@@ -4616,7 +4616,8 @@ function getDelayBadgeHtml(mins){
 
   return `<span class="${className}" style="${extraStyle}">${label}</span>`;
 }
-  
+
+
 // ===== Rendu liste : ARR = provenance, DEP = destination =====
 function renderAKList(flights, flow){
   const list = document.getElementById('akList');
@@ -4645,11 +4646,9 @@ function renderAKList(flights, flow){
     if(flow === 'DEP'){
       if(statusRaw === 'IN_FLIGHT') status = 'DÉCOLLÉ';
     }else{
-      // ARR
       if(statusRaw === 'TERMINATED') status = 'ARRIVÉ';
       if(statusRaw === 'IN_FLIGHT')  status = 'EN VOL';
 
-      // 🔥 ARR affiché DÉCOLLÉ si le DEP lié a décollé
       const nextDep = findLinkedDepForArr(f);
       if(nextDep){
         const depStatusRaw = (nextDep.status || nextDep.milestone || '').toString().toUpperCase();
@@ -4670,17 +4669,13 @@ function renderAKList(flights, flow){
 
     let bg = 'var(--card)';
 
-    // ARR : fond gris clair uniquement si ARRIVÉ
+    // fond gris seulement si terminé
     if(flow === 'ARR' && status === 'ARRIVÉ'){
       bg = '#f1f3f5';
     }
-    // DEP : on garde l’ancien comportement
-    else if(flow === 'DEP' && statusRaw === 'IN_FLIGHT'){
-      bg = 'rgba(0,0,0,.04)';
-    }else if(flow === 'DEP' && dly != null && dly >= 5){
-      bg = (dly <= 15)
-        ? 'rgba(245,158,11,0.18)'
-        : 'rgba(239,68,68,0.16)';
+
+    if(flow === 'DEP' && status === 'DÉCOLLÉ'){
+      bg = '#f1f3f5';
     }
 
     const mainIata = (flow === 'ARR')
@@ -4727,7 +4722,7 @@ function renderAKList(flights, flow){
     ? flights.map(row).join('')
     : `<p class="has-text-grey">Aucun vol.</p>`;
 }
-
+  
 // ===== Import : règles BVA =====
 function akBuildSI(f, allowDL = true, opts = {}){
   const includeDL = opts.includeDL !== undefined ? !!opts.includeDL : true;
