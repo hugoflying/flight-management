@@ -5317,54 +5317,6 @@ function toggleDelayCodes() {
   const box = document.getElementById("delayCodesBox");
   box.style.display = box.style.display === "none" ? "block" : "none";
 }
-const EIBT_CORRECTION_MIN = -4;
-
-function addMinutesToIso(iso, minutes){
-  const t = Date.parse(iso || "");
-  if(!Number.isFinite(t)) return "";
-  return new Date(t + minutes * 60000).toISOString();
-}
-
-function delayMinFrom(plannedIso, actualIso){
-  const p = Date.parse(plannedIso || "");
-  const a = Date.parse(actualIso || "");
-  if(!Number.isFinite(p) || !Number.isFinite(a)) return null;
-  return Math.round((a - p) / 60000);
-}
-
-function actualDepIso(f){
-  return f?.aobt || f?.eobt || "";
-}
-
-function actualArrIso(f){
-  if(f?.aibt) return f.aibt;
-  if(f?.eibt) return addMinutesToIso(f.eibt, EIBT_CORRECTION_MIN);
-  return "";
-}
-
-function getDelayBadgeHtml(mins){
-  if(mins == null) return "";
-
-  let label = "";
-  let className = "";
-
-  if(mins >= 15){
-    label = `RETARDÉ +${mins}`;
-    className = "tag is-danger";
-  }else if(mins >= 5){
-    label = `RETARDÉ +${mins}`;
-    className = "tag is-warning";
-  }else if(mins <= -10){
-    label = `EN AVANCE ${mins}`;
-    className = "tag is-info";
-  }else{
-    label = "À L’HEURE";
-    className = "tag is-success";
-  }
-
-  return `<span class="${className}" style="font-weight:900; margin-left:6px;">${label}</span>`;
-}
-
 </script>
 
 <!-- ===== Airport Keeper Picker ===== -->
