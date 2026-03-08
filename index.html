@@ -5110,6 +5110,23 @@ function updateLidGuideVisibility(){
   btn.style.display = show ? '' : 'none';
 }
 
+function updateDelayCodesVisibility(){
+  const cie = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
+  const btn = document.getElementById('delayCodesBtn');
+  const box = document.getElementById('delayCodesBox');
+  const show = (cie === 'FR' || cie === 'RK');
+
+  if(btn) btn.style.display = show ? '' : 'none';
+
+  if(box){
+    if(show){
+      box.style.display = 'none';
+    } else {
+      box.style.display = 'none';
+    }
+  }
+}
+  
 /* validateForm */
 function validateForm() {
   const val = id => (document.getElementById(id)?.value || "");
@@ -5310,8 +5327,9 @@ function toggleFinalImage(){
 }
 
 function toggleDelayCodes() {
-  const box = document.getElementById("delayCodesBox");
-  box.style.display = box.style.display === "none" ? "block" : "none";
+  const box = document.getElementById('delayCodesBox');
+  if (!box) return;
+  box.style.display = (box.style.display === 'none') ? 'block' : 'none';
 }
 </script>
 
