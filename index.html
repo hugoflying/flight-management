@@ -1541,14 +1541,19 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
   <div class="card-content">
 
     <div style="margin-bottom:10px;">
-      <button class="button is-warning is-light" type="button" onclick="toggleDelayCodes()">
+      <button id="delayCodesBtn" class="button is-warning is-light" type="button" onclick="toggleDelayCodes()">
         DELAY CODES (RYR)
       </button>
     </div>
 
+    <div id="delayCodesBox" style="display:none; margin-top:12px;">
+      <img id="delayCodesImage"
+           src="https://pub-c7a84a2cfc4d46d3b0562e0e646eff71.r2.dev/gops-iata-delay-codes-apr24-rev17.jpg"
+           style="max-width:100%; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,.25);">
+    </div>
+
     <div class="dl-wrap">
 
-      <!-- LIGNE 1 : DL CODES -->
       <div class="dl-grid dl-codes">
         <div class="field">
           <label class="label">DL Code 1</label>
@@ -1566,7 +1571,6 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
         </div>
       </div>
 
-      <!-- LIGNE 2 : DL DURÉES -->
       <div class="dl-grid dl-durees">
         <div class="field">
           <label class="label">DL Durée 1 (min)</label>
@@ -3393,6 +3397,7 @@ function updateAllCalculations() {
   redistributeDL();
   updateLID();
   updateLIDVisibility();
+  updateDelayCodesVisibility();
 
   updateHBagsValidity('arr');
   updateHBagsValidity('final');
