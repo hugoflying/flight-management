@@ -4669,13 +4669,15 @@ function renderAKList(flights, flow){
     const dly = delayMinFrom(plannedIso, actualIso);
 
     let bg = 'var(--card)';
-    if(flow === 'ARR' && status === 'DÉCOLLÉ'){
+
+    // ARR : fond gris clair uniquement si ARRIVÉ
+    if(flow === 'ARR' && status === 'ARRIVÉ'){
+      bg = '#f1f3f5';
+    }
+    // DEP : on garde l’ancien comportement
+    else if(flow === 'DEP' && statusRaw === 'IN_FLIGHT'){
       bg = 'rgba(0,0,0,.04)';
-    }else if(flow === 'ARR' && statusRaw === 'IN_FLIGHT'){
-      bg = 'rgba(37,99,235,0.12)';
-    }else if(flow === 'DEP' && statusRaw === 'IN_FLIGHT'){
-      bg = 'rgba(0,0,0,.04)';
-    }else if(dly != null && dly >= 5){
+    }else if(flow === 'DEP' && dly != null && dly >= 5){
       bg = (dly <= 15)
         ? 'rgba(245,158,11,0.18)'
         : 'rgba(239,68,68,0.16)';
