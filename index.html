@@ -4556,28 +4556,70 @@ async function loadAKFlights(){
   }
 }
 
+/* =========================
+   BADGES RETARD (référence app.js)
+   ========================= */
+
+const EIBT_CORRECTION_MIN = -4;
+
+function addMinutesToIso(iso, minutes){
+  const t = Date.parse(iso || "");
+  if(!Number.isFinite(t)) return "";
+  return new Date(t + minutes * 60000).toISOString();
+}
+
+function delayMinFrom(plannedIso, actualIso){
+  const p = Date.parse(plannedIso || "");
+  const a = Date.parse(actualIso || "");
+  if(!Number.isFinite(p) || !Number.isFinite(a)) return null;
+  return Math.round((a - p) / 60000);
+}
+
+function actualDepIso(f){
+  return f?.aobt || f?.eobt || "";
+}
+
+function actualArrIso(f){
+  if(f?.aibt) return f.aibt;
+
+  if(f?.eibt){
+    return addMinutesToIso(f.eibt, EIBT_CORRECTION_MIN);
+  }
+
+  return "";
+}
+
+function getDelayBadgeHtml(mins){
+  if(mins == null) return "";
+
+  let label = "";
+  let className = "";
+  let extraStyle = "font-weight:900; margin-left:6px;";
+
+  if(mins >= 15){
+    label = `RETARDÉ +${mins}`;
+    className = "tag is-danger";
+  }
+  else if(mins >= 5){
+    label = `RETARDÉ +${mins}`;
+    className = "tag is-warning";
+  }
+  else if(mins <= -10){
+    label = `EN AVANCE ${mins}`;
+    className = "tag is-info";
+  }
+  else{
+    label = "À L’HEURE";
+    className = "tag is-success";
+  }
+
+  return `<span class="${className}" style="${extraStyle}">${label}</span>`;
+}
+
 // ===== Rendu liste : ARR = provenance, DEP = destination =====
 function renderAKList(flights, flow){
   const list = document.getElementById('akList');
   if(!list) return;
-
-  function delayMinutes(f, flow){
-    const parse = v => v ? Date.parse(v) : NaN;
-
-    if(flow === 'ARR'){
-      const s = parse(f?.sibt);
-      const r = parse(f?.aibt || f?.eibt);
-      if(!isFinite(s) || !isFinite(r)) return 0;
-      const d = Math.round((r - s) / 60000);
-      return d > 0 ? d : 0;
-    }else{
-      const s = parse(f?.sobt);
-      const r = parse(f?.aobt || f?.eobt);
-      if(!isFinite(s) || !isFinite(r)) return 0;
-      const d = Math.round((r - s) / 60000);
-      return d > 0 ? d : 0;
-    }
-  }
 
   const safeJsonForOnclick = obj =>
     JSON.stringify(obj)
@@ -4615,8 +4657,15 @@ function renderAKList(flights, flow){
       }
     }
 
-    const dly = delayMinutes(f, flow);
-    const showDelay = dly >= 5;
+    const plannedIso = flow === 'ARR'
+      ? (f?.sibt || "")
+      : (f?.sobt || "");
+
+    const actualIso = flow === 'ARR'
+      ? actualArrIso(f)
+      : actualDepIso(f);
+
+    const dly = delayMinFrom(plannedIso, actualIso);
 
     let bg = 'var(--card)';
     if(flow === 'ARR' && status === 'DÉCOLLÉ'){
@@ -4625,7 +4674,7 @@ function renderAKList(flights, flow){
       bg = 'rgba(37,99,235,0.12)';
     }else if(flow === 'DEP' && statusRaw === 'IN_FLIGHT'){
       bg = 'rgba(0,0,0,.04)';
-    }else if(showDelay){
+    }else if(dly != null && dly >= 5){
       bg = (dly <= 15)
         ? 'rgba(245,158,11,0.18)'
         : 'rgba(239,68,68,0.16)';
@@ -4635,13 +4684,7 @@ function renderAKList(flights, flow){
       ? (f.adepIata || f.adepIcao || '')
       : (f.adesIata || f.adesIcao || '');
 
-    const delayBadge = showDelay
-      ? `<span class="tag" style="font-weight:900; margin-left:6px;
-           background:${dly<=15 ? 'rgba(245,158,11,0.20)' : 'rgba(239,68,68,0.18)'};">
-           RETARD +${dly}
-         </span>`
-      : '';
-
+    const delayBadge = getDelayBadgeHtml(dly);
     const json = safeJsonForOnclick(f);
 
     return `
@@ -5273,6 +5316,53 @@ function toggleFinalImage(){
 function toggleDelayCodes() {
   const box = document.getElementById("delayCodesBox");
   box.style.display = box.style.display === "none" ? "block" : "none";
+}
+const EIBT_CORRECTION_MIN = -4;
+
+function addMinutesToIso(iso, minutes){
+  const t = Date.parse(iso || "");
+  if(!Number.isFinite(t)) return "";
+  return new Date(t + minutes * 60000).toISOString();
+}
+
+function delayMinFrom(plannedIso, actualIso){
+  const p = Date.parse(plannedIso || "");
+  const a = Date.parse(actualIso || "");
+  if(!Number.isFinite(p) || !Number.isFinite(a)) return null;
+  return Math.round((a - p) / 60000);
+}
+
+function actualDepIso(f){
+  return f?.aobt || f?.eobt || "";
+}
+
+function actualArrIso(f){
+  if(f?.aibt) return f.aibt;
+  if(f?.eibt) return addMinutesToIso(f.eibt, EIBT_CORRECTION_MIN);
+  return "";
+}
+
+function getDelayBadgeHtml(mins){
+  if(mins == null) return "";
+
+  let label = "";
+  let className = "";
+
+  if(mins >= 15){
+    label = `RETARDÉ +${mins}`;
+    className = "tag is-danger";
+  }else if(mins >= 5){
+    label = `RETARDÉ +${mins}`;
+    className = "tag is-warning";
+  }else if(mins <= -10){
+    label = `EN AVANCE ${mins}`;
+    className = "tag is-info";
+  }else{
+    label = "À L’HEURE";
+    className = "tag is-success";
+  }
+
+  return `<span class="${className}" style="font-weight:900; margin-left:6px;">${label}</span>`;
 }
 
 </script>
