@@ -5421,6 +5421,7 @@ function toggleDelayCodes() {
 <script>
 let socket = null;
 let isApplyingRemoteUpdate = false;
+let currentSocketKey = null;
 
 function buildFlightKey() {
   const date = (document.getElementById("Date")?.value || "").replaceAll("-", "");
@@ -5443,16 +5444,32 @@ function buildFlightKey() {
   return `${date}_${immat}_${stationRef}_${timeRef}`;
 }
 
+function applyRemotePayload(payload) {
+  if (!payload || typeof payload !== "object") return;
+
+  isApplyingRemoteUpdate = true;
+
+  try {
+    Object.entries(payload).forEach(([id, value]) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+
+      if (el.value === (value ?? "")) return;
+
+      el.value = value ?? "";
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+  } finally {
+    isApplyingRemoteUpdate = false;
+  }
+}
+
 function connectFlightSocket() {
   const key = buildFlightKey();
-  if (!key) {
-    console.log("Clé vol incomplète, connexion WebSocket ignorée");
-    return;
-  }
+  if (!key) return;
 
-  const url = `wss://turnaround-sync.deruellehugo-49c.workers.dev/${key}`;
-
-  if (socket && socket.url === url && socket.readyState <= 1) {
+  if (socket && currentSocketKey === key && socket.readyState <= 1) {
     return;
   }
 
@@ -5460,7 +5477,8 @@ function connectFlightSocket() {
     try { socket.close(); } catch (e) {}
   }
 
-  socket = new WebSocket(url);
+  currentSocketKey = key;
+  socket = new WebSocket(`wss://turnaround-sync.deruellehugo-49c.workers.dev/${key}`);
 
   socket.onopen = () => {
     console.log("WebSocket connecté :", key);
@@ -5468,20 +5486,22 @@ function connectFlightSocket() {
 
   socket.onmessage = (event) => {
     try {
-      const data = JSON.parse(event.data);
-      isApplyingRemoteUpdate = true;
+      const msg = JSON.parse(event.data);
 
-      Object.entries(data).forEach(([id, value]) => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.value = value ?? "";
-        el.dispatchEvent(new Event("input", { bubbles: true }));
-        el.dispatchEvent(new Event("change", { bubbles: true }));
-      });
+      if (msg.__type === "init") {
+        applyRemotePayload(msg.payload);
+        return;
+      }
+
+      if (msg.__type === "patch") {
+        applyRemotePayload(msg.payload);
+        return;
+      }
+
+      // fallback si un vieux message brut arrive
+      applyRemotePayload(msg);
     } catch (err) {
       console.error("Erreur message WebSocket :", err);
-    } finally {
-      isApplyingRemoteUpdate = false;
     }
   };
 
@@ -5498,9 +5518,7 @@ function sendFieldUpdate(id, value) {
   if (isApplyingRemoteUpdate) return;
   if (!socket || socket.readyState !== WebSocket.OPEN) return;
 
-  socket.send(JSON.stringify({
-    [id]: value
-  }));
+  socket.send(JSON.stringify({ [id]: value }));
 }
 
 function setupRealtimeSync() {
@@ -5509,10 +5527,9 @@ function setupRealtimeSync() {
   keyFields.forEach((id) => {
     const el = document.getElementById(id);
     if (!el) return;
-
     const reconnect = () => connectFlightSocket();
-    el.addEventListener("change", reconnect);
     el.addEventListener("input", reconnect);
+    el.addEventListener("change", reconnect);
   });
 
   const syncFields = new Set([
@@ -5554,6 +5571,7 @@ function setupRealtimeSync() {
 
   connectFlightSocket();
 }
+
 document.addEventListener("DOMContentLoaded", () => {
   setupRealtimeSync();
 });
