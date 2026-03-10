@@ -5550,6 +5550,7 @@ function connectFlightSocket() {
   };
 }
 
+<script>
 function sendFieldUpdate(id, value) {
   if (isApplyingRemoteUpdate) return;
   if (!socket || socket.readyState !== WebSocket.OPEN) return;
