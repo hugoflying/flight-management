@@ -5593,6 +5593,8 @@ function setupRealtimeSync() {
     if (!el) return;
 
     const reconnect = () => {
+      if (isApplyingRemoteUpdate) return;
+
       clearTimeout(reconnectTimer);
       reconnectTimer = setTimeout(() => {
         connectFlightSocket();
@@ -5686,28 +5688,33 @@ function setupRealtimeSync() {
     if (!el || !el.id) return;
     if (!syncFields.has(el.id)) return;
     if (el.readOnly) return;
+    if (el.disabled) return;
+
+    const value = el.value ?? "";
 
     const isImmediate =
       event.type === "change" ||
       el.tagName === "SELECT" ||
       el.type === "date" ||
-      el.type === "time";
+      el.type === "time" ||
+      el.type === "checkbox" ||
+      el.type === "radio";
 
     if (isImmediate) {
       clearTimeout(debounceTimers[el.id]);
-      sendFieldUpdate(el.id, el.value);
+      sendFieldUpdate(el.id, value);
       return;
     }
 
     clearTimeout(debounceTimers[el.id]);
 
     debounceTimers[el.id] = setTimeout(() => {
-      sendFieldUpdate(el.id, el.value);
+      sendFieldUpdate(el.id, value);
     }, 300);
   };
 
-  document.addEventListener("input", pushIfSyncField);
-  document.addEventListener("change", pushIfSyncField);
+  document.addEventListener("input", pushIfSyncField, true);
+  document.addEventListener("change", pushIfSyncField, true);
 
   connectFlightSocket();
 }
