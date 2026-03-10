@@ -5488,7 +5488,13 @@ function applyRemotePayload(payload) {
         changed.push(el);
       });
 
-      // Recalculs globaux une seule fois
+      // on rejoue les events comme avant pour garder ta logique de synchro/calcul
+      changed.forEach((el) => {
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+
+      // recalculs globaux une seule fois à la fin
       try { updateAllCalculations?.(); } catch (e) {}
       try { updateInfoStrip?.(); } catch (e) {}
       try { updateFinalTOB?.(); } catch (e) {}
@@ -5496,12 +5502,6 @@ function applyRemotePayload(payload) {
       try { updateCountdownOnce?.(); } catch (e) {}
       try { ensureCountdownRunning?.(); } catch (e) {}
 
-      // Déclenche uniquement les change utiles
-      changed.forEach((el) => {
-        if (el.tagName === "SELECT" || el.type === "date" || el.type === "time") {
-          el.dispatchEvent(new Event("change", { bubbles: true }));
-        }
-      });
     } finally {
       isApplyingRemoteUpdate = false;
     }
