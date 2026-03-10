@@ -5419,31 +5419,144 @@ function toggleDelayCodes() {
 </button>
 
 <script>
-const socket = new WebSocket("wss://turnaround-sync.deruellehugo-49c.workers.dev/test");
+let socket = null;
+let isApplyingRemoteUpdate = false;
 
-socket.onopen = () => {
-  console.log("WebSocket connecté");
-};
+function buildFlightKey() {
+  const date = (document.getElementById("Date")?.value || "").replaceAll("-", "");
+  const immat = (document.getElementById("Immat")?.value || "")
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "");
 
-socket.onmessage = (event) => {
-  console.log("Message reçu:", event.data);
-};
+  const from = (document.getElementById("From")?.value || "").trim().toUpperCase();
+  const to = (document.getElementById("To")?.value || "").trim().toUpperCase();
 
-socket.onerror = (err) => {
-  console.error("WebSocket erreur:", err);
-};
+  const sibt = (document.getElementById("SIBT")?.value || "").replace(":", "");
+  const sobt = (document.getElementById("SOBT")?.value || "").replace(":", "");
 
-socket.onclose = () => {
-  console.log("WebSocket fermé");
-};
+  const timeRef = sibt || sobt;
+  const stationRef = from || to;
 
-function sendTestMessage() {
-  if (socket.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({ test: "hello" }));
-  } else {
-    console.log("Socket pas connecté");
-  }
+  if (!date || !immat || !timeRef || !stationRef) return null;
+
+  return `${date}_${immat}_${stationRef}_${timeRef}`;
 }
+
+function connectFlightSocket() {
+  const key = buildFlightKey();
+  if (!key) {
+    console.log("Clé vol incomplète, connexion WebSocket ignorée");
+    return;
+  }
+
+  const url = `wss://turnaround-sync.deruellehugo-49c.workers.dev/${key}`;
+
+  if (socket && socket.url === url && socket.readyState <= 1) {
+    return;
+  }
+
+  if (socket) {
+    try { socket.close(); } catch (e) {}
+  }
+
+  socket = new WebSocket(url);
+
+  socket.onopen = () => {
+    console.log("WebSocket connecté :", key);
+  };
+
+  socket.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      isApplyingRemoteUpdate = true;
+
+      Object.entries(data).forEach(([id, value]) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.value = value ?? "";
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+    } catch (err) {
+      console.error("Erreur message WebSocket :", err);
+    } finally {
+      isApplyingRemoteUpdate = false;
+    }
+  };
+
+  socket.onerror = (err) => {
+    console.error("WebSocket erreur:", err);
+  };
+
+  socket.onclose = () => {
+    console.log("WebSocket fermé");
+  };
+}
+
+function sendFieldUpdate(id, value) {
+  if (isApplyingRemoteUpdate) return;
+  if (!socket || socket.readyState !== WebSocket.OPEN) return;
+
+  socket.send(JSON.stringify({
+    [id]: value
+  }));
+}
+
+function setupRealtimeSync() {
+  const keyFields = ["Date", "Immat", "From", "To", "SIBT", "SOBT"];
+
+  keyFields.forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    const reconnect = () => connectFlightSocket();
+    el.addEventListener("change", reconnect);
+    el.addEventListener("input", reconnect);
+  });
+
+  const syncFields = new Set([
+    "Date", "Parking", "Immat", "TypeAvion", "Cie", "NVol", "From", "To",
+    "SIBT", "AIBT", "SOBT", "AOBT",
+    "DLcode1", "DLcode2", "DLcode3",
+    "DLduree1", "DLduree2", "DLduree3",
+    "FaitsSaillants",
+
+    // TIMING ARR
+    "ArriveeFuel",
+    "PremierDebarque",
+    "DernierDebarque",
+    "ArriveeLiftArr",
+    "DepartLiftArr",
+
+    // TIMING DEP
+    "ArrPNT",
+    "ArrPNC",
+    "AvionPremierEmbarque",
+    "AvionDernierEmbarque",
+    "ArriveeLift",
+    "DepartLift",
+    "DepartFuel",
+    "ArriveeINAD",
+    "RemiseLID",
+    "FermeturePorteAvion"
+  ]);
+
+  const pushIfSyncField = (event) => {
+    const el = event.target;
+    if (!el || !el.id) return;
+    if (!syncFields.has(el.id)) return;
+    sendFieldUpdate(el.id, el.value);
+  };
+
+  document.addEventListener("input", pushIfSyncField);
+  document.addEventListener("change", pushIfSyncField);
+
+  connectFlightSocket();
+}
+document.addEventListener("DOMContentLoaded", () => {
+  setupRealtimeSync();
+});
 </script>
 
 </body>
