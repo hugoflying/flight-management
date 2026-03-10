@@ -690,43 +690,65 @@ body.modal-open{
 /* ===== footer fixed bottom (iPad/iOS: fond jusqu'en bas sans grossir) ===== */
 .fixed-footer{
   position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
   inset: auto 0 0 0;
   z-index: 3500;
   background: var(--bg) !important;
   border-top: 1px solid rgba(0,0,0,.08);
   overflow: visible; /* important pour le ::after */
+
+  /* renfort iOS Safari pour éviter les décrochages visuels */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
-html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
+html.dark .fixed-footer{
+  border-top-color: rgba(255,255,255,.08);
+}
 
 /* ✅ remplit la safe-area (home indicator) SANS augmenter la hauteur du footer */
 .fixed-footer::after{
-  content:"";
+  content: "";
   position: absolute;
   left: 0;
   right: 0;
   bottom: calc(-1 * env(safe-area-inset-bottom));
   height: env(safe-area-inset-bottom);
   background: var(--bg);
+
+  /* renfort rendu iOS */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 
 .fixed-footer-inner{
   max-width: 1120px;
   margin: 0 auto;
   padding: 10px 14px; /* inchangé => pas de footer plus “épais” */
+
+  /* renfort iOS */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 
 .footer-row{
-  display:flex;
-  gap:10px;
-  align-items:center;
-  justify-content:center;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
   flex-wrap: wrap;
 }
 
 /* version compacte tablette */
 @media (min-width: 600px) and (max-width: 900px){
-  .fixed-footer-inner{ padding: 8px 12px; }
+  .fixed-footer-inner{
+    padding: 8px 12px;
+  }
 }
 
 /* ===== LOAD FAB (au-dessus du footer fixe, au-dessus de SETTINGS) ===== */
@@ -5422,6 +5444,7 @@ function toggleDelayCodes() {
 let socket = null;
 let isApplyingRemoteUpdate = false;
 let currentSocketKey = null;
+let reconnectTimer = null;
 const debounceTimers = {};
 
 function buildFlightKey() {
@@ -5448,32 +5471,63 @@ function buildFlightKey() {
 function applyRemotePayload(payload) {
   if (!payload || typeof payload !== "object") return;
 
-  isApplyingRemoteUpdate = true;
-  try {
-    Object.entries(payload).forEach(([id, value]) => {
-      const el = document.getElementById(id);
-      if (!el) return;
+  requestAnimationFrame(() => {
+    isApplyingRemoteUpdate = true;
 
-      const newValue = value ?? "";
-      if (el.value === newValue) return;
+    try {
+      const changed = [];
 
-      el.value = newValue;
-      el.dispatchEvent(new Event("input", { bubbles: true }));
-      el.dispatchEvent(new Event("change", { bubbles: true }));
-    });
-  } finally {
-    isApplyingRemoteUpdate = false;
-  }
+      Object.entries(payload).forEach(([id, value]) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        const newValue = value ?? "";
+        if ((el.value ?? "") === newValue) return;
+
+        el.value = newValue;
+        changed.push(el);
+      });
+
+      // Recalculs globaux une seule fois
+      try { updateAllCalculations?.(); } catch (e) {}
+      try { updateInfoStrip?.(); } catch (e) {}
+      try { updateFinalTOB?.(); } catch (e) {}
+      try { updateHeaderOffset?.(); } catch (e) {}
+      try { updateCountdownOnce?.(); } catch (e) {}
+      try { ensureCountdownRunning?.(); } catch (e) {}
+
+      // Déclenche uniquement les change utiles
+      changed.forEach((el) => {
+        if (el.tagName === "SELECT" || el.type === "date" || el.type === "time") {
+          el.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+      });
+    } finally {
+      isApplyingRemoteUpdate = false;
+    }
+  });
 }
 
 function connectFlightSocket() {
   const key = buildFlightKey();
-  if (!key) return;
 
-  if (socket && currentSocketKey === key && socket.readyState <= 1) return;
+  if (!key) {
+    if (socket) {
+      try { socket.close(); } catch (e) {}
+    }
+    socket = null;
+    currentSocketKey = null;
+    return;
+  }
+
+  if (socket && currentSocketKey === key &&
+      (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+    return;
+  }
 
   if (socket) {
     try { socket.close(); } catch (e) {}
+    socket = null;
   }
 
   currentSocketKey = key;
@@ -5487,12 +5541,12 @@ function connectFlightSocket() {
     try {
       const msg = JSON.parse(event.data);
 
-      if (msg.__type === "init") {
+      if (msg?.__type === "init") {
         applyRemotePayload(msg.payload);
         return;
       }
 
-      if (msg.__type === "patch") {
+      if (msg?.__type === "patch") {
         applyRemotePayload(msg.payload);
         return;
       }
@@ -5504,11 +5558,19 @@ function connectFlightSocket() {
   };
 
   socket.onerror = (err) => {
-    console.error("WebSocket erreur:", err);
+    console.error("WebSocket erreur :", err);
   };
 
   socket.onclose = () => {
     console.log("WebSocket fermé");
+
+    // Reconnexion légère seulement si la clé est toujours valide
+    clearTimeout(reconnectTimer);
+    reconnectTimer = setTimeout(() => {
+      if (buildFlightKey() === currentSocketKey) {
+        connectFlightSocket();
+      }
+    }, 1200);
   };
 }
 
@@ -5516,7 +5578,11 @@ function sendFieldUpdate(id, value) {
   if (isApplyingRemoteUpdate) return;
   if (!socket || socket.readyState !== WebSocket.OPEN) return;
 
-  socket.send(JSON.stringify({ [id]: value }));
+  try {
+    socket.send(JSON.stringify({ [id]: value ?? "" }));
+  } catch (e) {
+    console.error("Erreur envoi WebSocket :", e);
+  }
 }
 
 function setupRealtimeSync() {
@@ -5526,7 +5592,13 @@ function setupRealtimeSync() {
     const el = document.getElementById(id);
     if (!el) return;
 
-    const reconnect = () => connectFlightSocket();
+    const reconnect = () => {
+      clearTimeout(reconnectTimer);
+      reconnectTimer = setTimeout(() => {
+        connectFlightSocket();
+      }, 150);
+    };
+
     el.addEventListener("input", reconnect);
     el.addEventListener("change", reconnect);
   });
@@ -5608,6 +5680,8 @@ function setupRealtimeSync() {
   ]);
 
   const pushIfSyncField = (event) => {
+    if (isApplyingRemoteUpdate) return;
+
     const el = event.target;
     if (!el || !el.id) return;
     if (!syncFields.has(el.id)) return;
