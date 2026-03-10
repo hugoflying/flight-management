@@ -5489,7 +5489,6 @@ function applyRemotePayload(payload) {
       const el = document.getElementById(id);
       if (!el) return;
 
-      // on ne réécrit jamais les champs structure vol pilotés AK / référence
       if (akProtectedFields.has(id)) return;
       if (el.dataset && el.dataset.ak === "1") return;
 
@@ -5555,6 +5554,7 @@ function sendFieldUpdate(id, value) {
   if (isApplyingRemoteUpdate) return;
   if (!socket || socket.readyState !== WebSocket.OPEN) return;
 
+  console.log("SEND", id, value);
   socket.send(JSON.stringify({ [id]: value }));
 }
 
@@ -5652,7 +5652,6 @@ function setupRealtimeSync() {
     const el = event.target;
     if (!el || !el.id) return;
     if (!syncFields.has(el.id)) return;
-    if (el.readOnly) return;
 
     const isImmediate =
       event.type === "change" ||
