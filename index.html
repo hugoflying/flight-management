@@ -892,24 +892,6 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
   opacity:.9;
 }
 
-const socket = new WebSocket("wss://turnaround-sync.deruellehugo-49c.workers.dev/test");
-
-socket.onopen = () => {
-  console.log("WebSocket connecté");
-};
-
-socket.onmessage = (event) => {
-  console.log("Message reçu:", event.data);
-};
-
-socket.onerror = (err) => {
-  console.error("WebSocket erreur:", err);
-};
-
-socket.onclose = () => {
-  console.log("WebSocket fermé");
-};
-
 </style>
 </head>
 
@@ -5351,14 +5333,6 @@ function toggleDelayCodes() {
   box.style.display = (box.style.display === 'none') ? 'block' : 'none';
 }
 
-function sendTestMessage() {
-  if (socket.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({ test: "hello" }));
-  } else {
-    console.log("Socket pas connecté");
-  }
-}
-
 </script>
 
 <!-- ===== Airport Keeper Picker ===== -->
@@ -5443,6 +5417,34 @@ function sendTestMessage() {
         onclick="toggleLDM()" aria-label="Load">
   🧳
 </button>
+
+<script>
+const socket = new WebSocket("wss://turnaround-sync.deruellehugo-49c.workers.dev/test");
+
+socket.onopen = () => {
+  console.log("WebSocket connecté");
+};
+
+socket.onmessage = (event) => {
+  console.log("Message reçu:", event.data);
+};
+
+socket.onerror = (err) => {
+  console.error("WebSocket erreur:", err);
+};
+
+socket.onclose = () => {
+  console.log("WebSocket fermé");
+};
+
+function sendTestMessage() {
+  if (socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({ test: "hello" }));
+  } else {
+    console.log("Socket pas connecté");
+  }
+}
+</script>
 
 </body>
 </html>
