@@ -5422,6 +5422,7 @@ function toggleDelayCodes() {
 let socket = null;
 let isApplyingRemoteUpdate = false;
 let currentSocketKey = null;
+const debounceTimers = {};
 
 function buildFlightKey() {
   const date = (document.getElementById("Date")?.value || "").replaceAll("-", "");
@@ -5453,7 +5454,10 @@ function applyRemotePayload(payload) {
       const el = document.getElementById(id);
       if (!el) return;
 
-      el.value = value ?? "";
+      const newValue = value ?? "";
+      if (el.value === newValue) return;
+
+      el.value = newValue;
       el.dispatchEvent(new Event("input", { bubbles: true }));
       el.dispatchEvent(new Event("change", { bubbles: true }));
     });
@@ -5521,23 +5525,28 @@ function setupRealtimeSync() {
   keyFields.forEach((id) => {
     const el = document.getElementById(id);
     if (!el) return;
+
     const reconnect = () => connectFlightSocket();
     el.addEventListener("input", reconnect);
     el.addEventListener("change", reconnect);
   });
 
   const syncFields = new Set([
+    // INFO VOL / HORAIRES / RETARDS / NOTES
     "Date", "Parking", "Immat", "TypeAvion", "Cie", "NVol", "From", "To",
     "SIBT", "AIBT", "SOBT", "AOBT",
     "DLcode1", "DLcode2", "DLcode3",
     "DLduree1", "DLduree2", "DLduree3",
     "FaitsSaillants",
 
+    // TIMING ARR
     "ArriveeFuel",
     "PremierDebarque",
     "DernierDebarque",
     "ArriveeLiftArr",
     "DepartLiftArr",
+
+    // TIMING DEP
     "ArrPNT",
     "ArrPNC",
     "AvionPremierEmbarque",
@@ -5547,14 +5556,80 @@ function setupRealtimeSync() {
     "DepartFuel",
     "ArriveeINAD",
     "RemiseLID",
-    "FermeturePorteAvion"
+    "FermeturePorteAvion",
+
+    // LOAD ARR
+    "ArrPAX_MAIN",
+    "ArrPAX_INF",
+    "ArrBAGS",
+    "ArrPOIDS",
+    "ArrSI",
+
+    // LOAD PREVI
+    "PreviPAX_MAIN",
+    "PreviPAX_INF",
+    "PreviBAGS",
+    "PreviPOIDS",
+    "PreviTOB_FRRK",
+    "PreviMALE",
+    "PreviFEMALE",
+    "PreviCHILD",
+    "PreviINFANT",
+    "PreviTOB",
+    "PreviBAGS_OTHER",
+    "PreviPOIDS_OTHER",
+    "PreviSI",
+
+    // LOAD FINAL
+    "FinalMALE",
+    "FinalFEMALE",
+    "FinalADULT",
+    "FinalCHILD",
+    "FinalINFANT",
+    "FinalTOB",
+    "FinalOA",
+    "FinalOB",
+    "FinalOC",
+    "FinalOD",
+    "FinalBAGS",
+    "FinalPOIDS",
+    "FinalGB",
+    "FinalH1",
+    "FinalH2",
+    "FinalH3",
+    "FinalH4",
+    "FinalSI",
+
+    // FUEL
+    "BlockFuel",
+    "TaxiFuel",
+    "TripFuel",
+    "FuelUplift"
   ]);
 
   const pushIfSyncField = (event) => {
     const el = event.target;
     if (!el || !el.id) return;
     if (!syncFields.has(el.id)) return;
-    sendFieldUpdate(el.id, el.value);
+    if (el.readOnly) return;
+
+    const isImmediate =
+      event.type === "change" ||
+      el.tagName === "SELECT" ||
+      el.type === "date" ||
+      el.type === "time";
+
+    if (isImmediate) {
+      clearTimeout(debounceTimers[el.id]);
+      sendFieldUpdate(el.id, el.value);
+      return;
+    }
+
+    clearTimeout(debounceTimers[el.id]);
+
+    debounceTimers[el.id] = setTimeout(() => {
+      sendFieldUpdate(el.id, el.value);
+    }, 300);
   };
 
   document.addEventListener("input", pushIfSyncField);
