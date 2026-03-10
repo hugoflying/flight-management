@@ -910,14 +910,6 @@ socket.onclose = () => {
   console.log("WebSocket fermé");
 };
 
-function sendTestMessage() {
-  if (socket.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({ test: "hello" }));
-  } else {
-    console.log("Socket pas connecté");
-  }
-}
-
 </style>
 </head>
 
@@ -5357,6 +5349,14 @@ function toggleDelayCodes() {
   const box = document.getElementById('delayCodesBox');
   if (!box) return;
   box.style.display = (box.style.display === 'none') ? 'block' : 'none';
+}
+
+function sendTestMessage() {
+  if (socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({ test: "hello" }));
+  } else {
+    console.log("Socket pas connecté");
+  }
 }
 
 </script>
