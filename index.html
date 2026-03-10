@@ -5444,7 +5444,6 @@ function toggleDelayCodes() {
 let socket = null;
 let isApplyingRemoteUpdate = false;
 let currentSocketKey = null;
-let reconnectTimer = null;
 const debounceTimers = {};
 
 function buildFlightKey() {
@@ -5471,63 +5470,32 @@ function buildFlightKey() {
 function applyRemotePayload(payload) {
   if (!payload || typeof payload !== "object") return;
 
-  requestAnimationFrame(() => {
-    isApplyingRemoteUpdate = true;
+  isApplyingRemoteUpdate = true;
+  try {
+    Object.entries(payload).forEach(([id, value]) => {
+      const el = document.getElementById(id);
+      if (!el) return;
 
-    try {
-      const changed = [];
+      const newValue = value ?? "";
+      if (el.value === newValue) return;
 
-      Object.entries(payload).forEach(([id, value]) => {
-        const el = document.getElementById(id);
-        if (!el) return;
-
-        const newValue = value ?? "";
-        if ((el.value ?? "") === newValue) return;
-
-        el.value = newValue;
-        changed.push(el);
-      });
-
-      // on rejoue les events comme avant pour garder ta logique de synchro/calcul
-      changed.forEach((el) => {
-        el.dispatchEvent(new Event("input", { bubbles: true }));
-        el.dispatchEvent(new Event("change", { bubbles: true }));
-      });
-
-      // recalculs globaux une seule fois à la fin
-      try { updateAllCalculations?.(); } catch (e) {}
-      try { updateInfoStrip?.(); } catch (e) {}
-      try { updateFinalTOB?.(); } catch (e) {}
-      try { updateHeaderOffset?.(); } catch (e) {}
-      try { updateCountdownOnce?.(); } catch (e) {}
-      try { ensureCountdownRunning?.(); } catch (e) {}
-
-    } finally {
-      isApplyingRemoteUpdate = false;
-    }
-  });
+      el.value = newValue;
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+  } finally {
+    isApplyingRemoteUpdate = false;
+  }
 }
 
 function connectFlightSocket() {
   const key = buildFlightKey();
+  if (!key) return;
 
-  if (!key) {
-    if (socket) {
-      try { socket.close(); } catch (e) {}
-    }
-    socket = null;
-    currentSocketKey = null;
-    return;
-  }
-
-  if (socket && currentSocketKey === key &&
-      (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
-    return;
-  }
+  if (socket && currentSocketKey === key && socket.readyState <= 1) return;
 
   if (socket) {
     try { socket.close(); } catch (e) {}
-    socket = null;
   }
 
   currentSocketKey = key;
@@ -5541,12 +5509,12 @@ function connectFlightSocket() {
     try {
       const msg = JSON.parse(event.data);
 
-      if (msg?.__type === "init") {
+      if (msg.__type === "init") {
         applyRemotePayload(msg.payload);
         return;
       }
 
-      if (msg?.__type === "patch") {
+      if (msg.__type === "patch") {
         applyRemotePayload(msg.payload);
         return;
       }
@@ -5558,19 +5526,11 @@ function connectFlightSocket() {
   };
 
   socket.onerror = (err) => {
-    console.error("WebSocket erreur :", err);
+    console.error("WebSocket erreur:", err);
   };
 
   socket.onclose = () => {
     console.log("WebSocket fermé");
-
-    // Reconnexion légère seulement si la clé est toujours valide
-    clearTimeout(reconnectTimer);
-    reconnectTimer = setTimeout(() => {
-      if (buildFlightKey() === currentSocketKey) {
-        connectFlightSocket();
-      }
-    }, 1200);
   };
 }
 
@@ -5578,11 +5538,7 @@ function sendFieldUpdate(id, value) {
   if (isApplyingRemoteUpdate) return;
   if (!socket || socket.readyState !== WebSocket.OPEN) return;
 
-  try {
-    socket.send(JSON.stringify({ [id]: value ?? "" }));
-  } catch (e) {
-    console.error("Erreur envoi WebSocket :", e);
-  }
+  socket.send(JSON.stringify({ [id]: value }));
 }
 
 function setupRealtimeSync() {
@@ -5592,15 +5548,7 @@ function setupRealtimeSync() {
     const el = document.getElementById(id);
     if (!el) return;
 
-    const reconnect = () => {
-      if (isApplyingRemoteUpdate) return;
-
-      clearTimeout(reconnectTimer);
-      reconnectTimer = setTimeout(() => {
-        connectFlightSocket();
-      }, 150);
-    };
-
+    const reconnect = () => connectFlightSocket();
     el.addEventListener("input", reconnect);
     el.addEventListener("change", reconnect);
   });
@@ -5682,39 +5630,32 @@ function setupRealtimeSync() {
   ]);
 
   const pushIfSyncField = (event) => {
-    if (isApplyingRemoteUpdate) return;
-
     const el = event.target;
     if (!el || !el.id) return;
     if (!syncFields.has(el.id)) return;
     if (el.readOnly) return;
-    if (el.disabled) return;
-
-    const value = el.value ?? "";
 
     const isImmediate =
       event.type === "change" ||
       el.tagName === "SELECT" ||
       el.type === "date" ||
-      el.type === "time" ||
-      el.type === "checkbox" ||
-      el.type === "radio";
+      el.type === "time";
 
     if (isImmediate) {
       clearTimeout(debounceTimers[el.id]);
-      sendFieldUpdate(el.id, value);
+      sendFieldUpdate(el.id, el.value);
       return;
     }
 
     clearTimeout(debounceTimers[el.id]);
 
     debounceTimers[el.id] = setTimeout(() => {
-      sendFieldUpdate(el.id, value);
+      sendFieldUpdate(el.id, el.value);
     }, 300);
   };
 
-  document.addEventListener("input", pushIfSyncField, true);
-  document.addEventListener("change", pushIfSyncField, true);
+  document.addEventListener("input", pushIfSyncField);
+  document.addEventListener("change", pushIfSyncField);
 
   connectFlightSocket();
 }
@@ -5726,3 +5667,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
 </body>
 </html>
+
