@@ -5480,7 +5480,7 @@ function applyRemotePayload(payload) {
 
   const akProtectedFields = new Set([
     "Date", "Parking", "Immat", "TypeAvion", "Cie", "NVol",
-    "From", "To", "SIBT", "AIBT", "SOBT", "AOBT"
+    "From", "To", "SIBT", "AIBT", "SOBT", "AOBT", "CTOT"
   ]);
 
   isApplyingRemoteUpdate = true;
@@ -5489,6 +5489,7 @@ function applyRemotePayload(payload) {
       const el = document.getElementById(id);
       if (!el) return;
 
+      // on ne réécrit jamais les champs structure vol pilotés AK / référence
       if (akProtectedFields.has(id)) return;
       if (el.dataset && el.dataset.ak === "1") return;
 
@@ -5570,19 +5571,23 @@ function setupRealtimeSync() {
   });
 
   const syncFields = new Set([
-    // RETARDS / NOTES
+    // structure vol : envoyée au worker / dashboard, mais jamais réinjectée dans applyRemotePayload
+    "Date", "Parking", "Immat", "TypeAvion", "Cie", "NVol",
+    "From", "To", "SIBT", "AIBT", "SOBT", "AOBT", "CTOT",
+
+    // retards / notes
     "DLcode1", "DLcode2", "DLcode3",
     "DLduree1", "DLduree2", "DLduree3",
     "FaitsSaillants",
 
-    // TIMING ARR
+    // timing arr
     "ArriveeFuel",
     "PremierDebarque",
     "DernierDebarque",
     "ArriveeLiftArr",
     "DepartLiftArr",
 
-    // TIMING DEP
+    // timing dep
     "ArrPNT",
     "ArrPNC",
     "AvionPremierEmbarque",
@@ -5594,14 +5599,14 @@ function setupRealtimeSync() {
     "RemiseLID",
     "FermeturePorteAvion",
 
-    // LOAD ARR
+    // load arr
     "ArrPAX_MAIN",
     "ArrPAX_INF",
     "ArrBAGS",
     "ArrPOIDS",
     "ArrSI",
 
-    // LOAD PREVI
+    // load previ
     "PreviPAX_MAIN",
     "PreviPAX_INF",
     "PreviBAGS",
@@ -5616,7 +5621,7 @@ function setupRealtimeSync() {
     "PreviPOIDS_OTHER",
     "PreviSI",
 
-    // LOAD FINAL
+    // load final
     "FinalMALE",
     "FinalFEMALE",
     "FinalADULT",
@@ -5636,7 +5641,7 @@ function setupRealtimeSync() {
     "FinalH4",
     "FinalSI",
 
-    // FUEL
+    // fuel
     "BlockFuel",
     "TaxiFuel",
     "TripFuel",
@@ -5648,7 +5653,6 @@ function setupRealtimeSync() {
     if (!el || !el.id) return;
     if (!syncFields.has(el.id)) return;
     if (el.readOnly) return;
-    if (el.dataset && el.dataset.ak === "1") return;
 
     const isImmediate =
       event.type === "change" ||
