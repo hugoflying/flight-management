@@ -5448,13 +5448,10 @@ function applyRemotePayload(payload) {
   if (!payload || typeof payload !== "object") return;
 
   isApplyingRemoteUpdate = true;
-
   try {
     Object.entries(payload).forEach(([id, value]) => {
       const el = document.getElementById(id);
       if (!el) return;
-
-      if (el.value === (value ?? "")) return;
 
       el.value = value ?? "";
       el.dispatchEvent(new Event("input", { bubbles: true }));
@@ -5469,9 +5466,7 @@ function connectFlightSocket() {
   const key = buildFlightKey();
   if (!key) return;
 
-  if (socket && currentSocketKey === key && socket.readyState <= 1) {
-    return;
-  }
+  if (socket && currentSocketKey === key && socket.readyState <= 1) return;
 
   if (socket) {
     try { socket.close(); } catch (e) {}
@@ -5498,7 +5493,6 @@ function connectFlightSocket() {
         return;
       }
 
-      // fallback si un vieux message brut arrive
       applyRemotePayload(msg);
     } catch (err) {
       console.error("Erreur message WebSocket :", err);
@@ -5539,14 +5533,11 @@ function setupRealtimeSync() {
     "DLduree1", "DLduree2", "DLduree3",
     "FaitsSaillants",
 
-    // TIMING ARR
     "ArriveeFuel",
     "PremierDebarque",
     "DernierDebarque",
     "ArriveeLiftArr",
     "DepartLiftArr",
-
-    // TIMING DEP
     "ArrPNT",
     "ArrPNC",
     "AvionPremierEmbarque",
