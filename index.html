@@ -5447,6 +5447,14 @@ let currentSocketKey = null;
 const debounceTimers = {};
 
 function buildFlightKey() {
+  try {
+    if (typeof getTabData === "function") {
+      const data = getTabData();
+      const akId = data?.akMeta?.id ? String(data.akMeta.id).trim() : "";
+      if (akId) return `AK_${akId}`;
+    }
+  } catch (e) {}
+
   const date = (document.getElementById("Date")?.value || "").replaceAll("-", "");
   const immat = (document.getElementById("Immat")?.value || "")
     .trim()
@@ -5470,11 +5478,19 @@ function buildFlightKey() {
 function applyRemotePayload(payload) {
   if (!payload || typeof payload !== "object") return;
 
+  const akProtectedFields = new Set([
+    "Date", "Parking", "Immat", "TypeAvion", "Cie", "NVol",
+    "From", "To", "SIBT", "AIBT", "SOBT", "AOBT"
+  ]);
+
   isApplyingRemoteUpdate = true;
   try {
     Object.entries(payload).forEach(([id, value]) => {
       const el = document.getElementById(id);
       if (!el) return;
+
+      if (akProtectedFields.has(id)) return;
+      if (el.dataset && el.dataset.ak === "1") return;
 
       const newValue = value ?? "";
       if (el.value === newValue) return;
@@ -5554,9 +5570,7 @@ function setupRealtimeSync() {
   });
 
   const syncFields = new Set([
-    // INFO VOL / HORAIRES / RETARDS / NOTES
-    "Date", "Parking", "Immat", "TypeAvion", "Cie", "NVol", "From", "To",
-    "SIBT", "AIBT", "SOBT", "AOBT",
+    // RETARDS / NOTES
     "DLcode1", "DLcode2", "DLcode3",
     "DLduree1", "DLduree2", "DLduree3",
     "FaitsSaillants",
@@ -5634,6 +5648,7 @@ function setupRealtimeSync() {
     if (!el || !el.id) return;
     if (!syncFields.has(el.id)) return;
     if (el.readOnly) return;
+    if (el.dataset && el.dataset.ak === "1") return;
 
     const isImmediate =
       event.type === "change" ||
