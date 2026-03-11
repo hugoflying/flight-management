@@ -3301,8 +3301,12 @@ function loadTabData(id){
   updateInfoStrip();
 
   connectFlightSocket();
-}
 
+  setTimeout(() => {
+    sendFullFlightState();
+  }, 150);
+}
+  
 function updateTabLabelInstant(){ saveCurrentTabData(); renderTabs(); }
 
 /* TIMING FIELDS – ARR / DEP (responsive pro) */
