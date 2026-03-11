@@ -5594,7 +5594,6 @@ function collectFlightState() {
   ids.forEach((id) => {
     const el = document.getElementById(id);
     if (!el) return;
-    if (el.dataset && el.dataset.ak === "1") return;
     payload[id] = el.value || "";
   });
 
@@ -5810,7 +5809,6 @@ function setupRealtimeSync() {
     if (!el || !el.id) return;
     if (!syncFields.has(el.id)) return;
     if (el.readOnly) return;
-    if (el.dataset && el.dataset.ak === "1") return;
 
     const isImmediate =
       event.type === "change" ||
