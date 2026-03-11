@@ -5553,9 +5553,17 @@ function connectFlightSocket() {
 <script>
 function sendFieldUpdate(id, value) {
   if (isApplyingRemoteUpdate) return;
-  if (!socket || socket.readyState !== WebSocket.OPEN) return;
 
-  console.log("SEND", id, value);
+  if (!socket || socket.readyState !== WebSocket.OPEN) {
+    connectFlightSocket();
+    setTimeout(() => {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ [id]: value }));
+      }
+    }, 200);
+    return;
+  }
+
   socket.send(JSON.stringify({ [id]: value }));
 }
 
