@@ -5601,16 +5601,28 @@ function setupRealtimeSync() {
   });
 
   const syncFields = new Set([
+    // INFOS VOL nécessaires aussi au dashboard
+    "Cie",
+    "NVol",
+    "To",
+    "SOBT",
+    "TOBT",
+    "AOBT",
+    "AIBT",
+
+    // RETARDS / NOTES
     "DLcode1", "DLcode2", "DLcode3",
     "DLduree1", "DLduree2", "DLduree3",
     "FaitsSaillants",
 
+    // TIMING ARR
     "ArriveeFuel",
     "PremierDebarque",
     "DernierDebarque",
     "ArriveeLiftArr",
     "DepartLiftArr",
 
+    // TIMING DEP
     "ArrPNT",
     "ArrPNC",
     "AvionPremierEmbarque",
@@ -5622,12 +5634,14 @@ function setupRealtimeSync() {
     "RemiseLID",
     "FermeturePorteAvion",
 
+    // LOAD ARR
     "ArrPAX_MAIN",
     "ArrPAX_INF",
     "ArrBAGS",
     "ArrPOIDS",
     "ArrSI",
 
+    // LOAD PREVI
     "PreviPAX_MAIN",
     "PreviPAX_INF",
     "PreviBAGS",
@@ -5642,6 +5656,7 @@ function setupRealtimeSync() {
     "PreviPOIDS_OTHER",
     "PreviSI",
 
+    // LOAD FINAL
     "FinalMALE",
     "FinalFEMALE",
     "FinalADULT",
@@ -5661,6 +5676,7 @@ function setupRealtimeSync() {
     "FinalH4",
     "FinalSI",
 
+    // FUEL
     "BlockFuel",
     "TaxiFuel",
     "TripFuel",
