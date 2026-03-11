@@ -5608,7 +5608,10 @@ function sendFullFlightState() {
   if (!key) return;
   if (!socket || socket.readyState !== WebSocket.OPEN || currentSocketKey !== key) return;
 
-  socket.send(JSON.stringify(collectFlightState()));
+  const payload = collectFlightState();
+  console.log("SEND FULL STATE", payload);
+
+  socket.send(JSON.stringify(payload));
 }
 
 function connectFlightSocket() {
@@ -5681,7 +5684,10 @@ function sendFieldUpdate(id, value) {
     return;
   }
 
-  socket.send(JSON.stringify({ [id]: value }));
+  const payload = { [id]: value };
+  console.log("SEND PATCH", payload);
+
+  socket.send(JSON.stringify(payload));
 }
 
 function setupRealtimeSync() {
