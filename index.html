@@ -5693,18 +5693,39 @@ function sendFieldUpdate(id, value) {
 function setupRealtimeSync() {
   if (realtimeSyncInitialized) {
     connectFlightSocket();
+    setTimeout(() => {
+      sendFullFlightState();
+    }, 100);
     return;
   }
 
   realtimeSyncInitialized = true;
 
-  const keyFields = ["Date", "Immat", "From", "To", "SIBT", "SOBT"];
+  const keyFields = [
+    "Date",
+    "Immat",
+    "From",
+    "To",
+    "SIBT",
+    "SOBT",
+    "TOBT",
+    "AIBT",
+    "AOBT",
+    "Cie",
+    "NVol"
+  ];
 
   keyFields.forEach((id) => {
     const el = document.getElementById(id);
     if (!el) return;
 
-    const reconnect = () => connectFlightSocket();
+    const reconnect = () => {
+      connectFlightSocket();
+      setTimeout(() => {
+        sendFullFlightState();
+      }, 100);
+    };
+
     el.addEventListener("input", reconnect);
     el.addEventListener("change", reconnect);
   });
@@ -5813,6 +5834,10 @@ function setupRealtimeSync() {
   document.addEventListener("change", pushIfSyncField);
 
   connectFlightSocket();
+
+  setTimeout(() => {
+    sendFullFlightState();
+  }, 100);
 }
 </script>
   
