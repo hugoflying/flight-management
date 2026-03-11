@@ -5509,6 +5509,104 @@ function applyRemotePayload(payload) {
   }
 }
 
+function collectFlightState() {
+  const ids = [
+    "Cie",
+    "NVol",
+    "To",
+    "SIBT",
+    "SOBT",
+    "TOBT",
+    "AIBT",
+    "AOBT",
+
+    "DLcode1", "DLcode2", "DLcode3",
+    "DLduree1", "DLduree2", "DLduree3",
+    "FaitsSaillants",
+
+    "ArriveeFuel",
+    "PremierDebarque",
+    "DernierDebarque",
+    "ArriveeLiftArr",
+    "DepartLiftArr",
+
+    "ArrPNT",
+    "ArrPNC",
+    "AvionPremierEmbarque",
+    "AvionDernierEmbarque",
+    "ArriveeLift",
+    "DepartLift",
+    "DepartFuel",
+    "ArriveeINAD",
+    "RemiseLID",
+    "FermeturePorteAvion",
+
+    "ArrPAX_MAIN",
+    "ArrPAX_INF",
+    "ArrBAGS",
+    "ArrPOIDS",
+    "ArrSI",
+
+    "PreviPAX_MAIN",
+    "PreviPAX_INF",
+    "PreviBAGS",
+    "PreviPOIDS",
+    "PreviTOB_FRRK",
+    "PreviMALE",
+    "PreviFEMALE",
+    "PreviCHILD",
+    "PreviINFANT",
+    "PreviTOB",
+    "PreviBAGS_OTHER",
+    "PreviPOIDS_OTHER",
+    "PreviSI",
+
+    "FinalMALE",
+    "FinalFEMALE",
+    "FinalADULT",
+    "FinalCHILD",
+    "FinalINFANT",
+    "FinalTOB",
+    "FinalOA",
+    "FinalOB",
+    "FinalOC",
+    "FinalOD",
+    "FinalBAGS",
+    "FinalPOIDS",
+    "FinalGB",
+    "FinalH1",
+    "FinalH2",
+    "FinalH3",
+    "FinalH4",
+    "FinalSI",
+
+    "BlockFuel",
+    "TaxiFuel",
+    "TripFuel",
+    "FuelUplift"
+  ];
+
+  const payload = {};
+  ids.forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.dataset && el.dataset.ak === "1") return;
+    payload[id] = el.value || "";
+  });
+
+  return payload;
+}
+
+function sendFullFlightState() {
+  if (isApplyingRemoteUpdate) return;
+
+  const key = buildFlightKey();
+  if (!key) return;
+  if (!socket || socket.readyState !== WebSocket.OPEN || currentSocketKey !== key) return;
+
+  socket.send(JSON.stringify(collectFlightState()));
+}
+
 function connectFlightSocket() {
   const key = buildFlightKey();
 
@@ -5533,6 +5631,7 @@ function connectFlightSocket() {
 
   socket.onopen = () => {
     console.log("WebSocket connecté :", key);
+    sendFullFlightState();
   };
 
   socket.onmessage = (event) => {
@@ -5561,7 +5660,7 @@ function connectFlightSocket() {
 
   socket.onclose = () => {
     console.log("WebSocket fermé");
-    if (socket && currentSocketKey === key) {
+    if (currentSocketKey === key) {
       socket = null;
     }
   };
@@ -5601,7 +5700,6 @@ function setupRealtimeSync() {
   });
 
   const syncFields = new Set([
-    // INFOS VOL nécessaires aussi au dashboard
     "Cie",
     "NVol",
     "To",
@@ -5610,19 +5708,16 @@ function setupRealtimeSync() {
     "AOBT",
     "AIBT",
 
-    // RETARDS / NOTES
     "DLcode1", "DLcode2", "DLcode3",
     "DLduree1", "DLduree2", "DLduree3",
     "FaitsSaillants",
 
-    // TIMING ARR
     "ArriveeFuel",
     "PremierDebarque",
     "DernierDebarque",
     "ArriveeLiftArr",
     "DepartLiftArr",
 
-    // TIMING DEP
     "ArrPNT",
     "ArrPNC",
     "AvionPremierEmbarque",
@@ -5634,14 +5729,12 @@ function setupRealtimeSync() {
     "RemiseLID",
     "FermeturePorteAvion",
 
-    // LOAD ARR
     "ArrPAX_MAIN",
     "ArrPAX_INF",
     "ArrBAGS",
     "ArrPOIDS",
     "ArrSI",
 
-    // LOAD PREVI
     "PreviPAX_MAIN",
     "PreviPAX_INF",
     "PreviBAGS",
@@ -5656,7 +5749,6 @@ function setupRealtimeSync() {
     "PreviPOIDS_OTHER",
     "PreviSI",
 
-    // LOAD FINAL
     "FinalMALE",
     "FinalFEMALE",
     "FinalADULT",
@@ -5676,7 +5768,6 @@ function setupRealtimeSync() {
     "FinalH4",
     "FinalSI",
 
-    // FUEL
     "BlockFuel",
     "TaxiFuel",
     "TripFuel",
