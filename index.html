@@ -2807,14 +2807,13 @@ function initForm(){
     updateAllCalculations();
     updateInfoStrip();
 
-    updateFinalLoadLayout();          // ✅ labels H/CP + layout
-    updateFinalPlaceholdersFRRK();    // ✅ placeholders selon type (FR/RK)
-    updateLidGuideVisibility();       // ✅ bouton LID guide seulement FR/RK
+    updateFinalLoadLayout();
+    updateFinalPlaceholdersFRRK();
+    updateLidGuideVisibility();
   });
 
   document.getElementById('TypeAvion')?.addEventListener('change', ()=>{
     updateInfoStrip();
-
     updateFinalLoadLayout();
     updateFinalPlaceholdersFRRK();
     updateLidGuideVisibility();
@@ -2859,7 +2858,6 @@ function initForm(){
   });
 
   [
-    // H-bags seulement pour FINAL
     'FinalBAGS','FinalH1','FinalH2','FinalH3','FinalH4',
     'FinalGB'
   ].forEach(id=>{
@@ -2937,6 +2935,10 @@ function initForm(){
   updateFinalLoadLayout();
   updateFinalPlaceholdersFRRK();
   updateLidGuideVisibility();
+
+  // ✅ synchro temps réel APRÈS restauration complète du vol
+  setupRealtimeSync();
+  connectFlightSocket();
 }
 
 function updateInfoStrip(){
@@ -3297,6 +3299,8 @@ function loadTabData(id){
   updateAllCalculations();
   updateHeaderOffset();
   updateInfoStrip();
+
+  connectFlightSocket();
 }
 
 function updateTabLabelInstant(){ saveCurrentTabData(); renderTabs(); }
@@ -5445,6 +5449,7 @@ let socket = null;
 let isApplyingRemoteUpdate = false;
 let currentSocketKey = null;
 const debounceTimers = {};
+let realtimeSyncInitialized = false;
 
 function buildFlightKey() {
   try {
@@ -5506,16 +5511,25 @@ function applyRemotePayload(payload) {
 
 function connectFlightSocket() {
   const key = buildFlightKey();
-  if (!key) return;
+
+  if (!key) {
+    currentSocketKey = null;
+    if (socket) {
+      try { socket.close(); } catch (e) {}
+      socket = null;
+    }
+    return;
+  }
 
   if (socket && currentSocketKey === key && socket.readyState <= 1) return;
 
   if (socket) {
     try { socket.close(); } catch (e) {}
+    socket = null;
   }
 
   currentSocketKey = key;
-  socket = new WebSocket(`wss://turnaround-sync.deruellehugo-49c.workers.dev/${key}`);
+  socket = new WebSocket(`wss://turnaround-sync.deruellehugo-49c.workers.dev/${encodeURIComponent(key)}`);
 
   socket.onopen = () => {
     console.log("WebSocket connecté :", key);
@@ -5547,17 +5561,34 @@ function connectFlightSocket() {
 
   socket.onclose = () => {
     console.log("WebSocket fermé");
+    if (socket && currentSocketKey === key) {
+      socket = null;
+    }
   };
 }
 
 function sendFieldUpdate(id, value) {
   if (isApplyingRemoteUpdate) return;
-  if (!socket || socket.readyState !== WebSocket.OPEN) return;
+
+  const key = buildFlightKey();
+  if (!key) return;
+
+  if (!socket || socket.readyState !== WebSocket.OPEN || currentSocketKey !== key) {
+    connectFlightSocket();
+    return;
+  }
 
   socket.send(JSON.stringify({ [id]: value }));
 }
 
 function setupRealtimeSync() {
+  if (realtimeSyncInitialized) {
+    connectFlightSocket();
+    return;
+  }
+
+  realtimeSyncInitialized = true;
+
   const keyFields = ["Date", "Immat", "From", "To", "SIBT", "SOBT"];
 
   keyFields.forEach((id) => {
@@ -5570,19 +5601,16 @@ function setupRealtimeSync() {
   });
 
   const syncFields = new Set([
-    // RETARDS / NOTES
     "DLcode1", "DLcode2", "DLcode3",
     "DLduree1", "DLduree2", "DLduree3",
     "FaitsSaillants",
 
-    // TIMING ARR
     "ArriveeFuel",
     "PremierDebarque",
     "DernierDebarque",
     "ArriveeLiftArr",
     "DepartLiftArr",
 
-    // TIMING DEP
     "ArrPNT",
     "ArrPNC",
     "AvionPremierEmbarque",
@@ -5594,14 +5622,12 @@ function setupRealtimeSync() {
     "RemiseLID",
     "FermeturePorteAvion",
 
-    // LOAD ARR
     "ArrPAX_MAIN",
     "ArrPAX_INF",
     "ArrBAGS",
     "ArrPOIDS",
     "ArrSI",
 
-    // LOAD PREVI
     "PreviPAX_MAIN",
     "PreviPAX_INF",
     "PreviBAGS",
@@ -5616,7 +5642,6 @@ function setupRealtimeSync() {
     "PreviPOIDS_OTHER",
     "PreviSI",
 
-    // LOAD FINAL
     "FinalMALE",
     "FinalFEMALE",
     "FinalADULT",
@@ -5636,7 +5661,6 @@ function setupRealtimeSync() {
     "FinalH4",
     "FinalSI",
 
-    // FUEL
     "BlockFuel",
     "TaxiFuel",
     "TripFuel",
@@ -5663,7 +5687,6 @@ function setupRealtimeSync() {
     }
 
     clearTimeout(debounceTimers[el.id]);
-
     debounceTimers[el.id] = setTimeout(() => {
       sendFieldUpdate(el.id, el.value);
     }, 300);
@@ -5674,10 +5697,6 @@ function setupRealtimeSync() {
 
   connectFlightSocket();
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-  setupRealtimeSync();
-});
 </script>
   
 </body>
