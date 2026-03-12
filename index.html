@@ -5096,6 +5096,7 @@ function storeAKMetaForTab(meta){
 
     // ✅ clé la plus fiable
     id: String(meta.id || ''),
+    linkedId: String(meta.linkedId || ''),
 
     // ✅ fallback
     reg:  (meta.reg  || '').toUpperCase().trim(),
@@ -5334,6 +5335,7 @@ function applyAKFlight(f, flow, opts = {}){
     storeAKMetaForTab({
       flow,
       id: f.id,
+      linkedId: f.linkedId || '',
       reg: f.reg || '',
       ff: (f.fullFlightNumber || f.callsign || ''),
       timeISO: (flow === 'DEP')
@@ -5782,8 +5784,21 @@ function buildFlightKey() {
   try {
     if (typeof getTabData === "function") {
       const data = getTabData();
-      const akId = data?.akMeta?.id ? String(data.akMeta.id).trim() : "";
-      if (akId) return `AK_${akId}`;
+      const meta = data?.akMeta;
+      if (meta) {
+        const id       = String(meta.id       || '').trim();
+        const linkedId = String(meta.linkedId || '').trim();
+
+        // ✅ Les deux vols liés ont id/linkedId qui se pointent mutuellement
+        // → min(id, linkedId) est identique sur les deux appareils
+        if(id && linkedId){
+          const roomId = id < linkedId ? id : linkedId;
+          return `ROT_${roomId}`;
+        }
+
+        // Fallback : id seul (rotation sans lien connu)
+        if(id) return `AK_${id}`;
+      }
     }
   } catch (e) {}
 
