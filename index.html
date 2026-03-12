@@ -1135,6 +1135,75 @@ body.iv-editing .iv-edit-btn{ opacity: 1; }
   padding-top: 10px;
   margin-bottom: 10px;
 }
+
+/* ===== TIME WRAP : zones gestuelles ===== */
+.time-wrap{
+  position: relative;
+  display: block;
+}
+.tw-hidden-input{
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 0; height: 0;
+}
+.tw-display{
+  width: 100%;
+  text-align: center !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 1.05rem;
+  cursor: default;
+  user-select: none;
+  border-width: 2px !important;
+}
+/* zones overlay : left / center / right */
+.tw-zone{
+  position: absolute;
+  top: 0; bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .72rem;
+  font-weight: 900;
+  color: var(--muted);
+  opacity: 0.45;
+  cursor: pointer;
+  user-select: none;
+  z-index: 3;
+  border-radius: 8px;
+  transition: opacity .12s, background .12s;
+}
+.tw-zone-left  { left: 0;    width: 30%; }
+.tw-zone-center{ left: 30%;  width: 40%; }
+.tw-zone-right { right: 0;   width: 30%; }
+.tw-zone:hover { opacity: 1; background: rgba(0,0,0,.05); }
+.tw-zone-center:hover{ background: rgba(37,99,235,.08); color: #2563eb; }
+html.dark .tw-zone:hover{ background: rgba(255,255,255,.07); }
+.tw-zone:active{ background: rgba(0,0,0,.12); opacity: 1; }
+
+/* ===== TIME WRAP : couleurs par catégorie ===== */
+.tw-color-is-link     { border-color: #3273dc !important; color: #3273dc; }
+.tw-color-is-success  { border-color: #15803d !important; color: #15803d; }
+.tw-color-is-warning  { border-color: #d4a000 !important; color: #7a5800; }
+.tw-color-is-dark     { border-color: #363636 !important; color: #363636; }
+.tw-color-is-bordeaux { border-color: #7f1d1d !important; color: #7f1d1d; }
+html.dark .tw-color-is-link     { border-color: #5a9eff !important; color: #5a9eff; }
+html.dark .tw-color-is-success  { border-color: #4ade80 !important; color: #4ade80; }
+html.dark .tw-color-is-warning  { border-color: #f5c400 !important; color: #f5c400; }
+html.dark .tw-color-is-dark     { border-color: #aaa !important; color: #ccc; }
+html.dark .tw-color-is-bordeaux { border-color: #ef4444 !important; color: #ef4444; }
+
+/* RETARD + Faits saillants : champs plus épais */
+.dl-wrap .input{
+  border-width: 2px !important;
+  font-weight: 700;
+}
+#FaitsSaillants{
+  border-width: 2px !important;
+}
 </style>
 </head>
 
@@ -1601,15 +1670,19 @@ body.iv-editing .iv-edit-btn{ opacity: 1; }
         <div class="hor-col-head"><span class="hor-badge hor-badge-arr">ARR</span></div>
         <div class="hor-cell">
           <label class="label">SIBT</label>
-          <input class="input hor-input-sched" type="time" id="SIBT" onchange="updateAllCalculations()">
+          <div class="time-wrap" data-id="SIBT">
+            <input type="time" id="SIBT" class="tw-hidden-input" onchange="updateAllCalculations(); twSync('SIBT')">
+            <div class="input tw-display hor-input-sched" id="tw-disp-SIBT">--:--</div>
+          </div>
         </div>
         <div class="hor-cell">
           <label class="label">AIBT</label>
-          <input class="input" type="time" id="AIBT" onchange="updateAllCalculations()">
-          <div class="btn-actions">
-            <button class="button is-dark is-light" type="button" onclick="adjustTime('AIBT',-1);updateAllCalculations()">-1</button>
-            <button class="button is-link" type="button" onclick="setNow('AIBT');updateAllCalculations()">Now</button>
-            <button class="button is-dark is-light" type="button" onclick="adjustTime('AIBT',1);updateAllCalculations()">+1</button>
+          <div class="time-wrap" data-id="AIBT">
+            <input type="time" id="AIBT" class="tw-hidden-input" onchange="updateAllCalculations(); twSync('AIBT')">
+            <div class="input tw-display" id="tw-disp-AIBT">--:--</div>
+            <div class="tw-zone tw-zone-left"  data-action="minus">−1</div>
+            <div class="tw-zone tw-zone-center" data-action="now"></div>
+            <div class="tw-zone tw-zone-right" data-action="plus">+1</div>
           </div>
         </div>
       </div>
@@ -1619,15 +1692,19 @@ body.iv-editing .iv-edit-btn{ opacity: 1; }
         <div class="hor-col-head"><span class="hor-badge hor-badge-dep">DEP</span></div>
         <div class="hor-cell">
           <label class="label">SOBT</label>
-          <input class="input hor-input-sched" type="time" id="SOBT" onchange="manualSOBT=true;updateAllCalculations()">
+          <div class="time-wrap" data-id="SOBT">
+            <input type="time" id="SOBT" class="tw-hidden-input" onchange="manualSOBT=true;updateAllCalculations(); twSync('SOBT')">
+            <div class="input tw-display hor-input-sched" id="tw-disp-SOBT">--:--</div>
+          </div>
         </div>
         <div class="hor-cell">
           <label class="label">AOBT</label>
-          <input class="input" type="time" id="AOBT" onchange="updateAllCalculations()">
-          <div class="btn-actions">
-            <button class="button is-dark is-light" type="button" onclick="adjustTime('AOBT',-1);updateAllCalculations()">-1</button>
-            <button class="button is-link" type="button" onclick="setNow('AOBT');updateAllCalculations()">Now</button>
-            <button class="button is-dark is-light" type="button" onclick="adjustTime('AOBT',1);updateAllCalculations()">+1</button>
+          <div class="time-wrap" data-id="AOBT">
+            <input type="time" id="AOBT" class="tw-hidden-input" onchange="updateAllCalculations(); twSync('AOBT')">
+            <div class="input tw-display" id="tw-disp-AOBT">--:--</div>
+            <div class="tw-zone tw-zone-left"  data-action="minus">−1</div>
+            <div class="tw-zone tw-zone-center" data-action="now"></div>
+            <div class="tw-zone tw-zone-right" data-action="plus">+1</div>
           </div>
         </div>
       </div>
@@ -3134,6 +3211,7 @@ function initForm(){
   // ✅ synchro temps réel APRÈS restauration complète du vol
   setupRealtimeSync();
   connectFlightSocket();
+  if(typeof twSyncAll === "function") setTimeout(twSyncAll, 50);
 }
 
 function updateInfoStrip(){
@@ -3487,15 +3565,13 @@ function generateTimingFields(){
       <div class="field${optional ? ' field-optional' : ''}">
         <label class="label">${label}</label>
         <div class="control">
-          <input class="input" type="time" id="${id}" onchange="updateAllCalculations()">
-        </div>
-        <div class="btn-actions">
-          <button class="button is-dark is-light" type="button"
-            onclick="adjustTime('${id}',-1);updateAllCalculations()">-1</button>
-          <button class="button ${nowColor}" type="button"
-            onclick="setNow('${id}');updateAllCalculations()">Now</button>
-          <button class="button is-dark is-light" type="button"
-            onclick="adjustTime('${id}',1);updateAllCalculations()">+1</button>
+          <div class="time-wrap" data-id="${id}">
+            <input type="time" id="${id}" class="tw-hidden-input" onchange="updateAllCalculations(); twSync('${id}')">
+            <div class="input tw-display tw-color-${nowColor}" id="tw-disp-${id}">--:--</div>
+            <div class="tw-zone tw-zone-left"  data-action="minus">−1</div>
+            <div class="tw-zone tw-zone-center" data-action="now"></div>
+            <div class="tw-zone tw-zone-right" data-action="plus">+1</div>
+          </div>
         </div>
       </div>
     </div>`;
@@ -5686,6 +5762,7 @@ function applyRemotePayload(payload) {
     });
   } finally {
     isApplyingRemoteUpdate = false;
+    if(typeof twSyncAll === "function") setTimeout(twSyncAll, 0);
   }
 }
 
@@ -6071,6 +6148,42 @@ async function footerRefreshAK(){
   }finally{
     btn.classList.remove('is-loading');
   }
+}
+
+/* ===== TIME WRAP gestures ===== */
+(function(){
+  document.addEventListener('click', function(e){
+    const zone = e.target.closest('.tw-zone');
+    if(!zone) return;
+    const wrap = zone.closest('.time-wrap');
+    if(!wrap) return;
+    const id = wrap.dataset.id;
+    if(!id) return;
+    const action = zone.dataset.action;
+    if(action === 'minus')  adjustTime(id, -1);
+    else if(action === 'plus') adjustTime(id, 1);
+    else if(action === 'now')  setNow(id);
+    updateAllCalculations();
+    twSync(id);
+    // enlever focus et sélection
+    if(window.getSelection) window.getSelection().removeAllRanges();
+    document.activeElement?.blur();
+  });
+})();
+
+function twSync(id){
+  const inp = document.getElementById(id);
+  const disp = document.getElementById('tw-disp-' + id);
+  if(!inp || !disp) return;
+  disp.textContent = inp.value || '--:--';
+}
+// Sync all tw displays on load and after calculations
+const _origUpdateAll = typeof updateAllCalculations === 'function' ? updateAllCalculations : null;
+function twSyncAll(){
+  document.querySelectorAll('.time-wrap').forEach(w => {
+    const id = w.dataset.id;
+    if(id) twSync(id);
+  });
 }
 </script>
   
