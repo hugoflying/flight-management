@@ -6259,19 +6259,25 @@ function updateIVBadges(){
   renderBadge(depEl, delayMinsFromHHMM(sobt, aobt));
 }
 
-/* ===== TIME WRAP : édition manuelle (double-tap / appui long) ===== */
+/* ===== TIME WRAP : édition manuelle (appui long) + effacer (double-tap) ===== */
 (function(){
-  const LONG_PRESS_MS = 500;
-  const pressTimers = {};
+  const LONG_PRESS_MS = 600;
+  const DBL_TAP_MS   = 320;
+  const state = {}; // par id : { pressTimer, longFired, lastTap }
+
+  function getState(id){
+    if(!state[id]) state[id] = { pressTimer: null, longFired: false, lastTap: 0 };
+    return state[id];
+  }
 
   function openEdit(wrap){
     const id = wrap.dataset.id;
     if(!id) return;
-    const inp = document.getElementById(id);
+    const inp  = document.getElementById(id);
     const disp = document.getElementById('tw-disp-' + id);
     if(!inp || !disp) return;
+    if(wrap.querySelector('.tw-editor')) return; // déjà ouvert
 
-    // Créer un input texte temporaire par-dessus
     const editor = document.createElement('input');
     editor.type = 'text';
     editor.className = 'input tw-editor';
@@ -6280,23 +6286,23 @@ function updateIVBadges(){
     editor.maxLength = 5;
     editor.inputMode = 'numeric';
 
-    // Masquer le display, insérer l'éditeur
     disp.style.display = 'none';
     wrap.appendChild(editor);
-    editor.focus();
-    editor.select();
+    setTimeout(() => { editor.focus(); editor.select(); }, 50);
 
+    let committed = false;
     function commit(){
+      if(committed) return;
+      committed = true;
       const raw = editor.value.trim();
-      // Accepter HHMM ou HH:MM
       const m = raw.match(/^(\d{1,2}):?(\d{2})$/);
       if(m){
-        const hh = m[1].padStart(2,'0');
-        const mm = m[2];
+        const hh = m[1].padStart(2,'0'), mm = m[2];
         if(parseInt(hh)<24 && parseInt(mm)<60){
-          inp.value = `${hh}:${mm}`;
+          inp.value = hh+':'+mm;
           inp.dispatchEvent(new Event('change', {bubbles:true}));
           twSync(id);
+          updateAllCalculations();
         }
       }
       editor.remove();
@@ -6306,15 +6312,15 @@ function updateIVBadges(){
     editor.addEventListener('blur', commit);
     editor.addEventListener('keydown', e => {
       if(e.key === 'Enter'){ e.preventDefault(); editor.blur(); }
-      if(e.key === 'Escape'){ editor.removeEventListener('blur', commit); editor.remove(); disp.style.display = ''; }
+      if(e.key === 'Escape'){
+        committed = true;
+        editor.remove();
+        disp.style.display = '';
+      }
     });
   }
 
-  // Double-clic : effacer la valeur
-  document.addEventListener('dblclick', function(e){
-    const wrap = e.target.closest('.time-wrap');
-    if(!wrap) return;
-    if(e.target.classList.contains('tw-zone')) return;
+  function clearValue(wrap){
     const id = wrap.dataset.id;
     if(!id) return;
     const inp = document.getElementById(id);
@@ -6323,28 +6329,66 @@ function updateIVBadges(){
     inp.dispatchEvent(new Event('change', {bubbles:true}));
     twSync(id);
     updateAllCalculations();
-  });
+  }
 
-  // Appui long (mobile)
+  // ---- TOUCH (mobile / tablette) ----
   document.addEventListener('touchstart', function(e){
     const wrap = e.target.closest('.time-wrap');
-    if(!wrap) return;
-    if(e.target.classList.contains('tw-zone')) return;
+    if(!wrap || e.target.closest('.tw-zone') || e.target.classList.contains('tw-editor')) return;
     const id = wrap.dataset.id;
-    pressTimers[id] = setTimeout(() => { openEdit(wrap); }, LONG_PRESS_MS);
+    const s = getState(id);
+    s.longFired = false;
+    clearTimeout(s.pressTimer);
+    s.pressTimer = setTimeout(() => {
+      s.longFired = true;
+      openEdit(wrap);
+    }, LONG_PRESS_MS);
   }, {passive: true});
 
   document.addEventListener('touchend', function(e){
     const wrap = e.target.closest('.time-wrap');
-    if(!wrap) return;
-    clearTimeout(pressTimers[wrap.dataset.id]);
+    if(!wrap || e.target.closest('.tw-zone') || e.target.classList.contains('tw-editor')) return;
+    const id = wrap.dataset.id;
+    const s = getState(id);
+    clearTimeout(s.pressTimer);
+    if(s.longFired) return; // action déjà faite
+
+    // Double-tap : effacer
+    const now = Date.now();
+    if(now - s.lastTap < DBL_TAP_MS){
+      s.lastTap = 0;
+      clearValue(wrap);
+    } else {
+      s.lastTap = now;
+    }
   }, {passive: true});
 
   document.addEventListener('touchmove', function(e){
     const wrap = e.target.closest('.time-wrap');
     if(!wrap) return;
-    clearTimeout(pressTimers[wrap.dataset.id]);
+    const id = wrap.dataset.id;
+    clearTimeout(getState(id).pressTimer);
   }, {passive: true});
+
+  // ---- MOUSE (desktop) ----
+  // Double-clic sur le display = effacer
+  document.addEventListener('dblclick', function(e){
+    const wrap = e.target.closest('.time-wrap');
+    if(!wrap || e.target.closest('.tw-zone') || e.target.classList.contains('tw-editor')) return;
+    clearValue(wrap);
+  });
+
+  // Clic droit ou long-clic (mousedown > 600ms) = éditer
+  let mouseTimer = null;
+  document.addEventListener('mousedown', function(e){
+    if(e.button !== 0) return;
+    const wrap = e.target.closest('.time-wrap');
+    if(!wrap || e.target.closest('.tw-zone') || e.target.classList.contains('tw-editor')) return;
+    mouseTimer = setTimeout(() => { mouseTimer = null; openEdit(wrap); }, LONG_PRESS_MS);
+  });
+  document.addEventListener('mouseup', function(){
+    clearTimeout(mouseTimer); mouseTimer = null;
+  });
 })();
 </script>
   
