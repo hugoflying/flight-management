@@ -4850,66 +4850,62 @@ function depAtotTooOld(dep, minutes = 15){
   return (Date.now() - t) > minutes * 60 * 1000;
 }
 
-// ===== Chargement liste (vols du jour) + TRI + SUPPRESSION ATOT+15 =====
+// ===== Chargement liste (vols du jour) - paires ARR+DEP =====
 async function loadAKFlights(){
-  const flow = document.getElementById('akFlow')?.value || 'DEP';
   const st   = document.getElementById('akStatus');
   const list = document.getElementById('akList');
-
   if(st) st.textContent = 'Chargement…';
   if(list) list.innerHTML = '';
 
   const now = new Date();
   const startDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0,0,0,0);
   const endDay   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23,59,59,999);
-
-  const linkFromDate = new Date(startDay.getTime() - 12*60*60*1000);
-  const linkToDate   = new Date(endDay.getTime()   + 12*60*60*1000);
-  const linkFrom = linkFromDate.toISOString().replace(/\.\d{3}Z$/, "Z");
-  const linkTo   = linkToDate.toISOString().replace(/\.\d{3}Z$/, "Z");
+  const linkFrom = new Date(startDay.getTime() - 12*3600*1000).toISOString().replace(/\.\d{3}Z$/,"Z");
+  const linkTo   = new Date(endDay.getTime()   + 12*3600*1000).toISOString().replace(/\.\d{3}Z$/,"Z");
 
   try{
     const [arrAll, depAll] = await Promise.all([
       fetchAK('ARR', linkFrom, linkTo),
       fetchAK('DEP', linkFrom, linkTo),
     ]);
-
     window._akCache = { arr: arrAll, dep: depAll };
 
-    const inToday = (f, flow) => {
-      const t = Date.parse(
-        flow === 'DEP'
-          ? (f.sobt || f.eobt || f.aobt || f.atot || '')
-          : (f.sibt || f.eibt || f.aibt || '')
-      );
+    const inToday = (f, fl) => {
+      const t = Date.parse(fl==='DEP'
+        ? (f.sobt||f.eobt||f.aobt||f.atot||'')
+        : (f.sibt||f.eibt||f.aibt||''));
       return t && t >= startDay.getTime() && t <= endDay.getTime();
     };
 
-    let flights = (flow === 'DEP' ? depAll : arrAll).filter(f => inToday(f, flow));
+    let arrF = arrAll.filter(f => inToday(f,'ARR')).filter(a => {
+      const nd = findLinkedDepForArr(a);
+      return !nd || !depAtotTooOld(nd,15);
+    });
+    let depF = depAll.filter(f => inToday(f,'DEP')).filter(d => !depAtotTooOld(d,15));
 
-    if(flow === 'DEP'){
-      flights = flights.filter(d => !depAtotTooOld(d, 15));
+    // Construire paires
+    const usedDep = new Set(), usedArr = new Set();
+    const pairs = [];
+    for(const arr of arrF){
+      const dep = findLinkedDepForArr(arr);
+      if(dep && !usedDep.has(dep.id)){
+        pairs.push({arr, dep}); usedDep.add(dep.id); usedArr.add(arr.id);
+      } else {
+        pairs.push({arr, dep:null}); usedArr.add(arr.id);
+      }
     }
+    for(const dep of depF){ if(!usedDep.has(dep.id)) pairs.push({arr:null, dep}); }
 
-    if(flow === 'ARR'){
-      flights = flights.filter(arr => {
-        const nextDep = findLinkedDepForArr(arr);
-        if(!nextDep) return true;
-        return !depAtotTooOld(nextDep, 15);
-      });
-    }
-
-    flights.sort((a,b)=>{
-      const ta = flow === 'DEP' ? depTimeMs(a) : arrTimeMs(a);
-      const tb = flow === 'DEP' ? depTimeMs(b) : arrTimeMs(b);
-      if(ta == null && tb == null) return 0;
-      if(ta == null) return 1;
-      if(tb == null) return -1;
-      return ta - tb;
+    // Tri chrono
+    pairs.sort((a,b)=>{
+      const ta = a.arr ? arrTimeMs(a.arr) : (a.dep ? depTimeMs(a.dep) : null);
+      const tb = b.arr ? arrTimeMs(b.arr) : (b.dep ? depTimeMs(b.dep) : null);
+      if(ta==null&&tb==null) return 0; if(ta==null) return 1; if(tb==null) return -1;
+      return ta-tb;
     });
 
-    if(st) st.textContent = `${flights.length} vol(s)`;
-    renderAKList(flights, flow);
+    if(st) st.textContent = pairs.length + ' vol(s)';
+    renderAKList(pairs);
 
   }catch(e){
     if(st) st.textContent = `Erreur (${String(e.message || e)})`;
@@ -4978,86 +4974,66 @@ function getDelayBadgeHtml(mins){
 
 
 // ===== Rendu liste : ARR = provenance, DEP = destination =====
-function renderAKList(flights, flow){
+function renderAKList(pairs){
   const list = document.getElementById('akList');
   if(!list) return;
 
-  const safeJsonForOnclick = obj =>
-    JSON.stringify(obj)
-      .replace(/</g,"\u003c")
-      .replace(/>/g,"\u003e")
-      .replace(/&/g,"\u0026")
-      .replace(/'/g,"\u0027");
+  const safe = obj => JSON.stringify(obj)
+    .replace(/</g,'\u003c').replace(/>/g,'\u003e')
+    .replace(/&/g,'\u0026').replace(/'/g,'\u0027');
 
-  const row = (f)=>{
-    const ff    = (f.fullFlightNumber || f.callsign || '').trim();
-    const reg   = (f.reg || '').trim();
-    const stand = (f.pkg || '').toString().replace(/^P/i,'');
-    const t     = pickBestTimeForList(f, flow);
-
-    let statusRaw = (f.status || f.milestone || '').toString().toUpperCase();
-    let status = statusRaw;
-    if(statusRaw === 'SCHEDULED') status = 'PRÉVU';
-    if(flow === 'DEP'){
-      if(statusRaw === 'IN_FLIGHT') status = 'DÉCOLLÉ';
-    }else{
-      if(statusRaw === 'TERMINATED') status = 'ARRIVÉ';
-      if(statusRaw === 'IN_FLIGHT')  status = 'EN VOL';
-      const nextDep = findLinkedDepForArr(f);
-      if(nextDep){
-        const depStatusRaw = (nextDep.status || nextDep.milestone || '').toString().toUpperCase();
-        if(depStatusRaw === 'IN_FLIGHT' || !!nextDep.atot) status = 'DÉCOLLÉ';
-      }
+  function getStatus(f, flow){
+    let s = (f?.status||f?.milestone||'').toString().toUpperCase();
+    if(s==='SCHEDULED') return 'PRÉVU';
+    if(flow==='DEP'){ if(s==='IN_FLIGHT') return 'DÉCOLLÉ'; }
+    else{
+      if(s==='TERMINATED') return 'ARRIVÉ';
+      if(s==='IN_FLIGHT') return 'EN VOL';
+      const nd = findLinkedDepForArr(f);
+      if(nd){ const ds=(nd.status||nd.milestone||'').toString().toUpperCase(); if(ds==='IN_FLIGHT'||!!nd.atot) return 'DÉCOLLÉ'; }
     }
+    return s||'';
+  }
 
-    const plannedIso = flow === 'ARR' ? (f?.sibt || "") : (f?.sobt || "");
-    const actualIso  = flow === 'ARR' ? actualArrIso(f) : actualDepIso(f);
-    const dly = delayMinFrom(plannedIso, actualIso);
+  function half(f, flow){
+    if(!f) return '<div class="ak-half ak-half-empty"><span style="color:var(--muted)">—</span></div>';
+    const ff    = (f.fullFlightNumber||f.callsign||'').trim();
+    const reg   = (f.reg||'').trim();
+    const stand = (f.pkg||'').toString().replace(/^P/i,'');
+    const t     = pickBestTimeForList(f, flow);
+    const status = getStatus(f, flow);
+    const iata  = flow==='ARR' ? (f.adepIata||f.adepIcao||'') : (f.adesIata||f.adesIcao||'');
+    const dly   = delayMinFrom(flow==='ARR'?(f.sibt||''):(f.sobt||''), flow==='ARR'?actualArrIso(f):actualDepIso(f));
+    const badge = getDelayBadgeHtml(dly);
+    const done  = (flow==='ARR'&&status==='ARRIVÉ')||(flow==='DEP'&&status==='DÉCOLLÉ');
+    const bgBadge = flow==='ARR' ? '#dbeafe' : '#dcfce7';
+    const txtBadge = flow==='ARR' ? '#1d4ed8' : '#15803d';
+    const json  = safe(f);
+    return '<div class="ak-half"' + (done?' style="opacity:.55"':'') + '>'
+      + '<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;">'
+      + '<span style="font-size:.62rem;font-weight:900;background:'+bgBadge+';color:'+txtBadge+';padding:1px 6px;border-radius:6px;">'+flow+'</span>'
+      + '<span style="font-weight:900;font-size:.95rem;">'+escapeHtml(iata||'---')+'</span>'
+      + badge
+      + '</div>'
+      + '<div style="color:var(--muted);font-size:.78rem;font-weight:700;">'
+      + escapeHtml(ff||'—')+' · Std '+escapeHtml(stand||'—')+' · '+escapeHtml(reg||'—')
+      + '</div>'
+      + '<div style="color:var(--muted);font-size:.75rem;font-weight:700;">'
+      + escapeHtml(t||'—')+(status?' · '+escapeHtml(status):'')
+      + '</div>'
+      + '<button class="button is-small is-link" type="button" style="margin-top:5px;" onclick=\'applyAKFlight('+json+', "'+flow+'")\'>Utiliser</button>'
+      + '</div>';
+  }
 
-    let bg = 'var(--card)';
-    if(flow === 'ARR' && status === 'ARRIVÉ')  bg = '#f1f3f5';
-    if(flow === 'DEP' && status === 'DÉCOLLÉ') bg = '#f1f3f5';
+  if(!pairs.length){ list.innerHTML = '<p class="has-text-grey">Aucun vol.</p>'; return; }
 
-    const mainIata = flow === 'ARR'
-      ? (f.adepIata || f.adepIcao || '')
-      : (f.adesIata || f.adesIcao || '');
-
-    const delayBadge = getDelayBadgeHtml(dly);
-    const json = safeJsonForOnclick(f);
-
-    return `
-      <div class="card mb-2"
-        style="box-shadow:none;border:1px solid rgba(0,0,0,.08);background:${bg};">
-        <div class="card-content" style="padding:10px 12px;">
-          <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;">
-            <div style="min-width:220px;">
-              <div style="font-weight:900;font-size:1.05rem;display:flex;gap:6px;flex-wrap:wrap;">
-                <span>${escapeHtml(mainIata || '---')}</span>
-                ${delayBadge}
-              </div>
-              <div style="color:var(--muted);font-weight:800;font-size:.95rem;">
-                ${escapeHtml(ff || '(sans numéro)')}
-                · Stand ${escapeHtml(stand || '—')}
-                · ${escapeHtml(reg || '—')}
-              </div>
-              <div style="color:var(--muted);font-weight:800;font-size:.9rem;">
-                ${escapeHtml(t || '—')}
-                ${status ? '· ' + escapeHtml(status) : ''}
-              </div>
-            </div>
-            <button class="button is-small is-link" type="button"
-              onclick='applyAKFlight(${json}, "${flow}")'>
-              Utiliser
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-  };
-
-  list.innerHTML = flights.length
-    ? flights.map(row).join('')
-    : `<p class="has-text-grey">Aucun vol.</p>`;
+  list.innerHTML = pairs.map(function(p){
+    return '<div class="ak-pair-row">'
+      + half(p.arr,'ARR')
+      + '<div class="ak-pair-divider"></div>'
+      + half(p.dep,'DEP')
+      + '</div>';
+  }).join('');
 }
   
 // ===== Import : règles BVA =====
@@ -5678,12 +5654,6 @@ function toggleDelayCodes() {
 
 <div id="akPopover">
   <div class="ak-header" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:10px;">
-    <div class="select">
-      <select id="akFlow" onchange="loadAKFlights()">
-        <option value="DEP" selected>DEP</option>
-        <option value="ARR">ARR</option>
-      </select>
-    </div>
     <button class="button is-small is-link" type="button" onclick="loadAKFlights()">
       Rafraîchir
     </button>
