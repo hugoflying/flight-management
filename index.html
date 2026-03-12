@@ -174,8 +174,9 @@ body.has-tab .app-wrap{ display:block; }
 
 /* CTOT éditable */
 .ctot-pill{
-  width: auto;
+  width: 70px;
   min-width: 70px;
+  max-width: 70px;
   border: 0 !important;
   outline: 0 !important;
   box-shadow: none !important;
@@ -193,6 +194,11 @@ body.has-tab .app-wrap{ display:block; }
 }
 .ctot-pill::-webkit-datetime-edit{ color:#fff; }
 .ctot-pill::-webkit-calendar-picker-indicator{ display:none; -webkit-appearance:none; }
+.ctot-pill::-webkit-datetime-edit-ampm-field{ display:none; }
+.ctot-pill::-webkit-datetime-edit-text{ padding:0 1px; }
+.ctot-pill:empty, .ctot-pill[value=""]{
+  min-width: 70px;
+}
 
 /* Bulma tweaks */
 .card{
