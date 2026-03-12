@@ -1065,14 +1065,36 @@ body.iv-editing .iv-edit-btn{ opacity: 1; }
 }
 .footer-refresh-btn:active{ transform: rotate(45deg) scale(.93); }
 .footer-refresh-btn.is-loading{ pointer-events:none; opacity:.6; }
-@media (max-width: 420px){
+@media (max-width: 480px){
   .footer-refresh-btn{
-    width: 36px !important;
-    height: 36px !important;
-    font-size: 1rem !important;
+    width: 34px !important;
+    height: 34px !important;
+    font-size: .9rem !important;
   }
   .footer-row{
-    grid-template-columns: 36px 1fr 36px;
+    grid-template-columns: 34px 1fr 34px;
+    gap: 4px;
+  }
+  .footer-timers{
+    gap: 4px !important;
+  }
+  .timer-chip{
+    min-width: 0 !important;
+    padding: 4px 6px !important;
+    gap: 4px !important;
+    flex: 1 1 0;
+  }
+  .timer-chip .v{
+    min-width: 0 !important;
+    padding: 3px 5px !important;
+    font-size: .72rem !important;
+  }
+  .timer-chip .k{ font-size: .58rem !important; }
+  .ctot-pill{
+    min-width: 0 !important;
+    width: 100% !important;
+    padding: 3px 4px !important;
+    font-size: .72rem !important;
   }
 }
 </style>
