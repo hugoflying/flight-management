@@ -227,6 +227,15 @@ body.dark .card-header{
 .input.uppercase{ text-transform: uppercase; }
 textarea.si-uppercase{ text-transform: uppercase; }
 
+.button.is-bordeaux{
+  background: #7f1d1d !important;
+  color: #fff !important;
+  border-color: transparent !important;
+}
+.button.is-bordeaux:hover{
+  background: #991b1b !important;
+}
+
 /* Champs optionnels (ex: PNT, PNC, INAD) */
 .field-optional .label{
   opacity: .55;
@@ -3349,8 +3358,8 @@ function generateTimingFields(){
     <div class="card">
       <div class="card-content">
         <div class="grid-auto">
-          ${fieldHTML('ArrPNT','Arrivée PNT',false,true,'is-warning')}
-          ${fieldHTML('ArrPNC','Arrivée PNC',false,true,'is-warning')}
+          ${fieldHTML('ArrPNT','Arrivée PNT',false,true,'is-dark')}
+          ${fieldHTML('ArrPNC','Arrivée PNC',false,true,'is-dark')}
           ${fieldHTML('AvionPremierEmbarque','Premier embarqué')}
           ${fieldHTML('AvionDernierEmbarque','Dernier embarqué')}
           ${fieldHTML('ArriveeLift','Arrivée lift',false,false,'is-success')}
@@ -3363,13 +3372,13 @@ function generateTimingFields(){
                 ${fieldHTML('DepartFuel','Départ Avitair',false,false,'is-info')}
               </div>
               <div class="span-6">
-                ${fieldHTML('ArriveeINAD','Arrivée INAD',false,true,'is-warning')}
+                ${fieldHTML('ArriveeINAD','Arrivée INAD',false,true,'is-dark')}
               </div>
             </div>
           </div>
 
           ${fieldHTML('RemiseLID','Remise LID/LDS')}
-          ${fieldHTML('FermeturePorteAvion','Fermeture porte avion')}
+          ${fieldHTML('FermeturePorteAvion','Fermeture porte avion',false,false,'is-bordeaux')}
         </div>
       </div>
     </div>`;
@@ -5873,4 +5882,3 @@ function setupRealtimeSync() {
   
 </body>
 </html>
-
