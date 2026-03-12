@@ -27,7 +27,7 @@
 
   --gap: 10px;
   --padCard: 12px;
-  --labelSize: .78rem;
+  --labelSize: .85rem;
   --inputH: 42px;
 
   --fixed-footer-h: 72px;
@@ -812,7 +812,7 @@ html.dark .fixed-footer{
 
 /* ===== TABLET 600–900 ===== */
 @media (min-width:600px) and (max-width:900px){
-  :root{ --gap: 8px; --padCard: 9px; --labelSize: .68rem; --inputH: 34px; --fixed-footer-h: 64px; }
+  :root{ --gap: 8px; --padCard: 9px; --labelSize: .75rem; --inputH: 34px; --fixed-footer-h: 64px; }
 
   .kv-strip{ grid-template-columns: 1fr 1fr !important; gap: 8px; }
   .kv-card{ padding: 10px 12px; border-radius: 12px; }
@@ -1467,7 +1467,7 @@ html.dark .fixed-footer{
               <input class="input" type="time" id="SIBT" onchange="updateAllCalculations()">
               <div class="btn-actions">
                 <button class="button is-dark is-light" type="button" onclick="adjustTime('SIBT',-1);updateAllCalculations()">-1</button>
-                <button class="button is-link" type="button" onclick="setNow('SIBT');updateAllCalculations()">Now</button>
+                <button class="button is-dark" type="button" onclick="setNow('SIBT');updateAllCalculations()">Now</button>
                 <button class="button is-dark is-light" type="button" onclick="adjustTime('SIBT',1);updateAllCalculations()">+1</button>
               </div>
             </div>
@@ -1495,7 +1495,7 @@ html.dark .fixed-footer{
               <input class="input" type="time" id="SOBT" onchange="manualSOBT=true;updateAllCalculations()">
               <div class="btn-actions">
                 <button class="button is-dark is-light" type="button" onclick="adjustTime('SOBT',-1);updateAllCalculations()">-1</button>
-                <button class="button is-link" type="button" onclick="setNow('SOBT');updateAllCalculations()">Now</button>
+                <button class="button is-dark" type="button" onclick="setNow('SOBT');updateAllCalculations()">Now</button>
                 <button class="button is-dark is-light" type="button" onclick="adjustTime('SOBT',1);updateAllCalculations()">+1</button>
               </div>
             </div>
@@ -3344,7 +3344,7 @@ function generateTimingFields(){
     <div class="card mb-4">
       <div class="card-content">
         <div class="grid-auto">
-          ${fieldHTML('ArriveeFuel','Arrivée Avitair',true,false,'is-info')}
+          ${fieldHTML('ArriveeFuel','Arrivée Avitair',true,false,'is-warning')}
           ${fieldHTML('PremierDebarque','Premier débarqué')}
           ${fieldHTML('DernierDebarque','Dernier débarqué')}
           ${fieldHTML('ArriveeLiftArr','Arrivée lift',false,false,'is-success')}
@@ -3369,7 +3369,7 @@ function generateTimingFields(){
           <div class="span-12">
             <div class="grid-auto">
               <div class="span-6">
-                ${fieldHTML('DepartFuel','Départ Avitair',false,false,'is-info')}
+                ${fieldHTML('DepartFuel','Départ Avitair',false,false,'is-warning')}
               </div>
               <div class="span-6">
                 ${fieldHTML('ArriveeINAD','Arrivée INAD',false,true,'is-dark')}
