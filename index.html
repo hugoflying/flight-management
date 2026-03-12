@@ -38,7 +38,7 @@
 }
 
 body{ background: var(--bg); color: var(--text); margin: 0; }
-html, body{ min-height: 100%; background: var(--bg) !important; overscroll-behavior-y: none; -webkit-overflow-scrolling: auto; }
+html, body{ min-height: 100%; background: var(--bg) !important; }
 
 html.dark, body.dark{
   --bg: #0f1115;
@@ -690,20 +690,11 @@ body.modal-open{
 /* ===== footer fixed bottom (iPad/iOS: fond jusqu'en bas sans grossir) ===== */
 .fixed-footer{
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
   inset: auto 0 0 0;
   z-index: 3500;
   background: var(--bg) !important;
   border-top: 1px solid rgba(0,0,0,.08);
   overflow: visible; /* important pour le ::after */
-
-  /* renfort iOS Safari — will-change retiré car il perturbe le fixed sur iPad */
-  -webkit-transform: translate3d(0, 0, 0);
-  transform: translate3d(0, 0, 0);
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
 }
 
 html.dark .fixed-footer{
@@ -719,20 +710,12 @@ html.dark .fixed-footer{
   bottom: calc(-1 * env(safe-area-inset-bottom));
   height: env(safe-area-inset-bottom);
   background: var(--bg);
-
-  /* renfort rendu iOS */
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
 }
 
 .fixed-footer-inner{
   max-width: 1120px;
   margin: 0 auto;
   padding: 10px 14px; /* inchangé => pas de footer plus “épais” */
-
-  /* renfort iOS */
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
 }
 
 .footer-row{
@@ -1577,17 +1560,17 @@ html.dark .fixed-footer{
       <div class="dl-grid dl-codes">
         <div class="field">
           <label class="label">DL Code 1</label>
-          <div class="control"><input class="input" type="text" id="DLcode1"></div>
+          <div class="control"><input class="input uppercase" type="text" id="DLcode1"></div>
         </div>
 
         <div class="field">
           <label class="label">DL Code 2</label>
-          <div class="control"><input class="input" type="text" id="DLcode2"></div>
+          <div class="control"><input class="input uppercase" type="text" id="DLcode2"></div>
         </div>
 
         <div class="field">
           <label class="label">DL Code 3</label>
-          <div class="control"><input class="input" type="text" id="DLcode3"></div>
+          <div class="control"><input class="input uppercase" type="text" id="DLcode3"></div>
         </div>
       </div>
 
@@ -2934,6 +2917,17 @@ function initForm(){
   updateFinalLoadLayout();
   updateFinalPlaceholdersFRRK();
   updateLidGuideVisibility();
+
+  // ✅ forcer MAJ sur DL codes
+  ['DLcode1','DLcode2','DLcode3'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', () => {
+      const pos = el.selectionStart;
+      el.value = el.value.toUpperCase();
+      el.setSelectionRange(pos, pos);
+    });
+  });
 
   // ✅ synchro temps réel APRÈS restauration complète du vol
   setupRealtimeSync();
