@@ -227,6 +227,20 @@ body.dark .card-header{
 .input.uppercase{ text-transform: uppercase; }
 textarea.si-uppercase{ text-transform: uppercase; }
 
+/* Champs optionnels (ex: PNT, PNC, INAD) */
+.field-optional .label{
+  opacity: .55;
+  font-style: italic;
+}
+.field-optional .input{
+  border-style: dashed !important;
+  opacity: .72;
+}
+.field-optional .input:focus{
+  opacity: 1;
+  border-style: solid !important;
+}
+
 .input::placeholder, .textarea::placeholder{ color: var(--field-placeholder) !important; }
 
 .field .label{
@@ -3307,9 +3321,9 @@ function generateTimingFields(){
   const container = document.getElementById('timing-grid');
   if(!container) return;
 
-  const fieldHTML = (id,label,full=false)=>`
+  const fieldHTML = (id,label,full=false,optional=false)=>`
     <div class="${full ? 'span-12' : 'span-6'}">
-      <div class="field">
+      <div class="field${optional ? ' field-optional' : ''}">
         <label class="label">${label}</label>
         <div class="control">
           <input class="input" type="time" id="${id}" onchange="updateAllCalculations()">
@@ -3344,8 +3358,8 @@ function generateTimingFields(){
     <div class="card">
       <div class="card-content">
         <div class="grid-auto">
-          ${fieldHTML('ArrPNT','Arrivée PNT')}
-          ${fieldHTML('ArrPNC','Arrivée PNC')}
+          ${fieldHTML('ArrPNT','Arrivée PNT',false,true)}
+          ${fieldHTML('ArrPNC','Arrivée PNC',false,true)}
           ${fieldHTML('AvionPremierEmbarque','Premier embarqué')}
           ${fieldHTML('AvionDernierEmbarque','Dernier embarqué')}
           ${fieldHTML('ArriveeLift','Arrivée lift')}
@@ -3358,7 +3372,7 @@ function generateTimingFields(){
                 ${fieldHTML('DepartFuel','Départ Avitair')}
               </div>
               <div class="span-6">
-                ${fieldHTML('ArriveeINAD','Arrivée INAD')}
+                ${fieldHTML('ArriveeINAD','Arrivée INAD',false,true)}
               </div>
             </div>
           </div>
@@ -5868,3 +5882,4 @@ function setupRealtimeSync() {
   
 </body>
 </html>
+
