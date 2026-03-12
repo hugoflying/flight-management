@@ -6185,22 +6185,116 @@ async function footerRefreshAK(){
 
 /* ===== TIME WRAP gestures ===== */
 (function(){
-  document.addEventListener('click', function(e){
-    const zone = e.target.closest('.tw-zone');
+  const LONG_MS  = 600;
+  const DBL_MS   = 320;
+  const s = {}; // state par id
+
+  function st(id){ if(!s[id]) s[id]={t:null,fired:false,last:0}; return s[id]; }
+
+  function openEdit(id){
+    const wrap = document.querySelector(`.time-wrap[data-id="${id}"]`);
+    const inp  = document.getElementById(id);
+    const disp = document.getElementById('tw-disp-'+id);
+    if(!wrap||!inp||!disp) return;
+    if(wrap.querySelector('.tw-editor')) return;
+
+    const ed = document.createElement('input');
+    ed.type='text'; ed.className='input tw-editor';
+    ed.value=inp.value||''; ed.placeholder='HH:MM';
+    ed.maxLength=5; ed.inputMode='numeric';
+    disp.style.display='none';
+    wrap.appendChild(ed);
+    setTimeout(()=>{ ed.focus(); ed.select(); },30);
+
+    let done=false;
+    function commit(){
+      if(done) return; done=true;
+      const m=(ed.value.trim()).match(/^(\d{1,2}):?(\d{2})$/);
+      if(m){
+        const hh=m[1].padStart(2,'0'),mm=m[2];
+        if(+hh<24&&+mm<60){
+          inp.value=hh+':'+mm;
+          inp.dispatchEvent(new Event('change',{bubbles:true}));
+          twSync(id); updateAllCalculations();
+        }
+      }
+      ed.remove(); disp.style.display='';
+    }
+    ed.addEventListener('blur',commit);
+    ed.addEventListener('keydown',e=>{
+      if(e.key==='Enter'){e.preventDefault();ed.blur();}
+      if(e.key==='Escape'){done=true;ed.remove();disp.style.display='';}
+    });
+  }
+
+  function clearVal(id){
+    const inp=document.getElementById(id); if(!inp) return;
+    inp.value='';
+    inp.dispatchEvent(new Event('change',{bubbles:true}));
+    twSync(id); updateAllCalculations();
+  }
+
+  /* ---- zone click (−1 / now / +1) ---- */
+  document.addEventListener('click',function(e){
+    const zone=e.target.closest('.tw-zone');
     if(!zone) return;
-    const wrap = zone.closest('.time-wrap');
-    if(!wrap) return;
-    const id = wrap.dataset.id;
-    if(!id) return;
-    const action = zone.dataset.action;
-    if(action === 'minus')  adjustTime(id, -1);
-    else if(action === 'plus') adjustTime(id, 1);
-    else if(action === 'now')  setNow(id);
-    updateAllCalculations();
-    twSync(id);
-    // enlever focus et sélection
+    const wrap=zone.closest('.time-wrap'); if(!wrap) return;
+    const id=wrap.dataset.id; if(!id) return;
+    const action=zone.dataset.action;
+    if(action==='minus') adjustTime(id,-1);
+    else if(action==='plus') adjustTime(id,1);
+    else if(action==='now') setNow(id);
+    updateAllCalculations(); twSync(id);
     if(window.getSelection) window.getSelection().removeAllRanges();
     document.activeElement?.blur();
+  });
+
+  /* ---- long press & double-tap sur zone centre ---- */
+  function onStart(id){
+    const o=st(id); o.fired=false;
+    clearTimeout(o.t);
+    o.t=setTimeout(()=>{ o.fired=true; openEdit(id); },LONG_MS);
+  }
+  function onEnd(id){
+    const o=st(id);
+    clearTimeout(o.t);
+    if(o.fired) return;
+    const now=Date.now();
+    if(now-o.last<DBL_MS){ o.last=0; clearVal(id); }
+    else { o.last=now; }
+  }
+  function onCancel(id){ clearTimeout(st(id).t); }
+
+  document.addEventListener('touchstart',function(e){
+    const z=e.target.closest('.tw-zone-center'); if(!z) return;
+    const id=z.closest('.time-wrap')?.dataset?.id; if(!id) return;
+    onStart(id);
+  },{passive:true});
+  document.addEventListener('touchend',function(e){
+    const z=e.target.closest('.tw-zone-center'); if(!z) return;
+    const id=z.closest('.time-wrap')?.dataset?.id; if(!id) return;
+    onEnd(id);
+  },{passive:true});
+  document.addEventListener('touchmove',function(e){
+    const z=e.target.closest('.tw-zone-center'); if(!z) return;
+    const id=z.closest('.time-wrap')?.dataset?.id; if(!id) return;
+    onCancel(id);
+  },{passive:true});
+
+  // desktop : long mousedown sur centre = éditer, dblclick = effacer
+  let mTimer=null;
+  document.addEventListener('mousedown',function(e){
+    if(e.button!==0) return;
+    const z=e.target.closest('.tw-zone-center'); if(!z) return;
+    const id=z.closest('.time-wrap')?.dataset?.id; if(!id) return;
+    const o=st(id); o.fired=false;
+    mTimer=setTimeout(()=>{ o.fired=true; openEdit(id); },LONG_MS);
+  });
+  document.addEventListener('mouseup',function(){ clearTimeout(mTimer); mTimer=null; });
+  document.addEventListener('dblclick',function(e){
+    const z=e.target.closest('.tw-zone-center'); if(!z) return;
+    const id=z.closest('.time-wrap')?.dataset?.id; if(!id) return;
+    clearVal(id);
   });
 })();
 
@@ -6259,137 +6353,7 @@ function updateIVBadges(){
   renderBadge(depEl, delayMinsFromHHMM(sobt, aobt));
 }
 
-/* ===== TIME WRAP : édition manuelle (appui long) + effacer (double-tap) ===== */
-(function(){
-  const LONG_PRESS_MS = 600;
-  const DBL_TAP_MS   = 320;
-  const state = {}; // par id : { pressTimer, longFired, lastTap }
 
-  function getState(id){
-    if(!state[id]) state[id] = { pressTimer: null, longFired: false, lastTap: 0 };
-    return state[id];
-  }
-
-  function openEdit(wrap){
-    const id = wrap.dataset.id;
-    if(!id) return;
-    const inp  = document.getElementById(id);
-    const disp = document.getElementById('tw-disp-' + id);
-    if(!inp || !disp) return;
-    if(wrap.querySelector('.tw-editor')) return; // déjà ouvert
-
-    const editor = document.createElement('input');
-    editor.type = 'text';
-    editor.className = 'input tw-editor';
-    editor.value = inp.value || '';
-    editor.placeholder = 'HH:MM';
-    editor.maxLength = 5;
-    editor.inputMode = 'numeric';
-
-    disp.style.display = 'none';
-    wrap.appendChild(editor);
-    setTimeout(() => { editor.focus(); editor.select(); }, 50);
-
-    let committed = false;
-    function commit(){
-      if(committed) return;
-      committed = true;
-      const raw = editor.value.trim();
-      const m = raw.match(/^(\d{1,2}):?(\d{2})$/);
-      if(m){
-        const hh = m[1].padStart(2,'0'), mm = m[2];
-        if(parseInt(hh)<24 && parseInt(mm)<60){
-          inp.value = hh+':'+mm;
-          inp.dispatchEvent(new Event('change', {bubbles:true}));
-          twSync(id);
-          updateAllCalculations();
-        }
-      }
-      editor.remove();
-      disp.style.display = '';
-    }
-
-    editor.addEventListener('blur', commit);
-    editor.addEventListener('keydown', e => {
-      if(e.key === 'Enter'){ e.preventDefault(); editor.blur(); }
-      if(e.key === 'Escape'){
-        committed = true;
-        editor.remove();
-        disp.style.display = '';
-      }
-    });
-  }
-
-  function clearValue(wrap){
-    const id = wrap.dataset.id;
-    if(!id) return;
-    const inp = document.getElementById(id);
-    if(!inp) return;
-    inp.value = '';
-    inp.dispatchEvent(new Event('change', {bubbles:true}));
-    twSync(id);
-    updateAllCalculations();
-  }
-
-  // ---- TOUCH (mobile / tablette) ----
-  document.addEventListener('touchstart', function(e){
-    const wrap = e.target.closest('.time-wrap');
-    if(!wrap || e.target.closest('.tw-zone') || e.target.classList.contains('tw-editor')) return;
-    const id = wrap.dataset.id;
-    const s = getState(id);
-    s.longFired = false;
-    clearTimeout(s.pressTimer);
-    s.pressTimer = setTimeout(() => {
-      s.longFired = true;
-      openEdit(wrap);
-    }, LONG_PRESS_MS);
-  }, {passive: true});
-
-  document.addEventListener('touchend', function(e){
-    const wrap = e.target.closest('.time-wrap');
-    if(!wrap || e.target.closest('.tw-zone') || e.target.classList.contains('tw-editor')) return;
-    const id = wrap.dataset.id;
-    const s = getState(id);
-    clearTimeout(s.pressTimer);
-    if(s.longFired) return; // action déjà faite
-
-    // Double-tap : effacer
-    const now = Date.now();
-    if(now - s.lastTap < DBL_TAP_MS){
-      s.lastTap = 0;
-      clearValue(wrap);
-    } else {
-      s.lastTap = now;
-    }
-  }, {passive: true});
-
-  document.addEventListener('touchmove', function(e){
-    const wrap = e.target.closest('.time-wrap');
-    if(!wrap) return;
-    const id = wrap.dataset.id;
-    clearTimeout(getState(id).pressTimer);
-  }, {passive: true});
-
-  // ---- MOUSE (desktop) ----
-  // Double-clic sur le display = effacer
-  document.addEventListener('dblclick', function(e){
-    const wrap = e.target.closest('.time-wrap');
-    if(!wrap || e.target.closest('.tw-zone') || e.target.classList.contains('tw-editor')) return;
-    clearValue(wrap);
-  });
-
-  // Clic droit ou long-clic (mousedown > 600ms) = éditer
-  let mouseTimer = null;
-  document.addEventListener('mousedown', function(e){
-    if(e.button !== 0) return;
-    const wrap = e.target.closest('.time-wrap');
-    if(!wrap || e.target.closest('.tw-zone') || e.target.classList.contains('tw-editor')) return;
-    mouseTimer = setTimeout(() => { mouseTimer = null; openEdit(wrap); }, LONG_PRESS_MS);
-  });
-  document.addEventListener('mouseup', function(){
-    clearTimeout(mouseTimer); mouseTimer = null;
-  });
-})();
 </script>
   
 </body>
