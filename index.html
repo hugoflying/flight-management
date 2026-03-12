@@ -37,20 +37,8 @@
   :root{ --gap: 12px; --padCard: 14px; --inputH: 44px; }
 }
 
-html, body{
-  height: 100%;
-  margin: 0;
-  background: var(--bg) !important;
-  overflow: hidden;
-  overscroll-behavior: none;
-}
-
-body{
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100dvh;
-  min-height: -webkit-fill-available;
-}
+body{ background: var(--bg); color: var(--text); margin: 0; }
+html, body{ min-height: 100%; background: var(--bg) !important; }
 
 html.dark, body.dark{
   --bg: #0f1115;
@@ -66,30 +54,14 @@ html.dark, body.dark{
   --field-placeholder: rgba(156,163,175,.95);
 }
 
-/* conteneur principal */
-.app-shell{
-  position: relative;
-  height: 100dvh;
-  height: -webkit-fill-available;
-  overflow: hidden;
-}
-
 /* ===== FIXED HEADER ===== */
 .fixed-header{
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  inset: 0 0 auto 0;
   z-index: 3000;
   background: var(--bg) !important;
   backdrop-filter: none !important;
   border-bottom: 1px solid rgba(0,0,0,.08);
-
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  will-change: transform;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
 }
 html.dark .fixed-header{ border-bottom-color: rgba(255,255,255,.08); }
 
@@ -105,12 +77,8 @@ html.dark .fixed-header{ border-bottom-color: rgba(255,255,255,.08); }
 .app-wrap{
   max-width: 1120px;
   margin: 0 auto;
-  height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-  padding: calc(var(--fixed-header-h) + 14px) 14px calc(var(--fixed-footer-h) + 18px) 14px;
+  padding: calc(var(--fixed-header-h) + 14px) 14px 14px;
+  padding-bottom: calc(var(--fixed-footer-h) + 18px);
 }
 
 /* rien afficher tant qu'il n'y a pas d'onglet */
@@ -302,11 +270,11 @@ textarea.si-uppercase{ text-transform: uppercase; }
 /* ===== BANDEAUX ESSENTIELS ===== */
 .kv-strip{
   display:grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr; /* mobile */
   gap: var(--gap);
 }
 @media (min-width: 600px){
-  .kv-strip{ grid-template-columns: 1fr 1fr; }
+  .kv-strip{ grid-template-columns: 1fr 1fr; } /* tablette + */
 }
 .kv-card{
   border-radius: 14px;
@@ -395,7 +363,7 @@ body.dark .kv-card{ box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
 }
 body.dark #akPopover{ border-color: rgba(255,255,255,.10); }
 
-/* Quand AK est ouvert : on masque les FAB */
+/* ✅ Quand AK est ouvert : on masque les FAB (LOAD + SETTINGS) */
 body.ak-open #loadFab,
 body.ak-open #settingsFab{
   display: none !important;
@@ -430,15 +398,16 @@ body.dark .timeline-track{ background:#2e2e2e; }
 
 .timeline-tick{
   position: absolute;
-  width: 1px;
+  width: 1px; /* ✅ pas plus gras */
   background: rgba(0,0,0,0.08);
 }
 body.dark .timeline-tick{
   background: #3e444b;
 }
 
+/* ✅ pas plus épais : juste un style léger optionnel */
 .timeline-tick-major{
-  width: 1px;
+  width: 1px; /* ✅ identique */
   background: rgba(0,0,0,0.12);
 }
 body.dark .timeline-tick-major{
@@ -518,7 +487,7 @@ body.dark .timeline-scroll{ box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
   position: fixed;
   right: 14px;
   bottom: calc(var(--fixed-footer-h) + 14px);
-  z-index: 9100;
+  z-index: 9100;                 /* ✅ au-dessus du footer + header */
   width: 52px;
   height: 52px;
   border-radius: 999px;
@@ -532,8 +501,8 @@ body.dark .timeline-scroll{ box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
 #settingsMenu{
   position: fixed;
   right: 14px;
-  bottom: calc(var(--fixed-footer-h) + 74px);
-  z-index: 9200;
+  bottom: calc(var(--fixed-footer-h) + 74px); /* ✅ suit la molette */
+  z-index: 9200;                 /* ✅ au-dessus de tout */
   width: min(320px, calc(100vw - 28px));
   border-radius: 16px;
   background: var(--card);
@@ -718,28 +687,31 @@ body.modal-open{
   touch-action: none;
 }
 
-/* ===== footer fixed bottom ===== */
+/* ===== footer fixed bottom (iPad/iOS: fond jusqu'en bas sans grossir) ===== */
 .fixed-footer{
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
+  inset: auto 0 0 0;
   z-index: 3500;
   background: var(--bg) !important;
   border-top: 1px solid rgba(0,0,0,.08);
-  overflow: visible;
+  overflow: visible; /* important pour le ::after */
 
+  /* renfort iOS Safari pour éviter les décrochages visuels */
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
   will-change: transform;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
+
 html.dark .fixed-footer{
   border-top-color: rgba(255,255,255,.08);
 }
 
-/* remplit la safe-area sans épaissir le footer */
+/* ✅ remplit la safe-area (home indicator) SANS augmenter la hauteur du footer */
 .fixed-footer::after{
   content: "";
   position: absolute;
@@ -749,6 +721,7 @@ html.dark .fixed-footer{
   height: env(safe-area-inset-bottom);
   background: var(--bg);
 
+  /* renfort rendu iOS */
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
 }
@@ -756,8 +729,9 @@ html.dark .fixed-footer{
 .fixed-footer-inner{
   max-width: 1120px;
   margin: 0 auto;
-  padding: 10px 14px;
+  padding: 10px 14px; /* inchangé => pas de footer plus “épais” */
 
+  /* renfort iOS */
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
 }
@@ -777,12 +751,12 @@ html.dark .fixed-footer{
   }
 }
 
-/* ===== LOAD FAB ===== */
+/* ===== LOAD FAB (au-dessus du footer fixe, au-dessus de SETTINGS) ===== */
 #loadFab{
   position: fixed;
   right: 14px;
-  bottom: calc(var(--fixed-footer-h) + 86px);
-  z-index: 9150;
+  bottom: calc(var(--fixed-footer-h) + 86px); /* ✅ au-dessus de la molette */
+  z-index: 9150;                              /* ✅ visible même si menu/settings */
   width: 52px;
   height: 52px;
   border-radius: 999px;
@@ -821,6 +795,7 @@ html.dark .fixed-footer{
 }
 #ldmTabFuel:hover{ filter: brightness(.97); }
 
+/* si actif, on garde jaune */
 .lm-seg .button#ldmTabFuel.is-active{
   background:#facc15 !important;
   color:#fff !important;
@@ -829,13 +804,13 @@ html.dark .fixed-footer{
 /* RETARDS : 2 lignes x 3 colonnes dès 600px */
 .dl-grid{
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr;  /* mobile <600 */
   gap: var(--gap);
 }
 
 @media (min-width: 600px){
   .dl-grid{
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr)); /* 600+ => 3 colonnes */
   }
 }
 
@@ -853,11 +828,13 @@ html.dark .fixed-footer{
   .timer-chip .k{ font-size: .75rem; }
   .timer-chip .v{ padding: 5px 8px; min-width: 64px; }
 
+  /* RESTAURE LA GRILLE TABLETTE */
   .span-2{ grid-column: span 2; }
   .span-3{ grid-column: span 3; }
   .span-4{ grid-column: span 4; }
   .span-6{ grid-column: span 6; }
 
+  /* DL : force 3 colonnes */
   .dl-wrap .dl-grid{
     display: grid !important;
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
@@ -867,7 +844,7 @@ html.dark .fixed-footer{
 
 /* SELECT même hauteur que input */
 .select{
-  height: auto !important;
+  height: auto !important;          /* ← très important */
 }
 
 .select select{
@@ -878,12 +855,14 @@ html.dark .fixed-footer{
   font-size: .95rem;
 }
 
+/* centre la flèche Bulma (sans casser la rotation) */
 .select:not(.is-multiple):not(.is-loading)::after{
   top: 50% !important;
   margin-top: 0 !important;
   transform: translateY(-50%) rotate(-45deg) !important;
 }
 
+/* tablette */
 @media (min-width:600px) and (max-width:900px){
   .select select{
     height: 32px !important;
@@ -891,7 +870,7 @@ html.dark .fixed-footer{
   }
 }
 
-/* ===== INPUTS NON GRAS ===== */
+/* ===== INPUTS NON GRAS (override global) ===== */
 .input,
 .textarea,
 .select select,
@@ -904,6 +883,7 @@ html.dark .fixed-footer{
 /* TABLET 600–900 : compaction champs */
 @media (min-width:600px) and (max-width:900px){
 
+  /* INFO VOL */
   #infoVolDetails .field{
     margin-bottom:0 !important;
   }
@@ -911,6 +891,7 @@ html.dark .fixed-footer{
     row-gap:6px !important;
   }
 
+  /* LOAD FINAL */
   #ldmFinal .field{
     margin-bottom:0 !important;
   }
@@ -932,6 +913,7 @@ html.dark .fixed-footer{
   color: var(--text) !important;
   opacity:.9;
 }
+
 </style>
 </head>
 
@@ -948,6 +930,7 @@ html.dark .fixed-footer{
       <span id="ldmHint" class="tag is-light">ARRIVÉE</span>
     </div>
 
+    <!-- ✅ 4 onglets : ARR / PREVI / FINAL / FUEL -->
     <div class="lm-seg">
       <button id="ldmTabArr" class="button is-small is-active" type="button"
               onclick="ldmSwitch('arr')">ARR</button>
@@ -1322,40 +1305,37 @@ html.dark .fixed-footer{
   </div><!-- /.ldm-body -->
 </div><!-- /#ldmModal -->
   
-<!-- ===== APP SHELL ===== -->
-<div class="app-shell">
+<!-- ===== FIXED HEADER ===== -->
+<div class="fixed-header" id="fixedHeader">
+  <div class="fixed-header-inner">
 
-  <!-- ===== FIXED HEADER ===== -->
-  <header class="fixed-header" id="fixedHeader">
-    <div class="fixed-header-inner">
+    <div class="topbar-inner"></div>
 
-      <div class="topbar-inner"></div>
-
-      <div class="tabs-row">
-        <div id="tab-bar" class="tabs-chip"></div>
-      </div>
-
-      <div class="timer-row">
-        <div class="timer-chip">
-          <div class="k">HLE</div>
-          <div id="timer-h40" class="v">--:--</div>
-        </div>
-
-        <div class="timer-chip">
-          <div class="k">H-15</div>
-          <div id="timer-h15" class="v">--:--</div>
-        </div>
-
-        <div id="lidBlock" class="timer-chip" style="display:none;">
-          <div class="k">LID</div>
-          <div id="timer-h8" class="v">--:--</div>
-        </div>
-      </div>
-
+    <div class="tabs-row">
+      <div id="tab-bar" class="tabs-chip"></div>
     </div>
-  </header>
 
-  <main class="app-wrap">
+    <div class="timer-row">
+      <div class="timer-chip">
+        <div class="k">HLE</div>
+        <div id="timer-h40" class="v">--:--</div>
+      </div>
+
+      <div class="timer-chip">
+        <div class="k">H-15</div>
+        <div id="timer-h15" class="v">--:--</div>
+      </div>
+
+      <div id="lidBlock" class="timer-chip" style="display:none;">
+        <div class="k">LID</div>
+        <div id="timer-h8" class="v">--:--</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="app-wrap">
 
 <!-- INFO VOL -->
 <div class="card mb-5">
@@ -5439,7 +5419,7 @@ function toggleDelayCodes() {
 </div>
 
 <!-- ===== FIXED FOOTER (CD / TOBT / CTOT) ===== -->
-<footer class="fixed-footer" id="fixedFooter">
+<div class="fixed-footer" id="fixedFooter">
   <div class="fixed-footer-inner">
     <div class="footer-row">
 
@@ -5460,7 +5440,7 @@ function toggleDelayCodes() {
 
     </div>
   </div>
-</footer>
+</div>
 
 <!-- ===== FAB LOAD + FUEL ===== -->
 <button id="loadFab" class="button is-info" type="button"
@@ -5474,8 +5454,6 @@ let isApplyingRemoteUpdate = false;
 let currentSocketKey = null;
 const debounceTimers = {};
 let realtimeSyncInitialized = false;
-let pendingPatch = {};
-let hasReceivedInitialState = false;
 
 function buildFlightKey() {
   try {
@@ -5510,8 +5488,8 @@ function applyRemotePayload(payload) {
   if (!payload || typeof payload !== "object") return;
 
   const akProtectedFields = new Set([
-    "Date", "Parking", "Immat", "TypeAvion",
-    "From", "To", "SIBT", "SOBT"
+    "Date", "Parking", "Immat", "TypeAvion", "Cie", "NVol",
+    "From", "To", "SIBT", "AIBT", "SOBT", "AOBT"
   ]);
 
   isApplyingRemoteUpdate = true;
@@ -5622,20 +5600,6 @@ function collectFlightState() {
   return payload;
 }
 
-function flushPendingPatch() {
-  if (!socket || socket.readyState !== WebSocket.OPEN) return;
-  if (!currentSocketKey) return;
-
-  const entries = Object.entries(pendingPatch);
-  if (!entries.length) return;
-
-  const payload = { ...pendingPatch };
-  pendingPatch = {};
-
-  console.log("FLUSH PATCH", payload);
-  socket.send(JSON.stringify(payload));
-}
-
 function sendFullFlightState() {
   if (isApplyingRemoteUpdate) return;
 
@@ -5654,8 +5618,6 @@ function connectFlightSocket() {
 
   if (!key) {
     currentSocketKey = null;
-    hasReceivedInitialState = false;
-    pendingPatch = {};
     if (socket) {
       try { socket.close(); } catch (e) {}
       socket = null;
@@ -5663,7 +5625,7 @@ function connectFlightSocket() {
     return;
   }
 
-  if (socket && currentSocketKey === key && socket.readyState <= WebSocket.OPEN) return;
+  if (socket && currentSocketKey === key && socket.readyState <= 1) return;
 
   if (socket) {
     try { socket.close(); } catch (e) {}
@@ -5671,14 +5633,11 @@ function connectFlightSocket() {
   }
 
   currentSocketKey = key;
-  hasReceivedInitialState = false;
-  pendingPatch = {};
-
   socket = new WebSocket(`wss://turnaround-sync.deruellehugo-49c.workers.dev/${encodeURIComponent(key)}`);
 
   socket.onopen = () => {
     console.log("WebSocket connecté :", key);
-    flushPendingPatch();
+    sendFullFlightState();
   };
 
   socket.onmessage = (event) => {
@@ -5686,18 +5645,16 @@ function connectFlightSocket() {
       const msg = JSON.parse(event.data);
 
       if (msg.__type === "init") {
-        hasReceivedInitialState = true;
-        applyRemotePayload(msg.payload || {});
-        flushPendingPatch();
+        applyRemotePayload(msg.payload);
         return;
       }
 
       if (msg.__type === "patch") {
-        applyRemotePayload(msg.payload || {});
+        applyRemotePayload(msg.payload);
         return;
       }
 
-      applyRemotePayload(msg || {});
+      applyRemotePayload(msg);
     } catch (err) {
       console.error("Erreur message WebSocket :", err);
     }
@@ -5711,25 +5668,8 @@ function connectFlightSocket() {
     console.log("WebSocket fermé");
     if (currentSocketKey === key) {
       socket = null;
-      hasReceivedInitialState = false;
     }
   };
-}
-
-function ensureSocketConnection(retries = 15, delay = 300) {
-  let count = 0;
-
-  const tryConnect = () => {
-    count++;
-    connectFlightSocket();
-
-    if (socket && currentSocketKey === buildFlightKey()) return;
-    if (count >= retries) return;
-
-    setTimeout(tryConnect, delay);
-  };
-
-  tryConnect();
 }
 
 function sendFieldUpdate(id, value) {
@@ -5738,23 +5678,23 @@ function sendFieldUpdate(id, value) {
   const key = buildFlightKey();
   if (!key) return;
 
-  pendingPatch[id] = value;
-
-  if (!socket || currentSocketKey !== key || socket.readyState === WebSocket.CLOSED) {
+  if (!socket || socket.readyState !== WebSocket.OPEN || currentSocketKey !== key) {
     connectFlightSocket();
     return;
   }
 
-  if (socket.readyState !== WebSocket.OPEN) {
-    return;
-  }
+  const payload = { [id]: value };
+  console.log("SEND PATCH", payload);
 
-  flushPendingPatch();
+  socket.send(JSON.stringify(payload));
 }
 
 function setupRealtimeSync() {
   if (realtimeSyncInitialized) {
-    ensureSocketConnection();
+    connectFlightSocket();
+    setTimeout(() => {
+      sendFullFlightState();
+    }, 100);
     return;
   }
 
@@ -5779,7 +5719,10 @@ function setupRealtimeSync() {
     if (!el) return;
 
     const reconnect = () => {
-      ensureSocketConnection();
+      connectFlightSocket();
+      setTimeout(() => {
+        sendFullFlightState();
+      }, 100);
     };
 
     el.addEventListener("input", reconnect);
@@ -5888,11 +5831,13 @@ function setupRealtimeSync() {
   document.addEventListener("input", pushIfSyncField);
   document.addEventListener("change", pushIfSyncField);
 
-  ensureSocketConnection();
+  connectFlightSocket();
+
+  setTimeout(() => {
+    sendFullFlightState();
+  }, 100);
 }
-  
 </script>
   
 </body>
 </html>
-
