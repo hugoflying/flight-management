@@ -5025,7 +5025,7 @@ function renderAKList(pairs){
     const col   = flow === 'ARR' ? '#dbeafe' : '#dcfce7';
     const textCol = flow === 'ARR' ? '#1d4ed8' : '#15803d';
     const json  = safe(f);
-    return \`
+    return `
       <div class="ak-half" style="\${done ? 'opacity:.55;' : ''}">
         <div style="display:flex;align-items:center;gap:5px;margin-bottom:2px;">
           <span style="font-size:.65rem;font-weight:900;background:\${col};color:\${textCol};padding:1px 6px;border-radius:6px;">\${flow}</span>
@@ -5040,18 +5040,18 @@ function renderAKList(pairs){
         </div>
         <button class="button is-small is-link" type="button" style="margin-top:6px;"
           onclick='applyAKFlight(\${json}, "\${flow}")'>Utiliser</button>
-      </div>\`;
+      </div>`;
   }
 
   if(!pairs.length){ list.innerHTML = '<p class="has-text-grey">Aucune rotation.</p>'; return; }
 
-  list.innerHTML = pairs.map(({arr, dep}) => \`
+  list.innerHTML = pairs.map(({arr, dep}) => `
     <div class="ak-pair-row">
       \${half(arr, 'ARR')}
       <div class="ak-pair-divider"></div>
       \${half(dep, 'DEP')}
     </div>
-  \`).join('');
+  `).join('');
 }
   
 // ===== Import : règles BVA =====
