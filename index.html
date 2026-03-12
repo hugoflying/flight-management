@@ -5696,6 +5696,22 @@ function connectFlightSocket() {
   };
 }
 
+function ensureSocketConnection(retries = 15, delay = 300) {
+  let count = 0;
+
+  const tryConnect = () => {
+    count++;
+    connectFlightSocket();
+
+    if (socket && currentSocketKey === buildFlightKey()) return;
+    if (count >= retries) return;
+
+    setTimeout(tryConnect, delay);
+  };
+
+  tryConnect();
+}
+
 function sendFieldUpdate(id, value) {
   if (isApplyingRemoteUpdate) return;
 
@@ -5718,7 +5734,7 @@ function sendFieldUpdate(id, value) {
 
 function setupRealtimeSync() {
   if (realtimeSyncInitialized) {
-    connectFlightSocket();
+    ensureSocketConnection();
     return;
   }
 
@@ -5743,7 +5759,7 @@ function setupRealtimeSync() {
     if (!el) return;
 
     const reconnect = () => {
-      connectFlightSocket();
+      ensureSocketConnection();
     };
 
     el.addEventListener("input", reconnect);
@@ -5852,8 +5868,9 @@ function setupRealtimeSync() {
   document.addEventListener("input", pushIfSyncField);
   document.addEventListener("change", pushIfSyncField);
 
-  connectFlightSocket();
+  ensureSocketConnection();
 }
+  
 </script>
   
 </body>
