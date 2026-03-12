@@ -988,6 +988,38 @@ body.iv-editing .iv-edit-btn{ opacity: 1; }
   from{ opacity:0; transform: translateY(-4px); }
   to{   opacity:1; transform: translateY(0); }
 }
+
+/* ===== Footer refresh button ===== */
+.footer-row{
+  display: grid !important;
+  grid-template-columns: 52px 1fr 52px;
+  align-items: center;
+}
+.footer-timers{
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.footer-refresh-btn{
+  width: 52px;
+  height: 52px;
+  border-radius: 999px !important;
+  font-size: 1.4rem !important;
+  font-weight: 900;
+  flex: 0 0 auto;
+  background: var(--card) !important;
+  border: 2px solid var(--field-border) !important;
+  color: var(--text) !important;
+  box-shadow: var(--shadow2);
+  transition: background .15s, transform .1s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.footer-refresh-btn:active{ transform: rotate(45deg) scale(.93); }
+.footer-refresh-btn.is-loading{ pointer-events:none; opacity:.6; }
 </style>
 </head>
 
@@ -1505,7 +1537,7 @@ body.iv-editing .iv-edit-btn{ opacity: 1; }
       <div class="field span-3">
         <label class="label">From</label>
         <input class="input uppercase" type="text" id="From" maxlength="3"
-               oninput="updateTOBT(); updateCountdownOnce(); ensureCountdownRunning(); updateAllCalculations();">
+               oninput="updateEOBT(); updateCountdownOnce(); ensureCountdownRunning(); updateAllCalculations();">
       </div>
 
       <div class="field span-3">
@@ -1952,9 +1984,9 @@ const TL_ZOOM_MAX = 8;
 const TL_ZOOM_STEP = 0.25;
 window._timelineCurrentRange = null;
 
-/* TOBT brut + TOBT affiché */
-window._tobtRawMins = null;
-window._tobtAdjMins = null;
+/* EOBT brut + EOBT affiché */
+window._eobtRawMins = null;
+window._eobtAdjMins = null;
 
 /* DL */
 let lastDLChanged = 1;
@@ -2455,11 +2487,11 @@ function updateCountdownOnce(){
     return;
   }
 
-  // cible = SOBT si retard AIBT<=SIBT, sinon TOBT adj
+  // cible = SOBT si retard AIBT<=SIBT, sinon EOBT adj
   let targetMin = null;
   if (AIBT <= SIBT) targetMin = SOBT;
   else {
-    const tobt = window._tobtRawMins;
+    const tobt = window._eobtRawMins;
     if(tobt == null){
       el.textContent = '--:--';
       el.classList.remove('cd-over');
@@ -3128,34 +3160,7 @@ function renderTabs(){
     btn.onclick = ()=> switchTab(id);
     btn.ondblclick = ()=> deleteTab(id);
 
-    // bouton refresh ↻ (sans switch)
-    const r = document.createElement('button');
-    r.className = 'button is-light tab-refresh';
-    r.type = 'button';
-    r.title = 'Rafraîchir depuis AK';
-    r.innerHTML = '↻';
-    r.onclick = async (e)=>{
-      e.preventDefault();
-      e.stopPropagation();
-
-      r.classList.add('is-loading');
-      try{
-        await refreshAKTab(id);
-      }finally{
-        r.classList.remove('is-loading');
-      }
-    };
-
-    // optionnel : griser si pas de akMeta
-    if(!data.akMeta){
-      r.disabled = true;
-      r.title = "Pas de vol AK associé";
-      r.style.opacity = '0.45';
-      r.style.cursor = 'not-allowed';
-    }
-
     wrap.appendChild(btn);
-    wrap.appendChild(r);
     tabBar.appendChild(wrap);
   });
 
@@ -3306,7 +3311,7 @@ function saveCurrentTabData(){
   data.timer_h40=document.getElementById('timer-h40')?.textContent || '--:--';
   data.timer_h15=document.getElementById('timer-h15')?.textContent || '--:--';
   data.timer_h8=document.getElementById('timer-h8')?.textContent || '--:--';
-  data.timer_tobt=document.getElementById('timer-tobt')?.textContent || '--:--';
+  data.timer_tobt=document.getElementById('timer-eobt')?.textContent || '--:--';
   data.timer_cd=document.getElementById('timer-cd')?.textContent || '--:--';
 
   data.timingPanel = localStorage.getItem('timingPanel') || 'dep';
@@ -3346,7 +3351,7 @@ function loadTabData(id){
   setTxt('timer-h40',  data.timer_h40);
   setTxt('timer-h15',  data.timer_h15);
   setTxt('timer-h8',   data.timer_h8);
-  setTxt('timer-tobt', data.timer_tobt);
+  setTxt('timer-eobt', data.timer_tobt);
   setTxt('timer-cd',   data.timer_cd);
 
   // ✅ re-sync modes globaux (UI + variables)
@@ -3484,7 +3489,7 @@ function updateLIDVisibility(){
 function updateAllCalculations() {
   updateTimers();
   updateSOBTDefault();
-  updateTOBT();
+  updateEOBT();
   updateDLCode();
   redistributeDL();
   updateLID();
@@ -3522,9 +3527,9 @@ function updateTimers() {
   document.getElementById('timer-h15').textContent = `${String(h15.getHours()).padStart(2, '0')}:${String(h15.getMinutes()).padStart(2, '0')}`;
 }
 
-/* LID = TOBT - 8 */
+/* LID = EOBT - 8 */
 function updateLID() {
-  const tobtRawMins = window._tobtRawMins;
+  const tobtRawMins = window._eobtRawMins;
   const el = document.getElementById('timer-h8');
   if (!el) return;
   if (tobtRawMins == null) { el.textContent = "--:--"; return; }
@@ -3561,8 +3566,8 @@ function updateSOBTDefault() {
     `${String(sobtCalc.getHours()).padStart(2,'0')}:${String(sobtCalc.getMinutes()).padStart(2,'0')}`;
 }
 
-/* TOBT + règle CTOT */
-function updateTOBT() {
+/* EOBT + règle CTOT */
+function updateEOBT() {
   const cie = (document.getElementById('Cie')?.value || '').toUpperCase();
   const from = (document.getElementById('From')?.value || '').toUpperCase().trim();
   const isBVA = (from === 'BVA');
@@ -3577,8 +3582,8 @@ function updateTOBT() {
   // ✅ BVA: on n'exige pas SIBT/AIBT (avion déjà là) → on utilise SOBT comme "source"
   if (!cie || !sobttxt || !outEl || (!sibttxt && !isBVA)) {
     if(outEl) outEl.textContent = '--:--';
-    window._tobtRawMins = null;
-    window._tobtAdjMins = null;
+    window._eobtRawMins = null;
+    window._eobtAdjMins = null;
     return;
   }
 
@@ -3586,8 +3591,8 @@ function updateTOBT() {
   const SOBT = parseHHMM(sobttxt);
   if (SIBT == null || SOBT == null) {
     outEl.textContent = '--:--';
-    window._tobtRawMins = null;
-    window._tobtAdjMins = null;
+    window._eobtRawMins = null;
+    window._eobtAdjMins = null;
     return;
   }
 
@@ -3595,8 +3600,8 @@ function updateTOBT() {
   const AIBT = isBVA ? SOBT : (aibttxt ? parseHHMM(aibttxt) : SIBT);
   if (AIBT == null) {
     outEl.textContent = '--:--';
-    window._tobtRawMins = null;
-    window._tobtAdjMins = null;
+    window._eobtRawMins = null;
+    window._eobtAdjMins = null;
     return;
   }
 
@@ -3620,58 +3625,58 @@ function updateTOBT() {
 
   const isDelayed = (AIBT_ext > SIBT_ext);
 
-  let TOBT_raw_ext = null;
+  let EOBT_raw_ext = null;
 
-  // ===== RÈGLE COMMUNE : si AIBT <= SIBT => TOBT = SOBT
+  // ===== RÈGLE COMMUNE : si AIBT <= SIBT => EOBT = SOBT
   if (!isDelayed) {
-    TOBT_raw_ext = SOBT_ext;
+    EOBT_raw_ext = SOBT_ext;
   } else {
-    // ===== FR / RK : TOBT = max(SOBT, AIBT + turn)
+    // ===== FR / RK : EOBT = max(SOBT, AIBT + turn)
     if (cie === 'FR' || cie === 'RK') {
       const turn = crewChange ? 35 : 25;
       const candidate = AIBT_ext + turn;
-      TOBT_raw_ext = (candidate <= SOBT_ext) ? SOBT_ext : candidate;
+      EOBT_raw_ext = (candidate <= SOBT_ext) ? SOBT_ext : candidate;
     }
 
-    // ===== W4 / W6 : TOBT = max(SOBT, AIBT + 30/35 selon type) ✅ FIX
+    // ===== W4 / W6 : EOBT = max(SOBT, AIBT + 30/35 selon type) ✅ FIX
     else if (cie === 'W4' || cie === 'W6') {
       const type = (document.getElementById('TypeAvion')?.value || '').toUpperCase();
       const turn = (type === 'A321' || type === 'A21N' || type === 'A21NY') ? 35 : 30;
 
       const candidate = AIBT_ext + turn;
-      TOBT_raw_ext = (candidate <= SOBT_ext) ? SOBT_ext : candidate;
+      EOBT_raw_ext = (candidate <= SOBT_ext) ? SOBT_ext : candidate;
     }
 
-    // ===== H4 / U5 / H6 / AUTRE : TOBT = AIBT + (SOBT - SIBT)
+    // ===== H4 / U5 / H6 / AUTRE : EOBT = AIBT + (SOBT - SIBT)
     else {
       const rot = SOBT_ext - SIBT_ext;
-      TOBT_raw_ext = AIBT_ext + rot;
+      EOBT_raw_ext = AIBT_ext + rot;
     }
   }
 
   // Raw minutes 0..1439
-  let TOBT_raw = ((TOBT_raw_ext % 1440) + 1440) % 1440;
-  window._tobtRawMins = TOBT_raw;
+  let EOBT_raw = ((EOBT_raw_ext % 1440) + 1440) % 1440;
+  window._eobtRawMins = EOBT_raw;
 
-  // ===== RÈGLE CTOT : si CTOT > TOBT + 15 => TOBT = CTOT - 15
-  let TOBT_adj_ext = TOBT_raw_ext;
+  // ===== RÈGLE CTOT : si CTOT > EOBT + 15 => EOBT = CTOT - 15
+  let EOBT_adj_ext = EOBT_raw_ext;
 
   if (ctottxt) {
     const CTOT = parseHHMM(ctottxt);
     if (CTOT != null) {
-      const TOBT_ref = ((TOBT_raw_ext % 1440) + 1440) % 1440;
-      const CTOT_ext = TOBT_raw_ext + diffSigned(CTOT, TOBT_ref);
+      const EOBT_ref = ((EOBT_raw_ext % 1440) + 1440) % 1440;
+      const CTOT_ext = EOBT_raw_ext + diffSigned(CTOT, EOBT_ref);
 
-      if (CTOT_ext > (TOBT_raw_ext + 15)) {
-        TOBT_adj_ext = CTOT_ext - 15;
+      if (CTOT_ext > (EOBT_raw_ext + 15)) {
+        EOBT_adj_ext = CTOT_ext - 15;
       }
     }
   }
 
-  let TOBT_adj = ((TOBT_adj_ext % 1440) + 1440) % 1440;
-  window._tobtAdjMins = TOBT_adj;
+  let EOBT_adj = ((EOBT_adj_ext % 1440) + 1440) % 1440;
+  window._eobtAdjMins = EOBT_adj;
 
-  outEl.textContent = fmtHHMM(TOBT_adj);
+  outEl.textContent = fmtHHMM(EOBT_adj);
 }
 
 /* ===== DL (LOGIQUE PROPRE) ===== */
@@ -3697,10 +3702,10 @@ function updateDLCode() {
   const sobt = parseHHMM(document.getElementById('SOBT')?.value || '');
   const aobt = parseHHMM(document.getElementById('AOBT')?.value || '');
 
-  // ✅ IMPORTANT: 93/93A doit utiliser la TOBT BRUTE (hors CTOT)
-  const tobt = (window._tobtRawMins != null)
-    ? window._tobtRawMins
-    : parseHHMM((document.getElementById('timer-tobt')?.textContent || '').trim());
+  // ✅ IMPORTANT: 93/93A doit utiliser la EOBT BRUTE (hors CTOT)
+  const tobt = (window._eobtRawMins != null)
+    ? window._eobtRawMins
+    : parseHHMM((document.getElementById('timer-eobt')?.textContent || '').trim());
 
   // si incomplet : on ne force rien
   if(sobt == null || aobt == null || tobt == null) return;
@@ -3709,7 +3714,7 @@ function updateDLCode() {
   let total = aobt - sobt;
   if(total < 0) total += 1440;
 
-  // 93/93A = TOBT - SOBT (borné)
+  // 93/93A = EOBT - SOBT (borné)
   let fixed = tobt - sobt;
   if(fixed < 0) fixed += 1440;
   fixed = Math.max(0, Math.min(fixed, total));
@@ -4002,11 +4007,11 @@ function computeTimelineWindow(allTimes){
 
   const SOBT = parseHHMM(document.getElementById('SOBT')?.value || '');
   const AOBT = parseHHMM(document.getElementById('AOBT')?.value || '');
-  const TOBT = parseHHMM((document.getElementById('timer-tobt')?.textContent || '').replace('--:--',''));
+  const EOBT = parseHHMM((document.getElementById('timer-eobt')?.textContent || '').replace('--:--',''));
   const CTOT = parseHHMM(document.getElementById('CTOT')?.value || '');
 
   const starts = [H40, SIBT, AIBT].filter(v => v != null);
-  const ends   = [SOBT, AOBT, TOBT, CTOT].filter(v => v != null);
+  const ends   = [SOBT, AOBT, EOBT, CTOT].filter(v => v != null);
 
   if(starts.length && ends.length){
     let startRef = Math.min(...starts);
@@ -4059,8 +4064,8 @@ function collectTimelineData(){
   const SOBT = parseHHMM(document.getElementById('SOBT')?.value || '');
   const AOBT = parseHHMM(document.getElementById('AOBT')?.value || '');
 
-  // TOBT affichée = peut être ajustée CTOT (timer). On garde comme avant pour le point fixe.
-  const TOBT = parseHHMM((document.getElementById('timer-tobt')?.textContent || '').replace('--:--',''));
+  // EOBT affichée = peut être ajustée CTOT (timer). On garde comme avant pour le point fixe.
+  const EOBT = parseHHMM((document.getElementById('timer-eobt')?.textContent || '').replace('--:--',''));
 
   const CTOT = parseHHMM(document.getElementById('CTOT')?.value || '');
   const H15  = parseHHMM((document.getElementById('timer-h15')?.textContent || '').replace('--:--',''));
@@ -4068,7 +4073,7 @@ function collectTimelineData(){
 
   addPoint('SIBT', SIBT, 'tl--std'); addPoint('AIBT', AIBT, 'tl--std');
   addPoint('SOBT', SOBT, 'tl--std'); addPoint('AOBT', AOBT, 'tl--std');
-  addPoint('TOBT', TOBT, 'tl--eobt'); addPoint('CTOT', CTOT, 'tl--ctot');
+  addPoint('EOBT', EOBT, 'tl--eobt'); addPoint('CTOT', CTOT, 'tl--ctot');
   addPoint('HLE',  H40,  'tl--turn');
   addPoint('H-15', H15,  'tl--turn');
 
@@ -5399,13 +5404,13 @@ function clearAutoSave() {
 }
 
 function shouldOpenFinalLoad(){
-  // TOBT brut (hors CTOT)
-  const tobtRaw = window._tobtRawMins;
+  // EOBT brut (hors CTOT)
+  const tobtRaw = window._eobtRawMins;
   if(tobtRaw == null) return false;
 
   const now = getNowMinutes().mins;
 
-  // seuil = TOBT brut - 15
+  // seuil = EOBT brut - 15
   let diff = now - (tobtRaw - 15);
 
   // gestion minuit (diff dans [-720..+720])
@@ -5481,25 +5486,31 @@ function toggleDelayCodes() {
   </div>
 </div>
 
-<!-- ===== FIXED FOOTER (CD / TOBT / CTOT) ===== -->
+<!-- ===== FIXED FOOTER (CD / EOBT / CTOT) ===== -->
 <div class="fixed-footer" id="fixedFooter">
   <div class="fixed-footer-inner">
     <div class="footer-row">
 
-      <div class="timer-chip">
-        <div class="k">EOBT</div>
-        <div id="timer-eobt" class="v">--:--</div>
+      <div></div>
+      <div class="footer-timers">
+        <div class="timer-chip">
+          <div class="k">EOBT</div>
+          <div id="timer-eobt" class="v">--:--</div>
+        </div>
+
+        <div class="timer-chip">
+          <div class="k">CTOT</div>
+          <input id="CTOT" class="ctot-pill" type="time" onchange="updateAllCalculations()">
+        </div>
+
+        <div class="timer-chip">
+          <div class="k">CD</div>
+          <div id="timer-cd" class="v">--:--</div>
+        </div>
       </div>
 
-      <div class="timer-chip">
-        <div class="k">CTOT</div>
-        <input id="CTOT" class="ctot-pill" type="time" onchange="updateAllCalculations()">
-      </div>
-
-      <div class="timer-chip">
-        <div class="k">CD</div>
-        <div id="timer-cd" class="v">--:--</div>
-      </div>
+      <button id="footerRefreshBtn" class="button footer-refresh-btn" type="button"
+              title="Rafraîchir depuis AK" onclick="footerRefreshAK()">↻</button>
 
     </div>
   </div>
@@ -5585,7 +5596,7 @@ function collectFlightState() {
     "To",
     "SIBT",
     "SOBT",
-    "TOBT",
+    "EOBT",
     "AIBT",
     "AOBT",
 
@@ -5810,7 +5821,7 @@ function setupRealtimeSync() {
     "To",
     "SIBT",
     "SOBT",
-    "TOBT",
+    "EOBT",
     "AIBT",
     "AOBT",
     "Cie",
@@ -5834,7 +5845,7 @@ function setupRealtimeSync() {
     "NVol",
     "To",
     "SOBT",
-    "TOBT",
+    "EOBT",
     "AOBT",
     "AIBT",
 
@@ -5941,6 +5952,24 @@ function toggleInfoVolEdit(){
   const open = edit.style.display === 'none' || edit.style.display === '';
   edit.style.display = open ? 'grid' : 'none';
   icon.textContent = open ? '✅' : '✏️';
+}
+
+async function footerRefreshAK(){
+  const btn = document.getElementById('footerRefreshBtn');
+  if(!currentTabId) return;
+  const data = JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}');
+  if(!data.akMeta){
+    btn.style.animation = 'none';
+    btn.textContent = '✕';
+    setTimeout(()=>{ btn.textContent = '↻'; }, 800);
+    return;
+  }
+  btn.classList.add('is-loading');
+  try{
+    await refreshAKTab(currentTabId);
+  }finally{
+    btn.classList.remove('is-loading');
+  }
 }
 </script>
   
