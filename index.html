@@ -1868,13 +1868,13 @@ html.dark .tw-color-is-bordeaux { border-color: #ef4444 !important; color: #ef44
 
       <div class="field span-3">
         <label class="label">Cie</label>
-        <div class="select is-fullwidth">
-          <select id="Cie" onchange="updateFinalWeightIfNeeded()">
-            <option value="">--</option>
+        <div class="control">
+          <input class="input uppercase" type="text" id="Cie" list="cieList" autocomplete="off" maxlength="4" placeholder="--" oninput="updateFinalWeightIfNeeded()">
+          <datalist id="cieList">
             <option>FR</option><option>RK</option><option>W4</option><option>W6</option>
             <option>H4</option><option>H6</option><option>U5</option><option>U7</option>
-            <option>V7</option><option>Autre</option>
-          </select>
+            <option>V7</option>
+          </datalist>
         </div>
       </div>
 
