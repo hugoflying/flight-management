@@ -3446,10 +3446,14 @@ function renderTabs(){
     const nvol = (data.NVol || '').toUpperCase();
     const to   = (data.To   || '').toUpperCase();
 
-    let left = `${cie}${nvol}`.trim();
+    // ✅ Priorité : depFF > arrFF > Cie+NVol
+    const depFF = (data?.akMeta?.depFF || '').toUpperCase().trim();
+    const arrFF = (data?.akMeta?.arrFF || '').toUpperCase().trim();
+    const volRef = depFF || arrFF || `${cie}${nvol}`.trim();
+
     let label =
-      left || to
-        ? (to ? `${left} | ${to}`.trim() : left)
+      volRef || to
+        ? (to ? `${volRef} | ${to}`.trim() : volRef)
         : 'VOL';
 
     const wrap = document.createElement('span');
