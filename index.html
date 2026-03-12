@@ -1231,6 +1231,23 @@ html.dark .tw-color-is-warning { border-color: #f59e0b !important; color: #fcd34
   font-size: .78rem;
   border-radius: 8px;
 }
+
+/* Editeur manuel inline */
+.tw-editor{
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  font-weight: 900;
+  font-size: 1rem;
+  z-index: 10;
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--text);
+  border: 2px solid #3273dc !important;
+  padding: 0 !important;
+}
 </style>
 </head>
 
@@ -6241,6 +6258,87 @@ function updateIVBadges(){
   // DEP : SOBT planifié, AOBT réel
   renderBadge(depEl, delayMinsFromHHMM(sobt, aobt));
 }
+
+/* ===== TIME WRAP : édition manuelle (double-tap / appui long) ===== */
+(function(){
+  const LONG_PRESS_MS = 500;
+  const pressTimers = {};
+
+  function openEdit(wrap){
+    const id = wrap.dataset.id;
+    if(!id) return;
+    const inp = document.getElementById(id);
+    const disp = document.getElementById('tw-disp-' + id);
+    if(!inp || !disp) return;
+
+    // Créer un input texte temporaire par-dessus
+    const editor = document.createElement('input');
+    editor.type = 'text';
+    editor.className = 'input tw-editor';
+    editor.value = inp.value || '';
+    editor.placeholder = 'HH:MM';
+    editor.maxLength = 5;
+    editor.inputMode = 'numeric';
+
+    // Masquer le display, insérer l'éditeur
+    disp.style.display = 'none';
+    wrap.appendChild(editor);
+    editor.focus();
+    editor.select();
+
+    function commit(){
+      const raw = editor.value.trim();
+      // Accepter HHMM ou HH:MM
+      const m = raw.match(/^(\d{1,2}):?(\d{2})$/);
+      if(m){
+        const hh = m[1].padStart(2,'0');
+        const mm = m[2];
+        if(parseInt(hh)<24 && parseInt(mm)<60){
+          inp.value = `${hh}:${mm}`;
+          inp.dispatchEvent(new Event('change', {bubbles:true}));
+          twSync(id);
+        }
+      }
+      editor.remove();
+      disp.style.display = '';
+    }
+
+    editor.addEventListener('blur', commit);
+    editor.addEventListener('keydown', e => {
+      if(e.key === 'Enter'){ e.preventDefault(); editor.blur(); }
+      if(e.key === 'Escape'){ editor.removeEventListener('blur', commit); editor.remove(); disp.style.display = ''; }
+    });
+  }
+
+  // Double-clic sur le display (desktop)
+  document.addEventListener('dblclick', function(e){
+    const wrap = e.target.closest('.time-wrap');
+    if(!wrap) return;
+    if(e.target.classList.contains('tw-zone')) return;
+    openEdit(wrap);
+  });
+
+  // Appui long (mobile)
+  document.addEventListener('touchstart', function(e){
+    const wrap = e.target.closest('.time-wrap');
+    if(!wrap) return;
+    if(e.target.classList.contains('tw-zone')) return;
+    const id = wrap.dataset.id;
+    pressTimers[id] = setTimeout(() => { openEdit(wrap); }, LONG_PRESS_MS);
+  }, {passive: true});
+
+  document.addEventListener('touchend', function(e){
+    const wrap = e.target.closest('.time-wrap');
+    if(!wrap) return;
+    clearTimeout(pressTimers[wrap.dataset.id]);
+  }, {passive: true});
+
+  document.addEventListener('touchmove', function(e){
+    const wrap = e.target.closest('.time-wrap');
+    if(!wrap) return;
+    clearTimeout(pressTimers[wrap.dataset.id]);
+  }, {passive: true});
+})();
 </script>
   
 </body>
