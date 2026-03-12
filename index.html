@@ -6310,12 +6310,19 @@ function updateIVBadges(){
     });
   }
 
-  // Double-clic sur le display (desktop)
+  // Double-clic : effacer la valeur
   document.addEventListener('dblclick', function(e){
     const wrap = e.target.closest('.time-wrap');
     if(!wrap) return;
     if(e.target.classList.contains('tw-zone')) return;
-    openEdit(wrap);
+    const id = wrap.dataset.id;
+    if(!id) return;
+    const inp = document.getElementById(id);
+    if(!inp) return;
+    inp.value = '';
+    inp.dispatchEvent(new Event('change', {bubbles:true}));
+    twSync(id);
+    updateAllCalculations();
   });
 
   // Appui long (mobile)
