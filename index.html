@@ -5351,6 +5351,15 @@ function applyAKFlight(f, flow, opts = {}){
     updateAllCalculations();
     updateTabLabelInstant();
 
+    // ✅ Synchro inter-appareils : envoyer tous les champs AK (bypass akProtected)
+    setTimeout(() => {
+      if(!isApplyingRemoteUpdate && socket && socket.readyState === WebSocket.OPEN && currentSocketKey){
+        const fullPayload = collectFlightState();
+        fullPayload['__fromAK'] = '1';
+        socket.send(JSON.stringify(fullPayload));
+      }
+    }, 100);
+
   }catch(e){
     showPopup(`Erreur import AK (${String(e.message || e)})`, "#ef4444", 2200);
   }finally{
@@ -5800,10 +5809,12 @@ function buildFlightKey() {
 function applyRemotePayload(payload) {
   if (!payload || typeof payload !== "object") return;
 
-  const akProtectedFields = new Set([
-    "Date", "Parking", "Immat", "TypeAvion",
-    "From", "To", "SIBT"
-  ]);
+  // Si le payload vient d'un applyAKFlight distant → on lève la protection
+  const isFromAK = payload['__fromAK'] === '1';
+
+  const akProtectedFields = isFromAK
+    ? new Set(["Date"])  // on garde seulement Date protégé
+    : new Set(["Date", "Parking", "Immat", "TypeAvion", "From", "To", "SIBT"]);
 
   // ✅ Traitement spécial : akMeta distant
   if(payload['__akMeta'] && currentTabId){
