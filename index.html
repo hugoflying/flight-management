@@ -838,6 +838,58 @@ html.dark .fixed-footer{
   }
 }
 
+
+/* ===== MOBILE < 480px : tout réduit ===== */
+@media (max-width: 480px){
+  :root{
+    --gap: 6px;
+    --padCard: 8px;
+    --labelSize: .70rem;
+    --inputH: 34px;
+    --fixed-footer-h: 58px;
+    --radius: 10px;
+  }
+
+  /* Layout général */
+  .app-wrap{ padding-left: 8px; padding-right: 8px; }
+  .card{ border-radius: var(--radius); }
+  .card-header-title{ font-size: .85rem; }
+  .card-content{ padding: var(--padCard) !important; }
+
+  /* Inputs & selects */
+  .input, .select select{
+    font-size: .85rem !important;
+    height: var(--inputH) !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+  .select select{ line-height: var(--inputH) !important; }
+
+  /* Boutons -1/Now/+1 */
+  .btn-actions .button{
+    height: 32px !important;
+    font-size: .75rem !important;
+    padding: 0 8px !important;
+  }
+
+  /* Tabs header */
+  .tabs-chip{ padding: 6px 10px; gap: 6px; }
+  .tabs-chip .button{ font-size: .78rem; padding: 0 10px; height: 32px; }
+
+  /* Timer chips footer */
+  .timer-chip{ min-width: 80px; padding: 5px 8px; gap: 6px; }
+  .timer-chip .k{ font-size: .62rem; }
+  .timer-chip .v{ min-width: 48px; padding: 3px 6px; font-size: .78rem; }
+  .ctot-pill{ min-width: 54px; padding: 3px 6px !important; font-size: .82rem; }
+
+  /* KV cards */
+  .kv-card{ padding: 8px 10px; border-radius: 10px; }
+  .kv-title{ font-size: .58rem; }
+  .kv-value{ font-size: .88rem; }
+
+  /* FAB buttons */
+  #loadFab, #settingsFab{ width: 42px; height: 42px; font-size: .85rem; }
+}
 /* SELECT même hauteur que input */
 .select{
   height: auto !important;          /* ← très important */
@@ -1013,6 +1065,16 @@ body.iv-editing .iv-edit-btn{ opacity: 1; }
 }
 .footer-refresh-btn:active{ transform: rotate(45deg) scale(.93); }
 .footer-refresh-btn.is-loading{ pointer-events:none; opacity:.6; }
+@media (max-width: 420px){
+  .footer-refresh-btn{
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 1rem !important;
+  }
+  .footer-row{
+    grid-template-columns: 36px 1fr 36px;
+  }
+}
 </style>
 </head>
 
