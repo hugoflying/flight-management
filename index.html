@@ -3670,7 +3670,6 @@ function generateTimingFields(){
   const arrNoHeader = `
     <div class="card mb-4">
       <div class="card-content">
-        <div class="hor-col-head mb-3"><span class="hor-badge hor-badge-arr">ARR</span></div>
         <div class="grid-auto">
           ${fieldHTML('ArriveeFuel','Arrivée Avitair',true,false,'is-warning')}
           ${fieldHTML('PremierDebarque','Premier débarqué')}
@@ -3685,7 +3684,6 @@ function generateTimingFields(){
   const depNoHeader = `
     <div class="card">
       <div class="card-content">
-        <div class="hor-col-head mb-3"><span class="hor-badge hor-badge-dep">DEP</span></div>
         <div class="grid-auto">
           ${fieldHTML('ArrPNT','Arrivée PNT',false,true,'is-dark')}
           ${fieldHTML('ArrPNC','Arrivée PNC',false,true,'is-dark')}
@@ -3712,7 +3710,21 @@ function generateTimingFields(){
       </div>
     </div>`;
 
-  container.innerHTML = arrNoHeader + depNoHeader;
+  const toggle = `
+    <div class="tabs is-toggle is-toggle-rounded is-centered mb-4">
+      <ul>
+        <li id="seg-arr-li"><a onclick="switchTimingPanel('arr')"><span>Arrivée</span></a></li>
+        <li id="seg-dep-li"><a onclick="switchTimingPanel('dep')"><span>Départ</span></a></li>
+      </ul>
+    </div>`;
+
+  container.innerHTML =
+    toggle +
+    `<div id="panel-arr" style="display:none;">${arrNoHeader}</div>` +
+    `<div id="panel-dep" style="display:none;">${depNoHeader}</div>`;
+
+  const saved = localStorage.getItem('timingPanel') || 'dep';
+  switchTimingPanel(saved);
 }
 
 function switchTimingPanel(mode){
@@ -3729,6 +3741,8 @@ function switchTimingPanel(mode){
 
   localStorage.setItem('timingPanel', mode);
 }
+
+
 
 /* LID visible FR/RK */
 function updateLIDVisibility(){
