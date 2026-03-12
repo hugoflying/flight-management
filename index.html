@@ -2163,6 +2163,14 @@ function getTabData(){
 function setTabData(data){
   if(!currentTabId) return;
   localStorage.setItem('tab-'+currentTabId, JSON.stringify(data));
+
+  // ✅ Synchro inter-appareils : envoyer akMeta dans le patch WebSocket
+  if(typeof pendingPatch !== 'undefined' && !isApplyingRemoteUpdate){
+    pendingPatch['__akMeta'] = JSON.stringify(data.akMeta);
+    if(socket && socket.readyState === WebSocket.OPEN && currentSocketKey){
+      flushPendingPatch();
+    }
+  }
 }
 
 /**
@@ -5798,9 +5806,33 @@ function applyRemotePayload(payload) {
     "From", "To", "SIBT"
   ]);
 
+  // ✅ Traitement spécial : akMeta distant
+  if(payload['__akMeta'] && currentTabId){
+    try{
+      const remoteMeta = JSON.parse(payload['__akMeta']);
+      const data = JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}');
+      const localMeta = data.akMeta;
+
+      // Fusionner : on garde le plus récent, mais on complète arrFF/depFF manquants
+      if(!localMeta || (remoteMeta.ts || 0) >= (localMeta.ts || 0)){
+        data.akMeta = remoteMeta;
+      } else {
+        // Local plus récent : compléter arrFF/depFF si l'autre appareil a l'autre moitié
+        if(!localMeta.arrFF && remoteMeta.arrFF) localMeta.arrFF = remoteMeta.arrFF;
+        if(!localMeta.depFF && remoteMeta.depFF) localMeta.depFF = remoteMeta.depFF;
+        if(!localMeta.bc   && remoteMeta.bc)     localMeta.bc   = remoteMeta.bc;
+        data.akMeta = localMeta;
+      }
+      localStorage.setItem('tab-'+currentTabId, JSON.stringify(data));
+      // Mise à jour du bandeau INFO VOL
+      if(typeof updateInfoStrip === 'function') setTimeout(updateInfoStrip, 0);
+    }catch(e){}
+  }
+
   isApplyingRemoteUpdate = true;
   try {
     Object.entries(payload).forEach(([id, value]) => {
+      if(id === '__akMeta') return; // déjà traité
       const el = document.getElementById(id);
       if (!el) return;
 
