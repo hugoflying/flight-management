@@ -5336,10 +5336,15 @@ function applyAKFlight(f, flow, opts = {}){
       }
     }
 
+    // ID du vol lié résolu par les fonctions de linking (plus fiable que f.linkedId)
+    const resolvedLinkedId = flow === 'DEP'
+      ? (prevArrUsed?.id || f.linkedId || '')
+      : (nextDepUsed?.id || f.linkedId || '');
+
     storeAKMetaForTab({
       flow,
       id: f.id,
-      linkedId: f.linkedId || '',
+      linkedId: resolvedLinkedId,
       reg: f.reg || '',
       ff: (f.fullFlightNumber || f.callsign || ''),
       timeISO: (flow === 'DEP')
@@ -5978,7 +5983,10 @@ function getLinkedRoom() {
   try {
     const meta = getTabData()?.akMeta;
     const linkedId = String(meta?.linkedId || '').trim();
-    if(linkedId) return `AK_${linkedId}`;
+    if(linkedId){
+      console.log("[SYNC] linkedRoom =", `AK_${linkedId}`);
+      return `AK_${linkedId}`;
+    }
   } catch(_) {}
   return null;
 }
