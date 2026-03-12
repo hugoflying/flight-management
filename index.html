@@ -687,29 +687,53 @@ body.modal-open{
   touch-action: none;
 }
 
-/* ===== footer fixed bottom (corrigé iPad/iOS) ===== */
+/* ===== footer fixed bottom (iPad/iOS: fond jusqu'en bas sans grossir) ===== */
 .fixed-footer{
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
+  inset: auto 0 0 0;
   z-index: 3500;
   background: var(--bg) !important;
   border-top: 1px solid rgba(0,0,0,.08);
-  overflow: hidden;
+  overflow: visible; /* important pour le ::after */
 
-  transform: translateY(var(--vv-offset, 0px));
+  /* renfort iOS Safari pour éviter les décrochages visuels */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
   will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 html.dark .fixed-footer{
   border-top-color: rgba(255,255,255,.08);
 }
 
+/* ✅ remplit la safe-area (home indicator) SANS augmenter la hauteur du footer */
+.fixed-footer::after{
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(-1 * env(safe-area-inset-bottom));
+  height: env(safe-area-inset-bottom);
+  background: var(--bg);
+
+  /* renfort rendu iOS */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
 .fixed-footer-inner{
   max-width: 1120px;
   margin: 0 auto;
-  padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+  padding: 10px 14px; /* inchangé => pas de footer plus “épais” */
+
+  /* renfort iOS */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 
 .footer-row{
@@ -720,15 +744,11 @@ html.dark .fixed-footer{
   flex-wrap: wrap;
 }
 
+/* version compacte tablette */
 @media (min-width: 600px) and (max-width: 900px){
   .fixed-footer-inner{
-    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+    padding: 8px 12px;
   }
-}
-
-/* stabilise la hauteur viewport sur iOS */
-html, body{
-  min-height: 100dvh;
 }
 
 /* ===== LOAD FAB (au-dessus du footer fixe, au-dessus de SETTINGS) ===== */
@@ -5429,40 +5449,13 @@ function toggleDelayCodes() {
 </button>
 
 <script>
-function syncIOSFixedFooter(){
-  const footer = document.getElementById('fixedFooter');
-  if(!footer) return;
-
-  const vv = window.visualViewport;
-  if(!vv){
-    document.documentElement.style.setProperty('--vv-offset', '0px');
-    return;
-  }
-
-  requestAnimationFrame(() => {
-    const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-    document.documentElement.style.setProperty('--vv-offset', `${offset}px`);
-  });
-}
-
-window.addEventListener('resize', syncIOSFixedFooter, { passive:true });
-window.addEventListener('orientationchange', syncIOSFixedFooter, { passive:true });
-
-if(window.visualViewport){
-  window.visualViewport.addEventListener('resize', syncIOSFixedFooter, { passive:true });
-  window.visualViewport.addEventListener('scroll', syncIOSFixedFooter, { passive:true });
-}
-
-document.addEventListener('DOMContentLoaded', syncIOSFixedFooter);
-window.addEventListener('load', syncIOSFixedFooter, { passive:true });
-setTimeout(syncIOSFixedFooter, 150);
-setTimeout(syncIOSFixedFooter, 500);
-  
 let socket = null;
 let isApplyingRemoteUpdate = false;
 let currentSocketKey = null;
 const debounceTimers = {};
 let realtimeSyncInitialized = false;
+let pendingPatch = {};
+let hasReceivedInitialState = false;
 
 function buildFlightKey() {
   try {
@@ -5497,8 +5490,8 @@ function applyRemotePayload(payload) {
   if (!payload || typeof payload !== "object") return;
 
   const akProtectedFields = new Set([
-    "Date", "Parking", "Immat", "TypeAvion", "Cie", "NVol",
-    "From", "To", "SIBT", "AIBT", "SOBT", "AOBT"
+    "Date", "Parking", "Immat", "TypeAvion",
+    "From", "To", "SIBT", "SOBT"
   ]);
 
   isApplyingRemoteUpdate = true;
@@ -5609,6 +5602,20 @@ function collectFlightState() {
   return payload;
 }
 
+function flushPendingPatch() {
+  if (!socket || socket.readyState !== WebSocket.OPEN) return;
+  if (!currentSocketKey) return;
+
+  const entries = Object.entries(pendingPatch);
+  if (!entries.length) return;
+
+  const payload = { ...pendingPatch };
+  pendingPatch = {};
+
+  console.log("FLUSH PATCH", payload);
+  socket.send(JSON.stringify(payload));
+}
+
 function sendFullFlightState() {
   if (isApplyingRemoteUpdate) return;
 
@@ -5627,6 +5634,8 @@ function connectFlightSocket() {
 
   if (!key) {
     currentSocketKey = null;
+    hasReceivedInitialState = false;
+    pendingPatch = {};
     if (socket) {
       try { socket.close(); } catch (e) {}
       socket = null;
@@ -5634,7 +5643,7 @@ function connectFlightSocket() {
     return;
   }
 
-  if (socket && currentSocketKey === key && socket.readyState <= 1) return;
+  if (socket && currentSocketKey === key && socket.readyState <= WebSocket.OPEN) return;
 
   if (socket) {
     try { socket.close(); } catch (e) {}
@@ -5642,11 +5651,14 @@ function connectFlightSocket() {
   }
 
   currentSocketKey = key;
+  hasReceivedInitialState = false;
+  pendingPatch = {};
+
   socket = new WebSocket(`wss://turnaround-sync.deruellehugo-49c.workers.dev/${encodeURIComponent(key)}`);
 
   socket.onopen = () => {
     console.log("WebSocket connecté :", key);
-    sendFullFlightState();
+    flushPendingPatch();
   };
 
   socket.onmessage = (event) => {
@@ -5654,16 +5666,18 @@ function connectFlightSocket() {
       const msg = JSON.parse(event.data);
 
       if (msg.__type === "init") {
-        applyRemotePayload(msg.payload);
+        hasReceivedInitialState = true;
+        applyRemotePayload(msg.payload || {});
+        flushPendingPatch();
         return;
       }
 
       if (msg.__type === "patch") {
-        applyRemotePayload(msg.payload);
+        applyRemotePayload(msg.payload || {});
         return;
       }
 
-      applyRemotePayload(msg);
+      applyRemotePayload(msg || {});
     } catch (err) {
       console.error("Erreur message WebSocket :", err);
     }
@@ -5677,8 +5691,25 @@ function connectFlightSocket() {
     console.log("WebSocket fermé");
     if (currentSocketKey === key) {
       socket = null;
+      hasReceivedInitialState = false;
     }
   };
+}
+
+function ensureSocketConnection(retries = 15, delay = 300) {
+  let count = 0;
+
+  const tryConnect = () => {
+    count++;
+    connectFlightSocket();
+
+    if (socket && currentSocketKey === buildFlightKey()) return;
+    if (count >= retries) return;
+
+    setTimeout(tryConnect, delay);
+  };
+
+  tryConnect();
 }
 
 function sendFieldUpdate(id, value) {
@@ -5687,23 +5718,23 @@ function sendFieldUpdate(id, value) {
   const key = buildFlightKey();
   if (!key) return;
 
-  if (!socket || socket.readyState !== WebSocket.OPEN || currentSocketKey !== key) {
+  pendingPatch[id] = value;
+
+  if (!socket || currentSocketKey !== key || socket.readyState === WebSocket.CLOSED) {
     connectFlightSocket();
     return;
   }
 
-  const payload = { [id]: value };
-  console.log("SEND PATCH", payload);
+  if (socket.readyState !== WebSocket.OPEN) {
+    return;
+  }
 
-  socket.send(JSON.stringify(payload));
+  flushPendingPatch();
 }
 
 function setupRealtimeSync() {
   if (realtimeSyncInitialized) {
-    connectFlightSocket();
-    setTimeout(() => {
-      sendFullFlightState();
-    }, 100);
+    ensureSocketConnection();
     return;
   }
 
@@ -5728,10 +5759,7 @@ function setupRealtimeSync() {
     if (!el) return;
 
     const reconnect = () => {
-      connectFlightSocket();
-      setTimeout(() => {
-        sendFullFlightState();
-      }, 100);
+      ensureSocketConnection();
     };
 
     el.addEventListener("input", reconnect);
@@ -5840,12 +5868,9 @@ function setupRealtimeSync() {
   document.addEventListener("input", pushIfSyncField);
   document.addEventListener("change", pushIfSyncField);
 
-  connectFlightSocket();
-
-  setTimeout(() => {
-    sendFullFlightState();
-  }, 100);
+  ensureSocketConnection();
 }
+  
 </script>
   
 </body>
