@@ -1204,6 +1204,12 @@ html.dark .tw-color-is-bordeaux { border-color: #ef4444 !important; color: #ef44
 #FaitsSaillants{
   border-width: 2px !important;
 }
+
+/* Timing fields plus hauts */
+.time-wrap .tw-display{
+  height: 42px !important;
+  min-height: 42px !important;
+}
 </style>
 </head>
 
@@ -3620,21 +3626,7 @@ function generateTimingFields(){
       </div>
     </div>`;
 
-  const toggle = `
-    <div class="tabs is-toggle is-toggle-rounded is-centered mb-4">
-      <ul>
-        <li id="seg-arr-li"><a onclick="switchTimingPanel('arr')"><span>Arrivée</span></a></li>
-        <li id="seg-dep-li"><a onclick="switchTimingPanel('dep')"><span>Départ</span></a></li>
-      </ul>
-    </div>`;
-
-  container.innerHTML =
-    toggle +
-    `<div id="panel-arr" style="display:none;">${arrNoHeader}</div>` +
-    `<div id="panel-dep" style="display:none;">${depNoHeader}</div>`;
-
-  const saved = localStorage.getItem('timingPanel') || 'dep';
-  switchTimingPanel(saved);
+  container.innerHTML = arrNoHeader + depNoHeader;
 }
 
 function switchTimingPanel(mode){
