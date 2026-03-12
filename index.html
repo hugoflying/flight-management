@@ -1123,6 +1123,18 @@ body.iv-editing .iv-edit-btn{ opacity: 1; }
 #timing-grid .grid-auto{
   row-gap: calc(var(--gap) + 6px);
 }
+
+/* Séparateur de section dans INFO VOL */
+.iv-section-title{
+  font-size: .72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--muted);
+  border-top: 1px solid var(--field-border);
+  padding-top: 10px;
+  margin-bottom: 10px;
+}
 </style>
 </head>
 
@@ -1546,7 +1558,7 @@ body.iv-editing .iv-edit-btn{ opacity: 1; }
 
 <div class="app-wrap">
 
-<!-- INFO VOL -->
+<!-- INFO VOL + HORAIRES -->
 <div class="card mb-5">
   <header class="card-header">
     <p class="card-header-title">INFO VOL</p>
@@ -1558,7 +1570,7 @@ body.iv-editing .iv-edit-btn{ opacity: 1; }
   <div class="card-content">
 
     <!-- Résumé (mode lecture) -->
-    <div id="ivSummary" class="kv-strip">
+    <div id="ivSummary" class="kv-strip mb-3">
       <div class="kv-card">
         <div class="kv-left">
           <div class="kv-title">Vol</div>
@@ -1581,7 +1593,48 @@ body.iv-editing .iv-edit-btn{ opacity: 1; }
       </div>
     </div>
 
-    <!-- Mode édition (masqué par défaut) -->
+    <!-- Horaires ARR / DEP -->
+    <div class="horaires-grid mb-3">
+
+      <!-- Bloc ARR -->
+      <div class="hor-block">
+        <div class="hor-col-head"><span class="hor-badge hor-badge-arr">ARR</span></div>
+        <div class="hor-cell">
+          <label class="label">SIBT</label>
+          <input class="input hor-input-sched" type="time" id="SIBT" onchange="updateAllCalculations()">
+        </div>
+        <div class="hor-cell">
+          <label class="label">AIBT</label>
+          <input class="input" type="time" id="AIBT" onchange="updateAllCalculations()">
+          <div class="btn-actions">
+            <button class="button is-dark is-light" type="button" onclick="adjustTime('AIBT',-1);updateAllCalculations()">-1</button>
+            <button class="button is-link" type="button" onclick="setNow('AIBT');updateAllCalculations()">Now</button>
+            <button class="button is-dark is-light" type="button" onclick="adjustTime('AIBT',1);updateAllCalculations()">+1</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bloc DEP -->
+      <div class="hor-block">
+        <div class="hor-col-head"><span class="hor-badge hor-badge-dep">DEP</span></div>
+        <div class="hor-cell">
+          <label class="label">SOBT</label>
+          <input class="input hor-input-sched" type="time" id="SOBT" onchange="manualSOBT=true;updateAllCalculations()">
+        </div>
+        <div class="hor-cell">
+          <label class="label">AOBT</label>
+          <input class="input" type="time" id="AOBT" onchange="updateAllCalculations()">
+          <div class="btn-actions">
+            <button class="button is-dark is-light" type="button" onclick="adjustTime('AOBT',-1);updateAllCalculations()">-1</button>
+            <button class="button is-link" type="button" onclick="setNow('AOBT');updateAllCalculations()">Now</button>
+            <button class="button is-dark is-light" type="button" onclick="adjustTime('AOBT',1);updateAllCalculations()">+1</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Mode édition infos vol (masqué par défaut) -->
     <div id="ivEdit" class="grid-auto" style="display:none; margin-top:12px;">
 
       <div class="field span-3">
@@ -1646,57 +1699,6 @@ body.iv-editing .iv-edit-btn{ opacity: 1; }
       <div class="field span-3">
         <label class="label">To</label>
         <input class="input uppercase" type="text" id="To" maxlength="3">
-      </div>
-
-    </div>
-  </div>
-</div>
-
-
-<!-- HORAIRES -->
-<div class="card mb-5">
-  <header class="card-header section-collapse" onclick="toggleCardBody(this)">
-    <p class="card-header-title">HORAIRES</p>
-    <span class="card-header-icon"><span class="icon">⌄</span></span>
-  </header>
-
-  <div class="card-content">
-    <div class="horaires-grid">
-
-      <!-- Bloc ARR -->
-      <div class="hor-block">
-        <div class="hor-col-head"><span class="hor-badge hor-badge-arr">ARR</span></div>
-        <div class="hor-cell">
-          <label class="label">SIBT</label>
-          <input class="input hor-input-sched" type="time" id="SIBT" onchange="updateAllCalculations()">
-        </div>
-        <div class="hor-cell">
-          <label class="label">AIBT</label>
-          <input class="input" type="time" id="AIBT" onchange="updateAllCalculations()">
-          <div class="btn-actions">
-            <button class="button is-dark is-light" type="button" onclick="adjustTime('AIBT',-1);updateAllCalculations()">-1</button>
-            <button class="button is-link" type="button" onclick="setNow('AIBT');updateAllCalculations()">Now</button>
-            <button class="button is-dark is-light" type="button" onclick="adjustTime('AIBT',1);updateAllCalculations()">+1</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Bloc DEP -->
-      <div class="hor-block">
-        <div class="hor-col-head"><span class="hor-badge hor-badge-dep">DEP</span></div>
-        <div class="hor-cell">
-          <label class="label">SOBT</label>
-          <input class="input hor-input-sched" type="time" id="SOBT" onchange="manualSOBT=true;updateAllCalculations()">
-        </div>
-        <div class="hor-cell">
-          <label class="label">AOBT</label>
-          <input class="input" type="time" id="AOBT" onchange="updateAllCalculations()">
-          <div class="btn-actions">
-            <button class="button is-dark is-light" type="button" onclick="adjustTime('AOBT',-1);updateAllCalculations()">-1</button>
-            <button class="button is-link" type="button" onclick="setNow('AOBT');updateAllCalculations()">Now</button>
-            <button class="button is-dark is-light" type="button" onclick="adjustTime('AOBT',1);updateAllCalculations()">+1</button>
-          </div>
-        </div>
       </div>
 
     </div>
