@@ -38,7 +38,7 @@
 }
 
 body{ background: var(--bg); color: var(--text); margin: 0; }
-html, body{ min-height: 100%; background: var(--bg) !important; }
+html, body{ min-height: 100%; background: var(--bg) !important; overscroll-behavior-y: none; -webkit-overflow-scrolling: auto; }
 
 html.dark, body.dark{
   --bg: #0f1115;
@@ -699,12 +699,11 @@ body.modal-open{
   border-top: 1px solid rgba(0,0,0,.08);
   overflow: visible; /* important pour le ::after */
 
-  /* renfort iOS Safari pour éviter les décrochages visuels */
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  will-change: transform;
-  backface-visibility: hidden;
+  /* renfort iOS Safari — will-change retiré car il perturbe le fixed sur iPad */
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
   -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 html.dark .fixed-footer{
