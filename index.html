@@ -964,6 +964,30 @@ html.dark .hor-badge-dep{ background: #14532d; color: #86efac; }
   opacity: 1;
   border-style: solid !important;
 }
+
+
+/* ===== INFO VOL edit toggle ===== */
+.iv-edit-btn{
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0 12px;
+  opacity: .55;
+  transition: opacity .15s;
+}
+.iv-edit-btn:hover{ opacity: 1; }
+body.iv-editing .iv-edit-btn{ opacity: 1; }
+
+#ivEdit{
+  border-top: 1px solid var(--field-border);
+  padding-top: 12px;
+  animation: ivFadeIn .18s ease;
+}
+@keyframes ivFadeIn{
+  from{ opacity:0; transform: translateY(-4px); }
+  to{   opacity:1; transform: translateY(0); }
+}
 </style>
 </head>
 
@@ -1391,45 +1415,39 @@ html.dark .hor-badge-dep{ background: #14532d; color: #86efac; }
 <div class="card mb-5">
   <header class="card-header">
     <p class="card-header-title">INFO VOL</p>
+    <button class="card-header-icon iv-edit-btn" onclick="toggleInfoVolEdit()" title="Modifier">
+      <span id="ivEditIcon">✏️</span>
+    </button>
   </header>
 
   <div class="card-content">
 
-    <!-- Bandeau ESSENTIEL -->
-    <div class="kv-strip mb-4">
+    <!-- Résumé (mode lecture) -->
+    <div id="ivSummary" class="kv-strip">
       <div class="kv-card">
         <div class="kv-left">
           <div class="kv-title">Vol</div>
-          <div class="kv-value">
-            <span id="kvArrVol">----</span> → <span id="kvDepVol">----</span>
-          </div>
+          <div class="kv-value"><span id="kvArrVol">----</span> → <span id="kvDepVol">----</span></div>
         </div>
         <div class="kv-left" style="text-align:right;">
           <div class="kv-title">Route</div>
-          <div class="kv-value">
-            <span id="kvFrom">---</span> → <span id="kvTo">---</span>
-          </div>
+          <div class="kv-value"><span id="kvFrom">---</span> → <span id="kvTo">---</span></div>
         </div>
       </div>
-
       <div class="kv-card">
         <div class="kv-left">
           <div class="kv-title">Immat / Type</div>
-          <div class="kv-value">
-            <span id="kvImmat">------</span> · <span id="kvType">--</span>
-          </div>
+          <div class="kv-value"><span id="kvImmat">------</span> · <span id="kvType">--</span></div>
         </div>
         <div class="kv-left" style="text-align:right;">
           <div class="kv-title">Salle arr. / Parking</div>
-          <div class="kv-value">
-            <span id="kvBC">----</span> · <span id="kvPark">--</span>
-          </div>
+          <div class="kv-value"><span id="kvBC">----</span> · <span id="kvPark">--</span></div>
         </div>
       </div>
     </div>
 
-    <!-- DÉTAILS (éditables) -->
-    <div id="infoVolDetails" class="grid-auto">
+    <!-- Mode édition (masqué par défaut) -->
+    <div id="ivEdit" class="grid-auto" style="display:none; margin-top:12px;">
 
       <div class="field span-3">
         <label class="label">Date</label>
@@ -1484,7 +1502,6 @@ html.dark .hor-badge-dep{ background: #14532d; color: #86efac; }
         <input class="input uppercase" type="text" id="NVol">
       </div>
 
-      <!-- ✅ FROM déclenche recalculs -->
       <div class="field span-3">
         <label class="label">From</label>
         <input class="input uppercase" type="text" id="From" maxlength="3"
@@ -5917,6 +5934,14 @@ function setupRealtimeSync() {
   ensureSocketConnection();
 }
   
+
+function toggleInfoVolEdit(){
+  const edit = document.getElementById('ivEdit');
+  const icon = document.getElementById('ivEditIcon');
+  const open = edit.style.display === 'none' || edit.style.display === '';
+  edit.style.display = open ? 'grid' : 'none';
+  icon.textContent = open ? '✅' : '✏️';
+}
 </script>
   
 </body>
