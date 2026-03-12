@@ -1287,6 +1287,25 @@ html.dark .tw-color-is-bordeaux { border-color: #ef4444 !important; color: #ef44
   background: rgba(0,0,0,.08);
   flex-shrink: 0;
 }
+
+/* AK paires ARR/DEP */
+.ak-pair-row{
+  display: flex;
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: var(--radius);
+  background: var(--card);
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+.ak-half{ flex:1; padding:10px; min-width:0; }
+.ak-half-done{ opacity:.5; }
+.ak-half-empty{ flex:1; background:rgba(0,0,0,.02); min-height:60px; }
+.ak-pair-divider{ width:1px; background:rgba(0,0,0,.08); flex-shrink:0; }
+.ak-half-top{ display:flex; align-items:center; gap:5px; flex-wrap:wrap; margin-bottom:2px; }
+.ak-flow-badge{ font-size:.62rem; font-weight:900; padding:1px 6px; border-radius:6px; }
+.ak-iata{ font-weight:900; font-size:.95rem; }
+.ak-half-sub{ font-size:.78rem; font-weight:700; color:var(--muted); line-height:1.3; }
+.ak-use-btn{ margin-top:6px !important; }
 </style>
 </head>
 
@@ -4850,7 +4869,7 @@ function depAtotTooOld(dep, minutes = 15){
   return (Date.now() - t) > minutes * 60 * 1000;
 }
 
-// ===== Chargement liste (vols du jour) - paires ARR+DEP =====
+// ===== Chargement liste (vols du jour) - ARR+DEP groupés =====
 async function loadAKFlights(){
   const st   = document.getElementById('akStatus');
   const list = document.getElementById('akList');
@@ -4864,39 +4883,26 @@ async function loadAKFlights(){
   const linkTo   = new Date(endDay.getTime()   + 12*3600*1000).toISOString().replace(/\.\d{3}Z$/,"Z");
 
   try{
-    const [arrAll, depAll] = await Promise.all([
-      fetchAK('ARR', linkFrom, linkTo),
-      fetchAK('DEP', linkFrom, linkTo),
-    ]);
+    const [arrAll, depAll] = await Promise.all([fetchAK('ARR',linkFrom,linkTo), fetchAK('DEP',linkFrom,linkTo)]);
     window._akCache = { arr: arrAll, dep: depAll };
 
     const inToday = (f, fl) => {
-      const t = Date.parse(fl==='DEP'
-        ? (f.sobt||f.eobt||f.aobt||f.atot||'')
-        : (f.sibt||f.eibt||f.aibt||''));
+      const t = Date.parse(fl==='DEP' ? (f.sobt||f.eobt||f.aobt||f.atot||'') : (f.sibt||f.eibt||f.aibt||''));
       return t && t >= startDay.getTime() && t <= endDay.getTime();
     };
 
-    let arrF = arrAll.filter(f => inToday(f,'ARR')).filter(a => {
-      const nd = findLinkedDepForArr(a);
-      return !nd || !depAtotTooOld(nd,15);
-    });
-    let depF = depAll.filter(f => inToday(f,'DEP')).filter(d => !depAtotTooOld(d,15));
+    let arrFlights = arrAll.filter(f => inToday(f,'ARR'));
+    let depFlights = depAll.filter(f => inToday(f,'DEP')).filter(d => !depAtotTooOld(d,15));
+    arrFlights = arrFlights.filter(arr => { const nd=findLinkedDepForArr(arr); return !nd || !depAtotTooOld(nd,15); });
 
-    // Construire paires
-    const usedDep = new Set(), usedArr = new Set();
-    const pairs = [];
-    for(const arr of arrF){
+    const usedDep = new Set(), pairs = [];
+    for(const arr of arrFlights){
       const dep = findLinkedDepForArr(arr);
-      if(dep && !usedDep.has(dep.id)){
-        pairs.push({arr, dep}); usedDep.add(dep.id); usedArr.add(arr.id);
-      } else {
-        pairs.push({arr, dep:null}); usedArr.add(arr.id);
-      }
+      if(dep && !usedDep.has(dep.id)){ pairs.push({arr,dep}); usedDep.add(dep.id); }
+      else { pairs.push({arr, dep:null}); }
     }
-    for(const dep of depF){ if(!usedDep.has(dep.id)) pairs.push({arr:null, dep}); }
+    for(const dep of depFlights){ if(!usedDep.has(dep.id)) pairs.push({arr:null,dep}); }
 
-    // Tri chrono
     pairs.sort((a,b)=>{
       const ta = a.arr ? arrTimeMs(a.arr) : (a.dep ? depTimeMs(a.dep) : null);
       const tb = b.arr ? arrTimeMs(b.arr) : (b.dep ? depTimeMs(b.dep) : null);
@@ -6356,3 +6362,57 @@ function updateIVBadges(){
   
 </body>
 </html>
+function renderAKList(pairs){
+  const list = document.getElementById('akList');
+  if(!list) return;
+
+  const safe = obj => JSON.stringify(obj)
+    .replace(/</g,"\u003c").replace(/>/g,"\u003e")
+    .replace(/&/g,"\u0026").replace(/'/g,"\u0027");
+
+  function getStatus(f, flow){
+    let s = (f?.status||f?.milestone||'').toString().toUpperCase();
+    if(s==='SCHEDULED') return 'PRÉVU';
+    if(flow==='DEP'){ if(s==='IN_FLIGHT') return 'DÉCOLLÉ'; }
+    else {
+      if(s==='TERMINATED') return 'ARRIVÉ';
+      if(s==='IN_FLIGHT')  return 'EN VOL';
+      const nd = findLinkedDepForArr(f);
+      if(nd){ const ds=(nd.status||nd.milestone||'').toString().toUpperCase(); if(ds==='IN_FLIGHT'||!!nd.atot) return 'DÉCOLLÉ'; }
+    }
+    return s||'';
+  }
+
+  function half(f, flow){
+    if(!f) return '<div class="ak-half ak-half-empty"></div>';
+    const ff    = (f.fullFlightNumber||f.callsign||'').trim();
+    const reg   = (f.reg||'').trim();
+    const stand = (f.pkg||'').toString().replace(/^P/i,'');
+    const t     = pickBestTimeForList(f, flow);
+    const status = getStatus(f, flow);
+    const iata  = flow==='ARR' ? (f.adepIata||f.adepIcao||'') : (f.adesIata||f.adesIcao||'');
+    const dly   = delayMinFrom(flow==='ARR'?(f.sibt||''):(f.sobt||''), flow==='ARR'?actualArrIso(f):actualDepIso(f));
+    const badge = getDelayBadgeHtml(dly);
+    const done  = (flow==='ARR'&&status==='ARRIVÉ')||(flow==='DEP'&&status==='DÉCOLLÉ');
+    const bgBadge = flow==='ARR' ? '#dbeafe' : '#dcfce7';
+    const clrBadge = flow==='ARR' ? '#1d4ed8' : '#15803d';
+    const json  = safe(f);
+    return `<div class="ak-half${done?' ak-half-done':''}">
+      <div class="ak-half-top">
+        <span class="ak-flow-badge" style="background:${bgBadge};color:${clrBadge}">${flow}</span>
+        <span class="ak-iata">${escapeHtml(iata||'---')}</span>
+        ${badge}
+      </div>
+      <div class="ak-half-sub">${escapeHtml(ff||'—')} &middot; Std ${escapeHtml(stand||'—')} &middot; ${escapeHtml(reg||'—')}</div>
+      <div class="ak-half-sub">${escapeHtml(t||'—')}${status?' &middot; '+escapeHtml(status):''}</div>
+      <button class="button is-small is-link ak-use-btn" type="button"
+        onclick='applyAKFlight(${json},"${flow}")'>Utiliser</button>
+    </div>`;
+  }
+
+  if(!pairs.length){ list.innerHTML = '<p class="has-text-grey">Aucun vol.</p>'; return; }
+
+  list.innerHTML = pairs.map(({arr,dep}) =>
+    `<div class="ak-pair-row">${half(arr,'ARR')}<div class="ak-pair-divider"></div>${half(dep,'DEP')}</div>`
+  ).join('');
+}
