@@ -1318,6 +1318,9 @@ html.dark .tw-color-is-bordeaux { border-color: #ef4444 !important; color: #ef44
   /* badge retard plus petit */
   .ak-half-top .tag{ font-size: .6rem !important; padding: 0 5px !important; height: auto !important; }
 }
+
+/* Suffixe source heure dans liste vols */
+.ak-tsuffix{ font-size:.7em; opacity:.7; font-weight:600; }
 </style>
 </head>
 
@@ -4655,23 +4658,27 @@ function escapeHtml(s){
 
 function pickBestTimeForList(f, flow){
   const iso = (v)=> v ? new Date(v) : null;
-
   const toHHMM = (d)=>{
     if(!d || isNaN(d.getTime())) return '';
     const hh = String(isUTC ? d.getUTCHours() : d.getHours()).padStart(2,'0');
     const mm = String(isUTC ? d.getUTCMinutes() : d.getMinutes()).padStart(2,'0');
     return `${hh}:${mm}`;
   };
-
+  // Retourne { time, suffix } selon la source
   if(flow === 'DEP'){
-    return toHHMM(
-      iso(f.aobt) || iso(f.sobt) || iso(f.eobt) || iso(f.atot) || iso(f.etot)
-    );
+    if(f.aobt) return { time: toHHMM(iso(f.aobt)), suffix: 'A' };
+    if(f.sobt) return { time: toHHMM(iso(f.sobt)), suffix: 'S' };
+    if(f.eobt) return { time: toHHMM(iso(f.eobt)), suffix: 'E' };
+    if(f.atot) return { time: toHHMM(iso(f.atot)), suffix: 'A' };
+    if(f.etot) return { time: toHHMM(iso(f.etot)), suffix: 'E' };
+    return { time: '', suffix: '' };
   }
-
-  return toHHMM(
-    iso(f.aibt) || iso(f.sibt) || iso(f.eibt) || iso(f.aldt) || iso(f.eldt)
-  );
+  if(f.aibt) return { time: toHHMM(iso(f.aibt)), suffix: 'A' };
+  if(f.sibt) return { time: toHHMM(iso(f.sibt)), suffix: 'S' };
+  if(f.eibt) return { time: toHHMM(iso(f.eibt)), suffix: 'E' };
+  if(f.aldt) return { time: toHHMM(iso(f.aldt)), suffix: 'A' };
+  if(f.eldt) return { time: toHHMM(iso(f.eldt)), suffix: 'E' };
+  return { time: '', suffix: '' };
 }
 
   /* ===== SETTINGS MENU ===== */
@@ -5018,7 +5025,7 @@ function renderAKList(pairs){
     const ff    = (f.fullFlightNumber||f.callsign||'').trim();
     const reg   = (f.reg||'').trim();
     const stand = (f.pkg||'').toString().replace(/^P/i,'');
-    const t     = pickBestTimeForList(f, flow);
+    const {time:t, suffix:tSuffix} = pickBestTimeForList(f, flow);
     const status = getStatus(f, flow);
     const iata  = flow==='ARR' ? (f.adepIata||f.adepIcao||'') : (f.adesIata||f.adesIcao||'');
     const dly   = delayMinFrom(flow==='ARR'?(f.sibt||''):(f.sobt||''), flow==='ARR'?actualArrIso(f):actualDepIso(f));
