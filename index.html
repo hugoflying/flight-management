@@ -697,13 +697,15 @@ body.modal-open{
   background: var(--bg) !important;
   border-top: 1px solid rgba(0,0,0,.08);
   overflow: hidden;
+
+  transform: translateY(var(--vv-offset, 0px));
+  will-change: transform;
 }
 
 html.dark .fixed-footer{
   border-top-color: rgba(255,255,255,.08);
 }
 
-/* safe-area intégrée sans pseudo élément */
 .fixed-footer-inner{
   max-width: 1120px;
   margin: 0 auto;
@@ -718,7 +720,6 @@ html.dark .fixed-footer{
   flex-wrap: wrap;
 }
 
-/* version compacte tablette */
 @media (min-width: 600px) and (max-width: 900px){
   .fixed-footer-inner{
     padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
@@ -5428,6 +5429,35 @@ function toggleDelayCodes() {
 </button>
 
 <script>
+function syncIOSFixedFooter(){
+  const footer = document.getElementById('fixedFooter');
+  if(!footer) return;
+
+  const vv = window.visualViewport;
+  if(!vv){
+    document.documentElement.style.setProperty('--vv-offset', '0px');
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    document.documentElement.style.setProperty('--vv-offset', `${offset}px`);
+  });
+}
+
+window.addEventListener('resize', syncIOSFixedFooter, { passive:true });
+window.addEventListener('orientationchange', syncIOSFixedFooter, { passive:true });
+
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize', syncIOSFixedFooter, { passive:true });
+  window.visualViewport.addEventListener('scroll', syncIOSFixedFooter, { passive:true });
+}
+
+document.addEventListener('DOMContentLoaded', syncIOSFixedFooter);
+window.addEventListener('load', syncIOSFixedFooter, { passive:true });
+setTimeout(syncIOSFixedFooter, 150);
+setTimeout(syncIOSFixedFooter, 500);
+  
 let socket = null;
 let isApplyingRemoteUpdate = false;
 let currentSocketKey = null;
