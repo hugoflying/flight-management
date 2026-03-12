@@ -5021,7 +5021,7 @@ function renderAKList(pairs){
   }
 
   function half(f, flow){
-    if(!f) return '<div class="ak-half ak-half-empty"><span style="color:var(--muted)">—</span></div>';
+    if(!f) return '<div class="ak-half ak-half-empty"></div>';
     const ff    = (f.fullFlightNumber||f.callsign||'').trim();
     const reg   = (f.reg||'').trim();
     const stand = (f.pkg||'').toString().replace(/^P/i,'');
@@ -5031,22 +5031,20 @@ function renderAKList(pairs){
     const dly   = delayMinFrom(flow==='ARR'?(f.sibt||''):(f.sobt||''), flow==='ARR'?actualArrIso(f):actualDepIso(f));
     const badge = getDelayBadgeHtml(dly);
     const done  = (flow==='ARR'&&status==='ARRIVÉ')||(flow==='DEP'&&status==='DÉCOLLÉ');
-    const bgBadge = flow==='ARR' ? '#dbeafe' : '#dcfce7';
+    const bgBadge  = flow==='ARR' ? '#dbeafe' : '#dcfce7';
     const txtBadge = flow==='ARR' ? '#1d4ed8' : '#15803d';
     const json  = safe(f);
-    return '<div class="ak-half"' + (done?' style="opacity:.55"':'') + '>'
-      + '<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;">'
+    const suf   = tSuffix ? ' <span style="font-size:.7em;opacity:.65;font-weight:600;">('+tSuffix+')</span>' : '';
+    const timeStr = t ? escapeHtml(t)+suf : '—';
+    const opacity = done ? 'opacity:.55;' : '';
+    return '<div class="ak-half" style="cursor:pointer;'+opacity+'" onclick=\'applyAKFlight('+json+',"'+flow+'")\'>'
+      + '<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:3px;">'
       + '<span style="font-size:.62rem;font-weight:900;background:'+bgBadge+';color:'+txtBadge+';padding:1px 6px;border-radius:6px;">'+flow+'</span>'
       + '<span style="font-weight:900;font-size:.95rem;">'+escapeHtml(iata||'---')+'</span>'
       + badge
       + '</div>'
-      + '<div style="color:var(--muted);font-size:.78rem;font-weight:700;">'
-      + escapeHtml(ff||'—')+' · Std '+escapeHtml(stand||'—')+' · '+escapeHtml(reg||'—')
-      + '</div>'
-      + '<div style="color:var(--muted);font-size:.75rem;font-weight:700;">'
-      + escapeHtml(t||'—')+(status?' · '+escapeHtml(status):'')
-      + '</div>'
-      + '<button class="button is-small is-link" type="button" style="margin-top:5px;" onclick=\'applyAKFlight('+json+', "'+flow+'")\'>Utiliser</button>'
+      + '<div style="color:var(--muted);font-size:.78rem;font-weight:700;">'+escapeHtml(ff||'—')+' · Std '+escapeHtml(stand||'—')+' · '+escapeHtml(reg||'—')+'</div>'
+      + '<div style="color:var(--muted);font-size:.75rem;font-weight:700;">'+timeStr+(status?' · '+escapeHtml(status):'')+'</div>'
       + '</div>';
   }
 
