@@ -1855,15 +1855,14 @@ html.dark .tw-color-is-bordeaux { border-color: #ef4444 !important; color: #ef44
 
       <div class="field span-3">
         <label class="label">Type avion</label>
-        <div class="select is-fullwidth">
-          <select id="TypeAvion">
-            <option value="">--</option>
+        <div class="control">
+          <input class="input uppercase" type="text" id="TypeAvion" list="typeAvionList" autocomplete="off" maxlength="6" placeholder="--">
+          <datalist id="typeAvionList">
             <option>A319</option><option>A320</option><option>A321</option>
             <option>A20N</option><option>A21N</option><option>A21NY</option>
             <option>B734</option><option>B737</option><option>B738</option>
             <option>B38M</option><option>BCS3</option><option>CL35</option>
-            <option>Autre</option>
-          </select>
+          </datalist>
         </div>
       </div>
 
