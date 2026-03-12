@@ -230,15 +230,12 @@ textarea.si-uppercase{ text-transform: uppercase; }
 /* Champs optionnels (ex: PNT, PNC, INAD) */
 .field-optional .label{
   opacity: .55;
-  font-style: italic;
 }
 .field-optional .input{
-  border-style: dashed !important;
-  opacity: .72;
+  background: color-mix(in srgb, var(--field-bg) 80%, #f59e0b 20%) !important;
 }
-.field-optional .input:focus{
-  opacity: 1;
-  border-style: solid !important;
+html.dark .field-optional .input{
+  background: color-mix(in srgb, var(--field-bg) 80%, #92400e 20%) !important;
 }
 
 .input::placeholder, .textarea::placeholder{ color: var(--field-placeholder) !important; }
@@ -5882,4 +5879,3 @@ function setupRealtimeSync() {
   
 </body>
 </html>
-
