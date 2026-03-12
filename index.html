@@ -3682,6 +3682,7 @@ function updateLIDVisibility(){
 
 /* CALCULS */
 function updateAllCalculations() {
+  setTimeout(updateIVBadges, 0);
   updateTimers();
   updateSOBTDefault();
   updateEOBT();
