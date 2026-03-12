@@ -5490,8 +5490,8 @@ function applyRemotePayload(payload) {
   if (!payload || typeof payload !== "object") return;
 
   const akProtectedFields = new Set([
-    "Date", "Parking", "Immat", "TypeAvion", "Cie", "NVol",
-    "From", "To", "SIBT", "AIBT", "SOBT", "AOBT"
+    "Date", "Parking", "Immat", "TypeAvion",
+    "From", "To", "SIBT", "SOBT"
   ]);
 
   isApplyingRemoteUpdate = true;
