@@ -5351,15 +5351,6 @@ function applyAKFlight(f, flow, opts = {}){
     updateAllCalculations();
     updateTabLabelInstant();
 
-    // ✅ Synchro inter-appareils : envoyer tous les champs AK (bypass akProtected)
-    setTimeout(() => {
-      if(!isApplyingRemoteUpdate && socket && socket.readyState === WebSocket.OPEN && currentSocketKey){
-        const fullPayload = collectFlightState();
-        fullPayload['__fromAK'] = '1';
-        socket.send(JSON.stringify(fullPayload));
-      }
-    }, 100);
-
   }catch(e){
     showPopup(`Erreur import AK (${String(e.message || e)})`, "#ef4444", 2200);
   }finally{
@@ -5371,6 +5362,19 @@ function applyAKFlight(f, flow, opts = {}){
       showPopup("Vol importé", "#16a34a", 1600);
     }
   }
+
+  // ✅ Synchro inter-appareils : envoyer tous les champs AK (bypass akProtected)
+  setTimeout(() => {
+    try{
+      if(!isApplyingRemoteUpdate && socket && socket.readyState === WebSocket.OPEN && currentSocketKey){
+        const fullPayload = collectFlightState();
+        if(fullPayload && typeof fullPayload === 'object'){
+          fullPayload['__fromAK'] = '1';
+          socket.send(JSON.stringify(fullPayload));
+        }
+      }
+    }catch(e2){ console.warn('AK sync send error:', e2); }
+  }, 150);
 }
 
 function openRZAModal(){
@@ -5807,7 +5811,7 @@ function buildFlightKey() {
 }
 
 function applyRemotePayload(payload) {
-  if (!payload || typeof payload !== "object") return;
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) return;
 
   // Si le payload vient d'un applyAKFlight distant → on lève la protection
   const isFromAK = payload['__fromAK'] === '1';
