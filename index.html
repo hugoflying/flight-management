@@ -5784,21 +5784,8 @@ function buildFlightKey() {
   try {
     if (typeof getTabData === "function") {
       const data = getTabData();
-      const meta = data?.akMeta;
-      if (meta) {
-        const id       = String(meta.id       || '').trim();
-        const linkedId = String(meta.linkedId || '').trim();
-
-        // ✅ Les deux vols liés ont id/linkedId qui se pointent mutuellement
-        // → min(id, linkedId) est identique sur les deux appareils
-        if(id && linkedId){
-          const roomId = id < linkedId ? id : linkedId;
-          return `ROT_${roomId}`;
-        }
-
-        // Fallback : id seul (rotation sans lien connu)
-        if(id) return `AK_${id}`;
-      }
+      const akId = data?.akMeta?.id ? String(data.akMeta.id).trim() : "";
+      if (akId) return `AK_${akId}`;
     }
   } catch (e) {}
 
