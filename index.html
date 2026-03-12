@@ -687,53 +687,27 @@ body.modal-open{
   touch-action: none;
 }
 
-/* ===== footer fixed bottom (iPad/iOS: fond jusqu'en bas sans grossir) ===== */
+/* ===== footer fixed bottom (corrigé iPad/iOS) ===== */
 .fixed-footer{
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
-  inset: auto 0 0 0;
   z-index: 3500;
   background: var(--bg) !important;
   border-top: 1px solid rgba(0,0,0,.08);
-  overflow: visible; /* important pour le ::after */
-
-  /* renfort iOS Safari pour éviter les décrochages visuels */
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  will-change: transform;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
+  overflow: hidden;
 }
 
 html.dark .fixed-footer{
   border-top-color: rgba(255,255,255,.08);
 }
 
-/* ✅ remplit la safe-area (home indicator) SANS augmenter la hauteur du footer */
-.fixed-footer::after{
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: calc(-1 * env(safe-area-inset-bottom));
-  height: env(safe-area-inset-bottom);
-  background: var(--bg);
-
-  /* renfort rendu iOS */
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-}
-
+/* safe-area intégrée sans pseudo élément */
 .fixed-footer-inner{
   max-width: 1120px;
   margin: 0 auto;
-  padding: 10px 14px; /* inchangé => pas de footer plus “épais” */
-
-  /* renfort iOS */
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
+  padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
 }
 
 .footer-row{
@@ -747,8 +721,13 @@ html.dark .fixed-footer{
 /* version compacte tablette */
 @media (min-width: 600px) and (max-width: 900px){
   .fixed-footer-inner{
-    padding: 8px 12px;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
   }
+}
+
+/* stabilise la hauteur viewport sur iOS */
+html, body{
+  min-height: 100dvh;
 }
 
 /* ===== LOAD FAB (au-dessus du footer fixe, au-dessus de SETTINGS) ===== */
