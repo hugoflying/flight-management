@@ -5454,6 +5454,8 @@ let isApplyingRemoteUpdate = false;
 let currentSocketKey = null;
 const debounceTimers = {};
 let realtimeSyncInitialized = false;
+let pendingPatch = {};
+let hasReceivedInitialState = false;
 
 function buildFlightKey() {
   try {
@@ -5600,6 +5602,20 @@ function collectFlightState() {
   return payload;
 }
 
+function flushPendingPatch() {
+  if (!socket || socket.readyState !== WebSocket.OPEN) return;
+  if (!currentSocketKey) return;
+
+  const entries = Object.entries(pendingPatch);
+  if (!entries.length) return;
+
+  const payload = { ...pendingPatch };
+  pendingPatch = {};
+
+  console.log("FLUSH PATCH", payload);
+  socket.send(JSON.stringify(payload));
+}
+
 function sendFullFlightState() {
   if (isApplyingRemoteUpdate) return;
 
@@ -5618,6 +5634,8 @@ function connectFlightSocket() {
 
   if (!key) {
     currentSocketKey = null;
+    hasReceivedInitialState = false;
+    pendingPatch = {};
     if (socket) {
       try { socket.close(); } catch (e) {}
       socket = null;
@@ -5625,7 +5643,7 @@ function connectFlightSocket() {
     return;
   }
 
-  if (socket && currentSocketKey === key && socket.readyState <= 1) return;
+  if (socket && currentSocketKey === key && socket.readyState <= WebSocket.OPEN) return;
 
   if (socket) {
     try { socket.close(); } catch (e) {}
@@ -5633,11 +5651,14 @@ function connectFlightSocket() {
   }
 
   currentSocketKey = key;
+  hasReceivedInitialState = false;
+  pendingPatch = {};
+
   socket = new WebSocket(`wss://turnaround-sync.deruellehugo-49c.workers.dev/${encodeURIComponent(key)}`);
 
   socket.onopen = () => {
     console.log("WebSocket connecté :", key);
-    sendFullFlightState();
+    flushPendingPatch();
   };
 
   socket.onmessage = (event) => {
@@ -5645,16 +5666,18 @@ function connectFlightSocket() {
       const msg = JSON.parse(event.data);
 
       if (msg.__type === "init") {
-        applyRemotePayload(msg.payload);
+        hasReceivedInitialState = true;
+        applyRemotePayload(msg.payload || {});
+        flushPendingPatch();
         return;
       }
 
       if (msg.__type === "patch") {
-        applyRemotePayload(msg.payload);
+        applyRemotePayload(msg.payload || {});
         return;
       }
 
-      applyRemotePayload(msg);
+      applyRemotePayload(msg || {});
     } catch (err) {
       console.error("Erreur message WebSocket :", err);
     }
@@ -5668,6 +5691,7 @@ function connectFlightSocket() {
     console.log("WebSocket fermé");
     if (currentSocketKey === key) {
       socket = null;
+      hasReceivedInitialState = false;
     }
   };
 }
@@ -5678,23 +5702,23 @@ function sendFieldUpdate(id, value) {
   const key = buildFlightKey();
   if (!key) return;
 
-  if (!socket || socket.readyState !== WebSocket.OPEN || currentSocketKey !== key) {
+  pendingPatch[id] = value;
+
+  if (!socket || currentSocketKey !== key || socket.readyState === WebSocket.CLOSED) {
     connectFlightSocket();
     return;
   }
 
-  const payload = { [id]: value };
-  console.log("SEND PATCH", payload);
+  if (socket.readyState !== WebSocket.OPEN) {
+    return;
+  }
 
-  socket.send(JSON.stringify(payload));
+  flushPendingPatch();
 }
 
 function setupRealtimeSync() {
   if (realtimeSyncInitialized) {
     connectFlightSocket();
-    setTimeout(() => {
-      sendFullFlightState();
-    }, 100);
     return;
   }
 
@@ -5720,9 +5744,6 @@ function setupRealtimeSync() {
 
     const reconnect = () => {
       connectFlightSocket();
-      setTimeout(() => {
-        sendFullFlightState();
-      }, 100);
     };
 
     el.addEventListener("input", reconnect);
@@ -5832,10 +5853,6 @@ function setupRealtimeSync() {
   document.addEventListener("change", pushIfSyncField);
 
   connectFlightSocket();
-
-  setTimeout(() => {
-    sendFullFlightState();
-  }, 100);
 }
 </script>
   
