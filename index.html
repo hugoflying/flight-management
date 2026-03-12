@@ -5966,9 +5966,23 @@ function flushPendingPatch() {
   const payload = { ...pendingPatch };
   pendingPatch = {};
 
-  console.log("FLUSH PATCH", payload);
+  // ✅ Toujours inclure __linkedRoom si une rotation liée existe
+  const lr = getLinkedRoom();
+  if(lr) payload['__linkedRoom'] = lr;
+
   socket.send(JSON.stringify(payload));
 }
+
+
+function getLinkedRoom() {
+  try {
+    const meta = getTabData()?.akMeta;
+    const linkedId = String(meta?.linkedId || '').trim();
+    if(linkedId) return `AK_${linkedId}`;
+  } catch(_) {}
+  return null;
+}
+
 
 function sendFullFlightState() {
   if (isApplyingRemoteUpdate) return;
@@ -5978,7 +5992,8 @@ function sendFullFlightState() {
   if (!socket || socket.readyState !== WebSocket.OPEN || currentSocketKey !== key) return;
 
   const payload = collectFlightState();
-  console.log("SEND FULL STATE", payload);
+  const lr = getLinkedRoom();
+  if(lr) payload['__linkedRoom'] = lr;
 
   socket.send(JSON.stringify(payload));
 }
