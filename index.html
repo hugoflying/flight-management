@@ -914,30 +914,23 @@ html.dark .fixed-footer{
 /* ===== HORAIRES grid 2×2 ===== */
 .horaires-grid{
   display: grid;
-  grid-template-columns: auto 1fr 1fr;
-  gap: 10px;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
   align-items: start;
 }
-.hor-empty{}
+@media (max-width: 480px){
+  .horaires-grid{ grid-template-columns: 1fr; }
+}
+.hor-block{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 .hor-col-head{
-  text-align: center;
   display: flex;
   justify-content: center;
-  padding-bottom: 2px;
+  padding-bottom: 6px;
   border-bottom: 2px solid var(--field-border);
-}
-.hor-row-head{
-  display: flex;
-  align-items: center;
-  height: var(--inputH);
-}
-.hor-row-label{
-  font-size: .75rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: .06em;
-  color: var(--muted);
-  white-space: nowrap;
 }
 .hor-badge{
   display: inline-flex;
@@ -1560,44 +1553,39 @@ body.iv-editing .iv-edit-btn{ opacity: 1; }
   <div class="card-content">
     <div class="horaires-grid">
 
-      <!-- Ligne 1 : badges ARR / DEP -->
-      <div class="hor-empty"></div>
-      <div class="hor-col-head"><span class="hor-badge hor-badge-arr">ARR</span></div>
-      <div class="hor-col-head"><span class="hor-badge hor-badge-dep">DEP</span></div>
-
-      <!-- Ligne 2 : labels SIBT / SOBT -->
-      <div class="hor-empty"></div>
-      <div><label class="label mb-0">SIBT</label></div>
-      <div><label class="label mb-0">SOBT</label></div>
-
-      <!-- Ligne 3 : inputs schedulé -->
-      <div class="hor-empty"></div>
-      <div><input class="input hor-input-sched" type="time" id="SIBT" onchange="updateAllCalculations()"></div>
-      <div><input class="input hor-input-sched" type="time" id="SOBT" onchange="manualSOBT=true;updateAllCalculations()"></div>
-
-      <!-- Ligne 4 : labels AIBT / AOBT -->
-      <div class="hor-empty"></div>
-      <div><label class="label mb-0">AIBT</label></div>
-      <div><label class="label mb-0">AOBT</label></div>
-
-      <!-- Ligne 5 : inputs réel + boutons -->
-      <div class="hor-empty"></div>
-
-      <div class="hor-cell">
-        <input class="input" type="time" id="AIBT" onchange="updateAllCalculations()">
-        <div class="btn-actions">
-          <button class="button is-dark is-light" type="button" onclick="adjustTime('AIBT',-1);updateAllCalculations()">-1</button>
-          <button class="button is-link" type="button" onclick="setNow('AIBT');updateAllCalculations()">Now</button>
-          <button class="button is-dark is-light" type="button" onclick="adjustTime('AIBT',1);updateAllCalculations()">+1</button>
+      <!-- Bloc ARR -->
+      <div class="hor-block">
+        <div class="hor-col-head"><span class="hor-badge hor-badge-arr">ARR</span></div>
+        <div class="hor-cell">
+          <label class="label">SIBT</label>
+          <input class="input hor-input-sched" type="time" id="SIBT" onchange="updateAllCalculations()">
+        </div>
+        <div class="hor-cell">
+          <label class="label">AIBT</label>
+          <input class="input" type="time" id="AIBT" onchange="updateAllCalculations()">
+          <div class="btn-actions">
+            <button class="button is-dark is-light" type="button" onclick="adjustTime('AIBT',-1);updateAllCalculations()">-1</button>
+            <button class="button is-link" type="button" onclick="setNow('AIBT');updateAllCalculations()">Now</button>
+            <button class="button is-dark is-light" type="button" onclick="adjustTime('AIBT',1);updateAllCalculations()">+1</button>
+          </div>
         </div>
       </div>
 
-      <div class="hor-cell">
-        <input class="input" type="time" id="AOBT" onchange="updateAllCalculations()">
-        <div class="btn-actions">
-          <button class="button is-dark is-light" type="button" onclick="adjustTime('AOBT',-1);updateAllCalculations()">-1</button>
-          <button class="button is-link" type="button" onclick="setNow('AOBT');updateAllCalculations()">Now</button>
-          <button class="button is-dark is-light" type="button" onclick="adjustTime('AOBT',1);updateAllCalculations()">+1</button>
+      <!-- Bloc DEP -->
+      <div class="hor-block">
+        <div class="hor-col-head"><span class="hor-badge hor-badge-dep">DEP</span></div>
+        <div class="hor-cell">
+          <label class="label">SOBT</label>
+          <input class="input hor-input-sched" type="time" id="SOBT" onchange="manualSOBT=true;updateAllCalculations()">
+        </div>
+        <div class="hor-cell">
+          <label class="label">AOBT</label>
+          <input class="input" type="time" id="AOBT" onchange="updateAllCalculations()">
+          <div class="btn-actions">
+            <button class="button is-dark is-light" type="button" onclick="adjustTime('AOBT',-1);updateAllCalculations()">-1</button>
+            <button class="button is-link" type="button" onclick="setNow('AOBT');updateAllCalculations()">Now</button>
+            <button class="button is-dark is-light" type="button" onclick="adjustTime('AOBT',1);updateAllCalculations()">+1</button>
+          </div>
         </div>
       </div>
 
