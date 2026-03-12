@@ -1219,6 +1219,18 @@ html.dark .tw-color-is-warning { border-color: #f59e0b !important; color: #fcd34
 #timing-grid .grid-auto { gap: 6px !important; row-gap: 6px !important; }
 #timing-grid .card.mb-4 { margin-bottom: 8px !important; }
 #timing-grid .hor-col-head { margin-bottom: 6px !important; }
+
+/* Badges retard INFO VOL */
+.kv-badges-row{
+  display: flex;
+  gap: 8px;
+  padding: 6px 0 2px 0;
+}
+.kv-badges-row .tag{
+  font-weight: 900;
+  font-size: .78rem;
+  border-radius: 8px;
+}
 </style>
 </head>
 
@@ -1674,6 +1686,10 @@ html.dark .tw-color-is-warning { border-color: #f59e0b !important; color: #fcd34
           <div class="kv-title">Salle arr. / Parking</div>
           <div class="kv-value"><span id="kvBC">----</span> · <span id="kvPark">--</span></div>
         </div>
+      </div>
+      <div class="kv-badges-row">
+        <span id="ivBadgeArr"></span>
+        <span id="ivBadgeDep"></span>
       </div>
     </div>
 
@@ -6187,6 +6203,46 @@ function twSyncAll(){
     const id = w.dataset.id;
     if(id) twSync(id);
   });
+}
+
+function delayMinsFromHHMM(planned, actual){
+  if(!planned || !actual) return null;
+  const toMin = s => { const [h,m] = s.split(':').map(Number); return h*60+m; };
+  let diff = toMin(actual) - toMin(planned);
+  // gestion passage minuit
+  if(diff < -720) diff += 1440;
+  if(diff > 720)  diff -= 1440;
+  return diff;
+}
+
+function updateIVBadges(){
+  const sibt = document.getElementById('SIBT')?.value || '';
+  const aibt = document.getElementById('AIBT')?.value || '';
+  const sobt = document.getElementById('SOBT')?.value || '';
+  const aobt = document.getElementById('AOBT')?.value || '';
+
+  function renderBadge(el, mins){
+    if(!el) return;
+    el.className = '';
+    el.textContent = '';
+    if(mins == null) return;
+    let label, cls;
+    if(mins >= 15)      { label = `RETARDÉ +${mins}min`; cls = 'tag is-danger'; }
+    else if(mins >= 5)  { label = `RETARDÉ +${mins}min`; cls = 'tag is-warning'; }
+    else if(mins <= -10){ label = `EN AVANCE ${mins}min`; cls = 'tag is-info'; }
+    else                { label = "À L'HEURE"; cls = 'tag is-success'; }
+    el.className = cls;
+    el.style.fontWeight = '900';
+    el.textContent = label;
+  }
+
+  const arrEl = document.getElementById('ivBadgeArr');
+  const depEl = document.getElementById('ivBadgeDep');
+
+  // ARR : SIBT planifié, AIBT réel
+  renderBadge(arrEl, delayMinsFromHHMM(sibt, aibt));
+  // DEP : SOBT planifié, AOBT réel
+  renderBadge(depEl, delayMinsFromHHMM(sobt, aobt));
 }
 </script>
   
