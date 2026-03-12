@@ -300,15 +300,22 @@ textarea.si-uppercase{ text-transform: uppercase; }
 }
 .kv-card{
   border-radius: 14px;
-  background: color-mix(in srgb, var(--card) 90%, #3b82f6 10%);
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+  background: rgba(255,255,255,.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,.6);
+  box-shadow: 0 4px 16px rgba(0,0,0,.06);
   padding: 10px 12px;
   display:flex;
   align-items:center;
   justify-content: space-between;
   gap: 10px;
 }
-body.dark .kv-card{ box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
+body.dark .kv-card{
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.12);
+  box-shadow: 0 4px 16px rgba(0,0,0,.25);
+}
 .kv-left{ display:flex; flex-direction:column; gap:2px; }
 .kv-title{ font-size:.78rem; font-weight:900; color: var(--muted); text-transform:uppercase; }
 .kv-value{ font-size:1.1rem; font-weight:900; color: var(--text); }
@@ -5656,7 +5663,7 @@ function applyRemotePayload(payload) {
 
   const akProtectedFields = new Set([
     "Date", "Parking", "Immat", "TypeAvion",
-    "From", "To", "SIBT", "SOBT"
+    "From", "To", "SIBT"
   ]);
 
   isApplyingRemoteUpdate = true;
@@ -5935,6 +5942,7 @@ function setupRealtimeSync() {
     "Cie",
     "NVol",
     "To",
+    "SIBT",
     "SOBT",
     "EOBT",
     "AOBT",
