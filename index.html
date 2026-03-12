@@ -231,12 +231,6 @@ textarea.si-uppercase{ text-transform: uppercase; }
 .field-optional .label{
   opacity: .55;
 }
-.field-optional .input{
-  background: color-mix(in srgb, var(--field-bg) 80%, #f59e0b 20%) !important;
-}
-html.dark .field-optional .input{
-  background: color-mix(in srgb, var(--field-bg) 80%, #92400e 20%) !important;
-}
 
 .input::placeholder, .textarea::placeholder{ color: var(--field-placeholder) !important; }
 
@@ -3318,7 +3312,7 @@ function generateTimingFields(){
   const container = document.getElementById('timing-grid');
   if(!container) return;
 
-  const fieldHTML = (id,label,full=false,optional=false)=>`
+  const fieldHTML = (id,label,full=false,optional=false,nowColor='is-link')=>`
     <div class="${full ? 'span-12' : 'span-6'}">
       <div class="field${optional ? ' field-optional' : ''}">
         <label class="label">${label}</label>
@@ -3328,7 +3322,7 @@ function generateTimingFields(){
         <div class="btn-actions">
           <button class="button is-dark is-light" type="button"
             onclick="adjustTime('${id}',-1);updateAllCalculations()">-1</button>
-          <button class="button is-link" type="button"
+          <button class="button ${nowColor}" type="button"
             onclick="setNow('${id}');updateAllCalculations()">Now</button>
           <button class="button is-dark is-light" type="button"
             onclick="adjustTime('${id}',1);updateAllCalculations()">+1</button>
@@ -3341,11 +3335,11 @@ function generateTimingFields(){
     <div class="card mb-4">
       <div class="card-content">
         <div class="grid-auto">
-          ${fieldHTML('ArriveeFuel','Arrivée Avitair',true)}
+          ${fieldHTML('ArriveeFuel','Arrivée Avitair',true,false,'is-info')}
           ${fieldHTML('PremierDebarque','Premier débarqué')}
           ${fieldHTML('DernierDebarque','Dernier débarqué')}
-          ${fieldHTML('ArriveeLiftArr','Arrivée lift')}
-          ${fieldHTML('DepartLiftArr','Départ lift')}
+          ${fieldHTML('ArriveeLiftArr','Arrivée lift',false,false,'is-success')}
+          ${fieldHTML('DepartLiftArr','Départ lift',false,false,'is-success')}
         </div>
       </div>
     </div>`;
@@ -3355,21 +3349,21 @@ function generateTimingFields(){
     <div class="card">
       <div class="card-content">
         <div class="grid-auto">
-          ${fieldHTML('ArrPNT','Arrivée PNT',false,true)}
-          ${fieldHTML('ArrPNC','Arrivée PNC',false,true)}
+          ${fieldHTML('ArrPNT','Arrivée PNT',false,true,'is-warning')}
+          ${fieldHTML('ArrPNC','Arrivée PNC',false,true,'is-warning')}
           ${fieldHTML('AvionPremierEmbarque','Premier embarqué')}
           ${fieldHTML('AvionDernierEmbarque','Dernier embarqué')}
-          ${fieldHTML('ArriveeLift','Arrivée lift')}
-          ${fieldHTML('DepartLift','Départ lift')}
+          ${fieldHTML('ArriveeLift','Arrivée lift',false,false,'is-success')}
+          ${fieldHTML('DepartLift','Départ lift',false,false,'is-success')}
 
           <!-- Départ Avitair + Arrivée INAD sur la même ligne -->
           <div class="span-12">
             <div class="grid-auto">
               <div class="span-6">
-                ${fieldHTML('DepartFuel','Départ Avitair')}
+                ${fieldHTML('DepartFuel','Départ Avitair',false,false,'is-info')}
               </div>
               <div class="span-6">
-                ${fieldHTML('ArriveeINAD','Arrivée INAD',false,true)}
+                ${fieldHTML('ArriveeINAD','Arrivée INAD',false,true,'is-warning')}
               </div>
             </div>
           </div>
@@ -5879,3 +5873,4 @@ function setupRealtimeSync() {
   
 </body>
 </html>
+
