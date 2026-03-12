@@ -3586,6 +3586,7 @@ function generateTimingFields(){
   const arrNoHeader = `
     <div class="card mb-4">
       <div class="card-content">
+        <div class="hor-col-head mb-3"><span class="hor-badge hor-badge-arr">ARR</span></div>
         <div class="grid-auto">
           ${fieldHTML('ArriveeFuel','Arrivée Avitair',true,false,'is-warning')}
           ${fieldHTML('PremierDebarque','Premier débarqué')}
@@ -3600,6 +3601,7 @@ function generateTimingFields(){
   const depNoHeader = `
     <div class="card">
       <div class="card-content">
+        <div class="hor-col-head mb-3"><span class="hor-badge hor-badge-dep">DEP</span></div>
         <div class="grid-auto">
           ${fieldHTML('ArrPNT','Arrivée PNT',false,true,'is-dark')}
           ${fieldHTML('ArrPNC','Arrivée PNC',false,true,'is-dark')}
