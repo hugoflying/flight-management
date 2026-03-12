@@ -5020,7 +5020,9 @@ function renderAKList(pairs){
 
   function getStatus(f, flow){
     let s = (f?.status||f?.milestone||'').toString().toUpperCase();
-    if(s==='SCHEDULED') return 'PRÉVU';
+    if(s==='SCHEDULED')  return 'PRÉVU';
+    if(s==='CANCELLED')  return 'ANNULÉ';
+    if(s==='SUSPENDED')  return 'SUSPENDU';
     if(flow==='DEP'){ if(s==='IN_FLIGHT') return 'DÉCOLLÉ'; }
     else{
       if(s==='TERMINATED') return 'ARRIVÉ';
@@ -5984,7 +5986,6 @@ function getLinkedRoom() {
     const meta = getTabData()?.akMeta;
     const linkedId = String(meta?.linkedId || '').trim();
     if(linkedId){
-      console.log("[SYNC] linkedRoom =", `AK_${linkedId}`);
       return `AK_${linkedId}`;
     }
   } catch(_) {}
