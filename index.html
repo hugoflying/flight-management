@@ -3473,6 +3473,24 @@ function renderTabs(){
   updateHeaderOffset();
 }
 
+function getTabFlightKey(tabId){
+  try{
+    const d = JSON.parse(localStorage.getItem('tab-'+tabId) || '{}');
+    const meta = d?.akMeta;
+    if(meta?.id) return `AK_${meta.id}`;
+    const date = (d.Date||'').replaceAll('-','');
+    const immat = (d.Immat||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+    const from = (d.From||'').toUpperCase();
+    const to = (d.To||'').toUpperCase();
+    const sibt = (d.SIBT||'').replace(':','');
+    const sobt = (d.SOBT||'').replace(':','');
+    const timeRef = sibt||sobt;
+    const stationRef = from||to;
+    if(date && immat && timeRef && stationRef) return `${date}_${immat}_${stationRef}_${timeRef}`;
+  }catch(_){}
+  return null;
+}
+
 function createNewTab(){
   // ✅ 1) Sauver l'onglet courant AVANT de reset
   if(currentTabId) saveCurrentTabData();
@@ -3539,6 +3557,21 @@ function deleteTab(id){
   if(!confirm('Supprimer cette fiche ?')) return;
 
   id = String(id);
+
+  // ✅ Supprimer du dashboard avant de fermer
+  if(id === currentTabId && socket && socket.readyState === WebSocket.OPEN && currentSocketKey){
+    const emptyState = {Cie:'',NVol:'',Date:'',From:'',To:'',SIBT:'',SOBT:'',AIBT:'',AOBT:''};
+    socket.send(JSON.stringify(emptyState));
+  } else {
+    // Si pas l'onglet courant, utiliser le flightKey de cet onglet
+    const tabData = JSON.parse(localStorage.getItem('tab-'+id) || '{}');
+    const tabKey = tabData?.akMeta?.id ? `AK_${tabData.akMeta.id}` : null;
+    if(tabKey){
+      try{
+        fetch(`https://turnaround-sync.deruellehugo-49c.workers.dev/${encodeURIComponent(tabKey)}`, {method:'DELETE'});
+      }catch(_){}
+    }
+  }
 
   let tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
   if(!Array.isArray(tabs)) tabs = [];
@@ -5360,6 +5393,26 @@ function applyAKFlight(f, flow, opts = {}){
 
     updateAllCalculations();
     updateTabLabelInstant();
+
+    // ✅ Détecter si un autre onglet a le même vol et le fermer
+    try{
+      const myKey = buildFlightKey();
+      if(myKey){
+        const tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
+        for(const tid of tabs){
+          if(tid === currentTabId) continue;
+          const otherKey = getTabFlightKey(tid);
+          if(otherKey === myKey){
+            // Même vol déjà ouvert : supprimer l'autre onglet silencieusement
+            localStorage.removeItem('tab-' + tid);
+            const updated = tabs.filter(t => t !== tid);
+            localStorage.setItem('flightTabs', JSON.stringify(updated));
+            renderTabs();
+            break;
+          }
+        }
+      }
+    }catch(_){}
 
   }catch(e){
     showPopup(`Erreur import AK (${String(e.message || e)})`, "#ef4444", 2200);
