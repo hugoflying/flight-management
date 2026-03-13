@@ -6248,6 +6248,8 @@ function setupRealtimeSync() {
     if (!el || !el.id) return;
     if (!syncFields.has(el.id)) return;
     if (el.readOnly) return;
+    // Vérifier si le vol est devenu vide
+    setTimeout(checkAndDeleteIfEmpty, 200);
 
     const isImmediate =
       event.type === "change" ||
@@ -6471,6 +6473,29 @@ function updateIVBadges(){
 }
 
 
+
+function checkAndDeleteIfEmpty(){
+  // Vérifier si le vol a encore des données significatives
+  const hasData =
+    hasValue(document.getElementById('SIBT')?.value) ||
+    hasValue(document.getElementById('SOBT')?.value) ||
+    hasValue(document.getElementById('AIBT')?.value) ||
+    hasValue(document.getElementById('AOBT')?.value) ||
+    hasValue(document.getElementById('NVol')?.value) ||
+    hasValue(document.getElementById('PremierDebarque')?.value) ||
+    hasValue(document.getElementById('AvionPremierEmbarque')?.value);
+
+  if(!hasData && currentSocketKey){
+    // Plus rien : supprimer du serveur
+    try{
+      fetch(`https://turnaround-sync.deruellehugo-49c.workers.dev/${encodeURIComponent(currentSocketKey)}`, {
+        method: "DELETE"
+      });
+    }catch(_){}
+  }
+}
+
+function hasValue(v){ return v !== undefined && v !== null && String(v).trim() !== ""; }
 </script>
   
 </body>
