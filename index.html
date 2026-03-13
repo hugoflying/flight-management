@@ -6018,6 +6018,18 @@ function collectFlightState() {
     payload[id] = el.value || "";
   });
 
+  // Clé dashboard commune ARR+DEP : min(id, linkedId)
+  try{
+    const meta = getTabData()?.akMeta;
+    const fid = String(meta?.id || '').trim();
+    const lid = String(meta?.linkedId || '').trim();
+    if(fid && lid){
+      payload['__dashboardKey'] = fid < lid ? fid : lid;
+    } else if(fid){
+      payload['__dashboardKey'] = fid;
+    }
+  }catch(_){}
+
   return payload;
 }
 
