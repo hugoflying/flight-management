@@ -6475,11 +6475,11 @@ function updateIVBadges(){
 
 
 function checkAndDeleteIfEmpty(){
-  const ids = ['SIBT','SOBT','AIBT','AOBT','NVol','PremierDebarque','AvionPremierEmbarque','ArrPNT','ArrPNC'];
-  const hasData = ids.some(id => {
-    const v = document.getElementById(id)?.value || '';
-    return v.trim() !== '';
-  });
+  // Le vol est actif tant que Cie + NVol + Date sont présents
+  const cie  = (document.getElementById('Cie')?.value  || '').trim();
+  const nvol = (document.getElementById('NVol')?.value || '').trim();
+  const date = (document.getElementById('Date')?.value || '').trim();
+  const hasData = cie && nvol && date;
 
   if(!hasData && socket && socket.readyState === WebSocket.OPEN && currentSocketKey){
     // Envoyer un state vide via WebSocket → le serveur supprime du dashboard
