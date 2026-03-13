@@ -5667,6 +5667,15 @@ function toggleSettings(){
 
 function clearAutoSave() {
   if (confirm("Tout réinitialiser ?")) {
+    // Effacer le state WebSocket avant de recharger
+    const key = buildFlightKey();
+    if(key){
+      try{
+        fetch(`https://turnaround-sync.deruellehugo-49c.workers.dev/${encodeURIComponent(key)}`, {
+          method: "DELETE"
+        });
+      }catch(_){}
+    }
     localStorage.clear();
     location.reload();
   }
@@ -6043,8 +6052,6 @@ function connectFlightSocket() {
   socket.onopen = () => {
     console.log("WebSocket connecté :", key);
     flushPendingPatch();
-    // Envoyer le state complet pour que le dashboard ait toutes les infos
-    setTimeout(sendFullFlightState, 100);
   };
 
   socket.onmessage = (event) => {
@@ -6055,6 +6062,8 @@ function connectFlightSocket() {
         hasReceivedInitialState = true;
         applyRemotePayload(msg.payload || {});
         flushPendingPatch();
+        // Envoyer le state complet pour que le dashboard ait toutes les infos
+        setTimeout(sendFullFlightState, 100);
         return;
       }
 
