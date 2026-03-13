@@ -6043,6 +6043,8 @@ function connectFlightSocket() {
   socket.onopen = () => {
     console.log("WebSocket connecté :", key);
     flushPendingPatch();
+    // Envoyer le state complet pour que le dashboard ait toutes les infos
+    setTimeout(sendFullFlightState, 100);
   };
 
   socket.onmessage = (event) => {
