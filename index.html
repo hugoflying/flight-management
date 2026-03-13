@@ -3558,17 +3558,20 @@ function deleteTab(id){
 
   id = String(id);
 
-  // ✅ Supprimer du dashboard avant de fermer
-  if(id === currentTabId && socket && socket.readyState === WebSocket.OPEN && currentSocketKey){
-    const emptyState = {Cie:'',NVol:'',Date:'',From:'',To:'',SIBT:'',SOBT:'',AIBT:'',AOBT:''};
-    socket.send(JSON.stringify(emptyState));
-  } else {
-    // Si pas l'onglet courant, utiliser le flightKey de cet onglet
-    const tabData = JSON.parse(localStorage.getItem('tab-'+id) || '{}');
-    const tabKey = tabData?.akMeta?.id ? `AK_${tabData.akMeta.id}` : null;
-    if(tabKey){
+  // ✅ Supprimer du dashboard : DELETE HTTP sur le flightKey de cet onglet
+  {
+    let keyToDel = null;
+    if(id === currentTabId){
+      keyToDel = currentSocketKey || buildFlightKey();
+    } else {
+      keyToDel = getTabFlightKey(id);
+    }
+    if(keyToDel){
       try{
-        fetch(`https://turnaround-sync.deruellehugo-49c.workers.dev/${encodeURIComponent(tabKey)}`, {method:'DELETE'});
+        fetch(`https://turnaround-sync.deruellehugo-49c.workers.dev/${encodeURIComponent(keyToDel)}`, {
+          method: 'DELETE'
+        }).then(r => console.log('[deleteTab] DELETE', keyToDel, r.status))
+          .catch(e => console.warn('[deleteTab] DELETE failed', e));
       }catch(_){}
     }
   }
