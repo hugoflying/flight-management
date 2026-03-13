@@ -5089,7 +5089,7 @@ function renderAKList(pairs){
   list.innerHTML = pairs.map(function(p){
     return '<div class="ak-pair-row">'
       + half(p.arr,'ARR')
-      + '<div class="ak-pair-divider">🔗</div>'
+      + '<div class="ak-pair-divider">' + (p.arr && p.dep ? '🔗' : '⛓️\u200d💥') + '</div>'
       + half(p.dep,'DEP')
       + '</div>';
   }).join('');
