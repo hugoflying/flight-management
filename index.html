@@ -3558,22 +3558,9 @@ function deleteTab(id){
 
   id = String(id);
 
-  // ✅ Supprimer du dashboard : DELETE HTTP sur le flightKey de cet onglet
-  {
-    let keyToDel = null;
-    if(id === currentTabId){
-      keyToDel = currentSocketKey || buildFlightKey();
-    } else {
-      keyToDel = getTabFlightKey(id);
-    }
-    if(keyToDel){
-      try{
-        fetch(`https://turnaround-sync.deruellehugo-49c.workers.dev/${encodeURIComponent(keyToDel)}`, {
-          method: 'DELETE'
-        }).then(r => console.log('[deleteTab] DELETE', keyToDel, r.status))
-          .catch(e => console.warn('[deleteTab] DELETE failed', e));
-      }catch(_){}
-    }
+  // ✅ Supprimer du dashboard via WebSocket __delete
+  if(id === currentTabId && socket && socket.readyState === WebSocket.OPEN){
+    socket.send(JSON.stringify({ __delete: '1' }));
   }
 
   let tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
@@ -6030,18 +6017,6 @@ function collectFlightState() {
     if (!el) return;
     payload[id] = el.value || "";
   });
-
-  // ✅ Clé dashboard commune ARR+DEP via min(id, linkedId)
-  try{
-    const meta = getTabData()?.akMeta;
-    const id       = String(meta?.id       || '').trim();
-    const linkedId = String(meta?.linkedId || '').trim();
-    if(id && linkedId){
-      payload['__dashboardKey'] = id < linkedId ? `AK_${id}` : `AK_${linkedId}`;
-    } else if(id){
-      payload['__dashboardKey'] = `AK_${id}`;
-    }
-  }catch(_){}
 
   return payload;
 }
