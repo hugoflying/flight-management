@@ -1300,7 +1300,7 @@ html.dark .tw-color-is-bordeaux { border-color: #ef4444 !important; color: #ef44
 .ak-half{ flex:1; padding:10px; min-width:0; }
 .ak-half-done{ opacity:.5; }
 .ak-half-empty{ flex:1; background:rgba(0,0,0,.02); min-height:60px; }
-.ak-pair-divider{ width:1px; background:rgba(0,0,0,.08); flex-shrink:0; }
+.ak-pair-divider{ width:auto; flex-shrink:0; display:flex; align-items:center; justify-content:center; padding:0 4px; font-size:.9rem; color:var(--muted); }
 .ak-half-top{ display:flex; align-items:center; gap:5px; flex-wrap:wrap; margin-bottom:2px; }
 .ak-flow-badge{ font-size:.62rem; font-weight:900; padding:1px 6px; border-radius:6px; }
 .ak-iata{ font-weight:900; font-size:.95rem; }
@@ -5089,7 +5089,7 @@ function renderAKList(pairs){
   list.innerHTML = pairs.map(function(p){
     return '<div class="ak-pair-row">'
       + half(p.arr,'ARR')
-      + '<div class="ak-pair-divider"></div>'
+      + '<div class="ak-pair-divider">🔗</div>'
       + half(p.dep,'DEP')
       + '</div>';
   }).join('');
