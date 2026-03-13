@@ -6475,27 +6475,24 @@ function updateIVBadges(){
 
 
 function checkAndDeleteIfEmpty(){
-  // Vérifier si le vol a encore des données significatives
-  const hasData =
-    hasValue(document.getElementById('SIBT')?.value) ||
-    hasValue(document.getElementById('SOBT')?.value) ||
-    hasValue(document.getElementById('AIBT')?.value) ||
-    hasValue(document.getElementById('AOBT')?.value) ||
-    hasValue(document.getElementById('NVol')?.value) ||
-    hasValue(document.getElementById('PremierDebarque')?.value) ||
-    hasValue(document.getElementById('AvionPremierEmbarque')?.value);
+  const ids = ['SIBT','SOBT','AIBT','AOBT','NVol','PremierDebarque','AvionPremierEmbarque','ArrPNT','ArrPNC'];
+  const hasData = ids.some(id => {
+    const v = document.getElementById(id)?.value || '';
+    return v.trim() !== '';
+  });
 
-  if(!hasData && currentSocketKey){
-    // Plus rien : supprimer du serveur
-    try{
-      fetch(`https://turnaround-sync.deruellehugo-49c.workers.dev/${encodeURIComponent(currentSocketKey)}`, {
-        method: "DELETE"
-      });
-    }catch(_){}
+  if(!hasData && socket && socket.readyState === WebSocket.OPEN && currentSocketKey){
+    // Envoyer un state vide via WebSocket → le serveur supprime du dashboard
+    const emptyState = {};
+    ids.forEach(id => { emptyState[id] = ''; });
+    emptyState['Cie'] = '';
+    emptyState['From'] = '';
+    emptyState['To'] = '';
+    emptyState['Immat'] = '';
+    emptyState['Parking'] = '';
+    socket.send(JSON.stringify(emptyState));
   }
 }
-
-function hasValue(v){ return v !== undefined && v !== null && String(v).trim() !== ""; }
 </script>
   
 </body>
