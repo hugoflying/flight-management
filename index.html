@@ -1321,6 +1321,15 @@ html.dark .tw-color-is-bordeaux { border-color: #ef4444 !important; color: #ef44
 
 /* Suffixe source heure dans liste vols */
 .ak-tsuffix{ font-size:.7em; opacity:.7; font-weight:600; }
+
+/* SIBT/SOBT : zone pleine largeur, pas de Now visible */
+.tw-sched-zone{
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%;
+  z-index: 3;
+  cursor: default;
+}
 </style>
 </head>
 
@@ -1789,8 +1798,8 @@ html.dark .tw-color-is-bordeaux { border-color: #ef4444 !important; color: #ef44
           <label class="label">SIBT</label>
           <div class="time-wrap" data-id="SIBT">
             <input type="time" id="SIBT" class="tw-hidden-input" onchange="updateAllCalculations(); twSync('SIBT')">
-            <div class="input tw-display hor-input-sched" id="tw-disp-SIBT">--:--</div>
-            <div class="tw-zone tw-zone-center" data-action="now" style="opacity:0;"></div>
+            <div class="input tw-display hor-input-sched tw-sched" id="tw-disp-SIBT">--:--</div>
+            <div class="tw-zone tw-zone-center tw-sched-zone" data-action="now"></div>
           </div>
         </div>
         <div class="hor-cell">
@@ -1812,8 +1821,8 @@ html.dark .tw-color-is-bordeaux { border-color: #ef4444 !important; color: #ef44
           <label class="label">SOBT</label>
           <div class="time-wrap" data-id="SOBT">
             <input type="time" id="SOBT" class="tw-hidden-input" onchange="manualSOBT=true;updateAllCalculations(); twSync('SOBT')">
-            <div class="input tw-display hor-input-sched" id="tw-disp-SOBT">--:--</div>
-            <div class="tw-zone tw-zone-center" data-action="now" style="opacity:0;"></div>
+            <div class="input tw-display hor-input-sched tw-sched" id="tw-disp-SOBT">--:--</div>
+            <div class="tw-zone tw-zone-center tw-sched-zone" data-action="now"></div>
           </div>
         </div>
         <div class="hor-cell">
@@ -6484,6 +6493,7 @@ async function footerRefreshAK(){
   document.addEventListener('click',function(e){
     const zone=e.target.closest('.tw-zone');
     if(!zone) return;
+    if(zone.classList.contains('tw-sched-zone')) return; // gérée par long press
     const wrap=zone.closest('.time-wrap'); if(!wrap) return;
     const id=wrap.dataset.id; if(!id) return;
     const action=zone.dataset.action;
@@ -6512,17 +6522,17 @@ async function footerRefreshAK(){
   function onCancel(id){ clearTimeout(st(id).t); }
 
   document.addEventListener('touchstart',function(e){
-    const z=e.target.closest('.tw-zone-center'); if(!z) return;
+    const z=e.target.closest('.tw-zone-center, .tw-sched-zone'); if(!z) return;
     const id=z.closest('.time-wrap')?.dataset?.id; if(!id) return;
     onStart(id);
   },{passive:true});
   document.addEventListener('touchend',function(e){
-    const z=e.target.closest('.tw-zone-center'); if(!z) return;
+    const z=e.target.closest('.tw-zone-center, .tw-sched-zone'); if(!z) return;
     const id=z.closest('.time-wrap')?.dataset?.id; if(!id) return;
     onEnd(id);
   },{passive:true});
   document.addEventListener('touchmove',function(e){
-    const z=e.target.closest('.tw-zone-center'); if(!z) return;
+    const z=e.target.closest('.tw-zone-center, .tw-sched-zone'); if(!z) return;
     const id=z.closest('.time-wrap')?.dataset?.id; if(!id) return;
     onCancel(id);
   },{passive:true});
@@ -6531,14 +6541,14 @@ async function footerRefreshAK(){
   let mTimer=null;
   document.addEventListener('mousedown',function(e){
     if(e.button!==0) return;
-    const z=e.target.closest('.tw-zone-center'); if(!z) return;
+    const z=e.target.closest('.tw-zone-center, .tw-sched-zone'); if(!z) return;
     const id=z.closest('.time-wrap')?.dataset?.id; if(!id) return;
     const o=st(id); o.fired=false;
     mTimer=setTimeout(()=>{ o.fired=true; openEdit(id); },LONG_MS);
   });
   document.addEventListener('mouseup',function(){ clearTimeout(mTimer); mTimer=null; });
   document.addEventListener('dblclick',function(e){
-    const z=e.target.closest('.tw-zone-center'); if(!z) return;
+    const z=e.target.closest('.tw-zone-center, .tw-sched-zone'); if(!z) return;
     const id=z.closest('.time-wrap')?.dataset?.id; if(!id) return;
     clearVal(id);
   });
