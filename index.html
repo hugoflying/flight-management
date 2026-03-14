@@ -1884,6 +1884,11 @@ html.dark .tw-color-is-bordeaux { border-color: #ef4444 !important; color: #ef44
       </div>
 
       <div class="field span-3">
+        <label class="label">Callsign</label>
+        <input class="input uppercase" type="text" id="Callsign" maxlength="10">
+      </div>
+
+      <div class="field span-3">
         <label class="label">From</label>
         <input class="input uppercase" type="text" id="From" maxlength="3"
                oninput="updateEOBT(); updateCountdownOnce(); ensureCountdownRunning(); updateAllCalculations();">
@@ -5252,6 +5257,8 @@ function applyAKFlight(f, flow, opts = {}){
     if(ac) setValAK('TypeAvion', ac);
 
     const ff = (f.fullFlightNumber || f.callsign || '').toUpperCase().trim();
+    // ✅ Callsign brut AK
+    if(f.callsign) setValAK('Callsign', f.callsign);
     if(ff){
       const m = ff.match(/^([A-Z0-9]{2})([0-9]{1,6})$/);
       if(m){
@@ -5416,7 +5423,12 @@ function applyAKFlight(f, flow, opts = {}){
     }
   }
 
-  // ✅ Synchro inter-appareils : envoyer tous les champs AK (bypass akProtected)
+  // ✅ Synchro inter-appareils : reconnecter si besoin puis envoyer le state complet
+  setTimeout(() => {
+    try{
+      connectFlightSocket(); // recalcule la clé avec le nouvel akMeta
+    }catch(_){}
+  }, 50);
   setTimeout(() => {
     try{
       if(!isApplyingRemoteUpdate && socket && socket.readyState === WebSocket.OPEN && currentSocketKey){
@@ -5427,7 +5439,7 @@ function applyAKFlight(f, flow, opts = {}){
         }
       }
     }catch(e2){ console.warn('AK sync send error:', e2); }
-  }, 150);
+  }, 500);
 }
 
 function openRZAModal(){
@@ -5932,6 +5944,7 @@ function collectFlightState() {
   const ids = [
     "Cie",
     "NVol",
+    "Callsign",
     "From",
     "To",
     "Date",
@@ -6226,6 +6239,7 @@ function setupRealtimeSync() {
   const syncFields = new Set([
     "Cie",
     "NVol",
+    "Callsign",
     "From",
     "To",
     "Date",
