@@ -4304,6 +4304,36 @@ function setTimeModeUTC(enable, fromInit=false){
 
   localStorage.setItem('modeUTC', enable ? '1' : '0');
 
+  // ✅ Convertir les valeurs de temps dans TOUS les onglets en localStorage
+  if(!fromInit){
+    const offsetHours = -new Date().getTimezoneOffset() / 60;
+    const timeFields = ['SIBT','AIBT','SOBT','AOBT','CTOT',
+      'ArriveeFuel','PremierDebarque','DernierDebarque',
+      'ArriveeLiftArr','DepartLiftArr','ArrPNT','ArrPNC',
+      'AvionPremierEmbarque','AvionDernierEmbarque',
+      'ArriveeLift','DepartLift','DepartFuel','ArriveeINAD',
+      'RemiseLID','FermeturePorteAvion'];
+
+    const tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
+    tabs.forEach(tid => {
+      if(tid === currentTabId) return; // onglet courant déjà mis à jour par les inputs
+      try{
+        const data = JSON.parse(localStorage.getItem('tab-'+tid) || '{}');
+        let changed = false;
+        timeFields.forEach(fid => {
+          const val = data[fid];
+          if(!val || !val.includes(':')) return;
+          let [hh, mm] = val.split(':').map(Number);
+          let totalMin = Math.round((enable ? hh - offsetHours : hh + offsetHours) * 60 + mm);
+          totalMin = ((totalMin % 1440) + 1440) % 1440;
+          data[fid] = String(Math.floor(totalMin/60)).padStart(2,'0') + ':' + String(totalMin%60).padStart(2,'0');
+          changed = true;
+        });
+        if(changed) localStorage.setItem('tab-'+tid, JSON.stringify(data));
+      }catch(_){}
+    });
+  }
+
   updateAllCalculations();
 
   // 🔁 refresh flight list AK si ouverte
