@@ -1363,6 +1363,15 @@ html.dark #btn-gpu.is-info {
     grid-column: span 1 !important;
   }
 }
+
+@media(max-width:480px){
+  #btn-recherche-bag, #btn-inad, #btn-gpu{
+    width: auto !important;
+    font-size: .75rem !important;
+    padding: .35rem .75rem !important;
+    height: auto !important;
+  }
+}
 </style>
 </head>
 
@@ -3858,7 +3867,7 @@ function generateTimingFields(){
           <div class="span-6">${fieldHTML('DepartFuel','Départ Avitair',false,false,'is-warning')}</div>
           <div class="span-6">${fieldHTML('RemiseLID','Remise LID/LDS')}</div>
           <div class="span-6">${fieldHTML('FermeturePorteAvion','Fermeture porte avion',false,false,'is-bordeaux')}</div>
-          <div class="span-6">${fieldHTML('ConnexionAgentCasque','Connexion agent casque',false,false,'is-purple')}</div>
+          <div class="span-6">${fieldHTML('ConnexionAgentCasque','Connexion casque',false,false,'is-purple')}</div>
         </div>
       </div>
     </div>`;
