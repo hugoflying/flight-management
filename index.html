@@ -1096,12 +1096,19 @@ body.iv-editing .iv-edit-btn{ opacity: 1; }
     gap: 4px;
   }
   .footer-timers{
-    gap: 4px !important;
+    gap: 3px !important;
     flex-wrap: nowrap !important;
   }
+  .footer-timers .timer-chip{
+    flex: 0 0 auto !important;
+    min-width: 0 !important;
+    padding: 4px 5px !important;
+  }
+  .footer-timers .timer-chip .k{ font-size: clamp(.5rem, 2.5vw, .65rem) !important; }
+  .footer-timers .timer-chip .v{ font-size: clamp(.65rem, 2.8vw, .85rem) !important; min-width: 0 !important; padding: 2px 4px !important; }
+  .footer-timers .ctot-pill{ font-size: clamp(.65rem, 2.8vw, .85rem) !important; width: clamp(52px, 14vw, 80px) !important; padding: 2px 3px !important; }
   .timer-chip{
     min-width: 0 !important;
-    flex: 1 1 0 !important;
     padding: 4px 5px !important;
     gap: 3px !important;
   }
