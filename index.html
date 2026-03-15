@@ -1347,6 +1347,22 @@ html.dark #btn-gpu.is-info {
   color: #fff !important;
   border-color: #2563eb !important;
 }
+
+/* Sur téléphone : timing en 2 colonnes */
+@media(max-width:480px){
+  #timing-grid .grid-auto{
+    grid-template-columns: 1fr 1fr !important;
+  }
+  #timing-grid .span-12{
+    grid-column: span 2 !important;
+  }
+  #timing-grid .span-6{
+    grid-column: span 1 !important;
+  }
+  #timing-grid .span-4{
+    grid-column: span 1 !important;
+  }
+}
 </style>
 </head>
 
