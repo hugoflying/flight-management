@@ -6560,5 +6560,93 @@ self.addEventListener('fetch', e => {
 }
 </script>
 
+<script>
+/* ===== CTOT — appui long = éditer, double-clic/tap = effacer ===== */
+(function(){
+  const LONG_MS = 600, DBL_MS = 320;
+  let t = null, lastTap = 0;
+
+  function pill(){ return document.getElementById('CTOT'); }
+
+  function openEdit(){
+    const inp = pill(); if(!inp) return;
+    const rect = inp.getBoundingClientRect();
+
+    const ed = document.createElement('input');
+    ed.type = 'text';
+    ed.placeholder = 'HH:MM';
+    ed.maxLength = 5;
+    ed.inputMode = 'numeric';
+    ed.value = inp.value || '';
+    ed.style.cssText =
+      'position:fixed;z-index:9999;' +
+      'left:'+rect.left+'px;top:'+rect.top+'px;' +
+      'width:'+rect.width+'px;height:'+rect.height+'px;' +
+      'border-radius:999px;border:2px solid #5a9eff;' +
+      'background:#334155;color:#fff;font-weight:900;' +
+      'font-size:1rem;text-align:center;padding:0;outline:none;';
+    document.body.appendChild(ed);
+    setTimeout(()=>{ ed.focus(); ed.select(); }, 30);
+
+    let done = false;
+    function commit(){
+      if(done) return; done = true;
+      const m = ed.value.trim().match(/^(\d{1,2}):?(\d{2})$/);
+      if(m){
+        const hh = m[1].padStart(2,'0'), mm = m[2];
+        if(+hh < 24 && +mm < 60){
+          inp.value = hh+':'+mm;
+          inp.dispatchEvent(new Event('change', {bubbles:true}));
+        }
+      }
+      ed.remove();
+    }
+    ed.addEventListener('blur', commit);
+    ed.addEventListener('keydown', e=>{
+      if(e.key==='Enter'){ e.preventDefault(); ed.blur(); }
+      if(e.key==='Escape'){ done=true; ed.remove(); }
+    });
+  }
+
+  function clearCTOT(){
+    const inp = pill(); if(!inp) return;
+    inp.value = '';
+    inp.dispatchEvent(new Event('change', {bubbles:true}));
+  }
+
+  function onTarget(e){ return !!e.target.closest('#CTOT'); }
+
+  /* Desktop */
+  document.addEventListener('mousedown', e=>{
+    if(e.button!==0 || !onTarget(e)) return;
+    clearTimeout(t);
+    t = setTimeout(openEdit, LONG_MS);
+  });
+  document.addEventListener('mouseup',  ()=>{ clearTimeout(t); });
+  document.addEventListener('dblclick', e=>{
+    if(!onTarget(e)) return;
+    clearTimeout(t); clearCTOT();
+  });
+
+  /* Touch */
+  document.addEventListener('touchstart', e=>{
+    if(!onTarget(e)) return;
+    clearTimeout(t);
+    t = setTimeout(openEdit, LONG_MS);
+  }, {passive:true});
+  document.addEventListener('touchend', e=>{
+    if(!onTarget(e)) return;
+    clearTimeout(t);
+    const now = Date.now();
+    if(now - lastTap < DBL_MS){ lastTap=0; clearCTOT(); }
+    else { lastTap = now; }
+  }, {passive:true});
+  document.addEventListener('touchmove', e=>{
+    if(!onTarget(e)) return;
+    clearTimeout(t);
+  }, {passive:true});
+})();
+</script>
+
 </body>
 </html>
