@@ -3729,10 +3729,12 @@ function generateTimingFields(){
 
   const colorDot = {
     'is-link':     '#3273dc',
-    'is-success':  '#23d160',
+    'is-success':  '#15803d',
     'is-warning':  '#d97706',
     'is-dark':     '#636363',
     'is-bordeaux': '#7f1d1d',
+    'is-purple':   '#7c3aed',
+    'is-jaune':    '#f5c400',
   };
   const fieldHTML = (id,label,full=false,optional=false,nowColor='is-link')=>`
     <div class="${full ? 'span-12' : 'span-6'}">
@@ -3755,42 +3757,75 @@ function generateTimingFields(){
     <div class="card mb-4">
       <div class="card-content">
         <div class="grid-auto">
-          <div class="span-4">${fieldHTML('PremierDebarque','1er débarqué (L1)')}</div>
-          <div class="span-4">${fieldHTML('PremierDebarqueL2','1er débarqué (L2)')}</div>
-          <div class="span-4">${fieldHTML('DernierDebarque','Dernier débarqué')}</div>
-          <div class="span-4">${fieldHTML('ArriveeFuel','Arrivée Avitair',true,false,'is-warning')}</div>
-          <div class="span-4">${fieldHTML('ArriveeLiftArr','Arrivée lift',false,false,'is-success')}</div>
-          <div class="span-4">${fieldHTML('DepartLiftArr','Départ lift',false,false,'is-success')}</div>
+          <div class="span-6">${fieldHTML('PremierDebarque','1er débarqué (L1)')}</div>
+          <div class="span-6">${fieldHTML('PremierDebarqueL2','1er débarqué (L2)')}</div>
+          <div class="span-6">${fieldHTML('ArriveeFuel','Arrivée Avitair',true,false,'is-warning')}</div>
+          <div class="span-6">${fieldHTML('DernierDebarque','Dernier débarqué')}</div>
+          <div class="span-6">${fieldHTML('ArriveeLiftArr','Arrivée lift',false,false,'is-success')}</div>
+          <div class="span-6">${fieldHTML('DepartLiftArr','Départ lift',false,false,'is-success')}</div>
         </div>
       </div>
     </div>`;
 
   /* ===== DÉPART ===== */
   const depNoHeader = `
-    <div class="card">
+    <div class="buttons mb-4" style="justify-content:center;gap:.5rem;">
+      <button class="button is-rounded" id="btn-recherche-bag" type="button" onclick="toggleDepExtra('recherche-bag')" style="font-weight:700;width:160px;">Recherche bag</button>
+      <button class="button is-rounded" id="btn-inad" type="button" onclick="toggleDepExtra('inad')" style="font-weight:700;width:160px;">INAD</button>
+      <button class="button is-rounded" id="btn-gpu" type="button" onclick="toggleDepExtra('gpu')" style="font-weight:700;width:160px;">GPU</button>
+    </div>
+
+    <!-- Panneau Recherche bag -->
+    <div id="panel-recherche-bag" class="card mb-3" style="display:none;">
       <div class="card-content">
         <div class="grid-auto">
-          ${fieldHTML('ArrPNT','Arrivée PNT',false,true,'is-dark')}
-          ${fieldHTML('ArrPNC','Arrivée PNC',false,true,'is-dark')}
-          ${fieldHTML('AvionPremierEmbarque','Premier embarqué')}
-          ${fieldHTML('AvionDernierEmbarque','Dernier embarqué')}
-          ${fieldHTML('ArriveeLift','Arrivée lift',false,false,'is-success')}
-          ${fieldHTML('DepartLift','Départ lift',false,false,'is-success')}
-
-          <!-- Départ Avitair + Arrivée INAD sur la même ligne -->
-          <div class="span-12">
-            <div class="grid-auto">
-              <div class="span-6">
-                ${fieldHTML('DepartFuel','Départ Avitair',false,false,'is-warning')}
-              </div>
-              <div class="span-6">
-                ${fieldHTML('ArriveeINAD','Arrivée INAD',false,true,'is-dark')}
+          <div class="span-4">
+            <div class="field">
+              <label class="label"><span class="tw-dot" style="background:#636363;"></span>Nombre de bags</label>
+              <div class="control">
+                <input class="input" type="number" id="RechercheBagNombre" min="0" placeholder="0" style="text-align:center;" oninput="twSync('RechercheBagNombre')">
               </div>
             </div>
           </div>
+          <div class="span-4">${fieldHTML('RechercheBagDebut','Début de recherche',false,false,'is-dark')}</div>
+          <div class="span-4">${fieldHTML('RechercheBagFin','Fin de recherche',false,false,'is-dark')}</div>
+        </div>
+      </div>
+    </div>
 
-          ${fieldHTML('RemiseLID','Remise LID/LDS')}
-          ${fieldHTML('FermeturePorteAvion','Fermeture porte avion',false,false,'is-bordeaux')}
+    <!-- Panneau INAD -->
+    <div id="panel-inad" class="card mb-3" style="display:none;">
+      <div class="card-content">
+        <div class="grid-auto">
+          <div class="span-6">${fieldHTML('AnnonceINAD','Annonce INAD',false,true,'is-dark')}</div>
+          <div class="span-6">${fieldHTML('ArriveeINAD','Arrivée INAD',false,true,'is-dark')}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panneau GPU -->
+    <div id="panel-gpu" class="card mb-3" style="display:none;">
+      <div class="card-content">
+        <div class="grid-auto">
+          <div class="span-6">${fieldHTML('BranchementGPU','Branchement GPU',false,false,'is-jaune')}</div>
+          <div class="span-6">${fieldHTML('DebranchementGPU','Débranchement GPU',false,false,'is-jaune')}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-content">
+        <div class="grid-auto">
+          <div class="span-6">${fieldHTML('ArrPNT','Arrivée PNT',false,true,'is-dark')}</div>
+          <div class="span-6">${fieldHTML('ArrPNC','Arrivée PNC',false,true,'is-dark')}</div>
+          <div class="span-6">${fieldHTML('AvionPremierEmbarque','Premier embarqué')}</div>
+          <div class="span-6">${fieldHTML('AvionDernierEmbarque','Dernier embarqué')}</div>
+          <div class="span-6">${fieldHTML('ArriveeLift','Arrivée lift',false,false,'is-success')}</div>
+          <div class="span-6">${fieldHTML('DepartLift','Départ lift',false,false,'is-success')}</div>
+          <div class="span-6">${fieldHTML('DepartFuel','Départ Avitair',false,false,'is-warning')}</div>
+          <div class="span-6">${fieldHTML('RemiseLID','Remise LID/LDS')}</div>
+          <div class="span-6">${fieldHTML('FermeturePorteAvion','Fermeture porte avion',false,false,'is-bordeaux')}</div>
+          <div class="span-6">${fieldHTML('ConnexionAgentCasque','Connexion agent casque',false,false,'is-purple')}</div>
         </div>
       </div>
     </div>`;
@@ -5836,6 +5871,21 @@ function toggleDelayCodes() {
   box.style.display = (box.style.display === 'none') ? 'block' : 'none';
 }
 
+
+function toggleDepExtra(panel){
+  const el = document.getElementById('panel-' + panel)
+  const btn = document.getElementById('btn-' + panel)
+  if(!el) return
+  const isOpen = el.style.display !== 'none'
+  el.style.display = isOpen ? 'none' : 'block'
+  if(btn){
+    if(isOpen){
+      btn.classList.remove('is-info', 'is-selected')
+    } else {
+      btn.classList.add('is-info', 'is-selected')
+    }
+  }
+}
 </script>
 
 <!-- ===== Airport Keeper Picker ===== -->
@@ -6051,6 +6101,8 @@ function collectFlightState() {
     "ArriveeINAD",
     "RemiseLID",
     "FermeturePorteAvion",
+    "ConnexionAgentCasque",
+    "RechercheBagNombre","RechercheBagDebut","RechercheBagFin","AnnonceINAD","BranchementGPU","DebranchementGPU",
 
     "ArrPAX_MAIN",
     "ArrPAX_INF",
@@ -6347,6 +6399,8 @@ function setupRealtimeSync() {
     "ArriveeINAD",
     "RemiseLID",
     "FermeturePorteAvion",
+    "ConnexionAgentCasque",
+    "RechercheBagNombre","RechercheBagDebut","RechercheBagFin","AnnonceINAD","BranchementGPU","DebranchementGPU",
 
     "ArrPAX_MAIN",
     "ArrPAX_INF",
