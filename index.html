@@ -293,11 +293,8 @@ textarea.si-uppercase{ text-transform: uppercase; }
 /* ===== BANDEAUX ESSENTIELS ===== */
 .kv-strip{
   display:grid;
-  grid-template-columns: 1fr; /* mobile */
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: var(--gap);
-}
-@media (min-width: 600px){
-  .kv-strip{ grid-template-columns: 1fr 1fr; } /* tablette + */
 }
 .kv-card{
   border-radius: 14px;
@@ -1455,6 +1452,7 @@ html.dark #btn-gpu.is-info {
     --radius: 10px;
   }
   .app-wrap{ padding: 0 8px; }
+  .app-wrap > *:first-child{ margin-top: 0 !important; }
 
   /* Grille : max 2 colonnes */
   .grid-auto .span-6{ grid-column: span 6; }
@@ -1480,22 +1478,24 @@ html.dark #btn-gpu.is-info {
   .kv-title{ font-size: .58rem; }
   .kv-value{ font-size: .85rem; }
 
-  /* Info strip */
-  .kv-grid-strip{ gap: 6px !important; }
+  /* Info strip - toujours visible */
+  .kv-grid-strip{ gap: 6px !important; overflow: visible !important; }
+  #infoStrip{ display: flex !important; opacity: 1 !important; }
 
-  /* Header timers (HLE/H-15/LID) */
-  .timer-row{ gap: 6px !important; flex-wrap: nowrap !important; }
+  /* Header timers (HLE/H-15/LID) - taille fixe, jamais élargi */
+  .timer-row{ gap: 6px !important; flex-wrap: nowrap !important; justify-content: center !important; }
   .timer-chip{
     min-width: 0 !important;
-    flex: 1 0 auto;
+    flex: 0 0 auto !important;
     padding: 4px 6px !important;
     gap: 4px !important;
   }
-  .timer-chip .k{ font-size: clamp(.5rem, 2.2vw, .65rem) !important; }
+  .timer-chip .k{ font-size: .6rem !important; white-space: nowrap; }
   .timer-chip .v{
-    min-width: 0 !important;
+    min-width: 52px !important;
+    max-width: 70px !important;
     padding: 2px 4px !important;
-    font-size: clamp(.65rem, 2.8vw, .82rem) !important;
+    font-size: .78rem !important;
   }
 
   /* Footer (EOBT/CTOT/CD) */
@@ -1507,17 +1507,19 @@ html.dark #btn-gpu.is-info {
     flex: 0 0 auto !important;
     padding: 4px 5px !important;
   }
-  .footer-timers .timer-chip .k{ font-size: clamp(.5rem, 2.2vw, .62rem) !important; }
+  .footer-timers .timer-chip .k{ font-size: .6rem !important; white-space: nowrap; }
   .footer-timers .timer-chip .v{
-    min-width: 0 !important;
+    min-width: 52px !important;
+    max-width: 70px !important;
     padding: 2px 4px !important;
-    font-size: clamp(.65rem, 2.8vw, .82rem) !important;
+    font-size: .78rem !important;
   }
   .ctot-pill{
-    min-width: 0 !important;
-    width: clamp(52px, 15vw, 76px) !important;
+    min-width: 52px !important;
+    max-width: 70px !important;
+    width: 64px !important;
     padding: 2px 4px !important;
-    font-size: clamp(.65rem, 2.8vw, .82rem) !important;
+    font-size: .78rem !important;
   }
   .footer-row{
     grid-template-columns: 30px 1fr 30px !important;
@@ -1554,6 +1556,25 @@ html.dark #btn-gpu.is-info {
     font-size: .72rem !important;
     padding: .3rem .65rem !important;
     height: auto !important;
+  }
+}
+
+@media(max-width:400px){
+  #timing-grid .grid-auto .span-6,
+  #timing-grid .grid-auto .span-4{
+    grid-column: span 12 !important;
+  }
+}
+
+/* Toggle ARR/DEP timing : responsive */
+.timing-toggle-wrap .tabs .is-toggle a{
+  font-size: clamp(.78rem, 3vw, 1rem) !important;
+  padding: .4em clamp(.6em, 3vw, 1.25em) !important;
+}
+@media(max-width:599px){
+  .tabs.is-toggle.is-toggle-rounded li a{
+    font-size: clamp(.78rem, 3.5vw, .95rem) !important;
+    padding: .35em clamp(.5em, 2.5vw, 1em) !important;
   }
 }
 </style>
@@ -2319,6 +2340,15 @@ function unlockScroll(){
 }
 
 /* Header height */
+// Observe header resize to update offset dynamically
+if(typeof ResizeObserver !== "undefined"){
+  const _hdrObserver = new ResizeObserver(() => updateHeaderOffset());
+  window.addEventListener('DOMContentLoaded', () => {
+    const hdr = document.getElementById('fixedHeader');
+    if(hdr) _hdrObserver.observe(hdr);
+  });
+}
+
 function updateHeaderOffset(){
   const header = document.getElementById('fixedHeader');
   const footer = document.getElementById('fixedFooter');
@@ -6883,15 +6913,7 @@ function updateIVBadges(){
     if(!el) return;
     el.className = '';
     el.textContent = '';
-    if(mins == null) return;
-    let label, cls;
-    if(mins >= 15)      { label = `RETARDÉ +${mins}min`; cls = 'tag is-danger'; }
-    else if(mins >= 5)  { label = `RETARDÉ +${mins}min`; cls = 'tag is-warning'; }
-    else if(mins <= -10){ label = `EN AVANCE ${mins}min`; cls = 'tag is-info'; }
-    else                { label = "À L'HEURE"; cls = 'tag is-success'; }
-    el.className = cls;
-    el.style.fontWeight = '900';
-    el.textContent = label;
+    // Badges retard/avance désactivés
   }
 
   const arrEl = document.getElementById('ivBadgeArr');
