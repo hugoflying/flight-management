@@ -258,7 +258,6 @@ textarea.si-uppercase{ text-transform: uppercase; }
   letter-spacing: .02em;
   text-transform: uppercase;
   opacity: .9;
-  margin-bottom: 2px !important;
 }
 
 /* FORCE couleur TOB */
@@ -293,8 +292,11 @@ textarea.si-uppercase{ text-transform: uppercase; }
 /* ===== BANDEAUX ESSENTIELS ===== */
 .kv-strip{
   display:grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: 1fr; /* mobile */
   gap: var(--gap);
+}
+@media (min-width: 600px){
+  .kv-strip{ grid-template-columns: 1fr 1fr; } /* tablette + */
 }
 .kv-card{
   border-radius: 14px;
@@ -895,10 +897,6 @@ html.dark .fixed-footer{
   .timer-chip .v{ min-width: 48px; padding: 3px 6px; font-size: .78rem; }
   .ctot-pill{ min-width: 54px; padding: 3px 6px !important; font-size: .82rem; }
 
-  /* Horaires : toujours 2 colonnes */
-  .horaires-grid{ grid-template-columns: 1fr 1fr !important; gap: 6px !important; }
-  .hor-col-head{ font-size: .65rem; }
-
   /* KV cards */
   .kv-card{ padding: 8px 10px; border-radius: 10px; }
   .kv-title{ font-size: .58rem; }
@@ -988,7 +986,7 @@ html.dark .fixed-footer{
   align-items: start;
 }
 @media (max-width: 480px){
-  .horaires-grid{ grid-template-columns: 1fr 1fr; gap: 8px; }
+  .horaires-grid{ grid-template-columns: 1fr; }
 }
 .hor-block{
   display: flex;
@@ -1084,42 +1082,34 @@ body.iv-editing .iv-edit-btn{ opacity: 1; }
 .footer-refresh-btn.is-loading{ pointer-events:none; opacity:.6; }
 @media (max-width: 480px){
   .footer-refresh-btn{
-    width: 30px !important;
-    height: 30px !important;
-    font-size: .85rem !important;
+    width: 34px !important;
+    height: 34px !important;
+    font-size: .9rem !important;
   }
   .footer-row{
-    grid-template-columns: 30px 1fr 30px;
+    grid-template-columns: 34px 1fr 34px;
     gap: 4px;
   }
   .footer-timers{
-    gap: 3px !important;
-    flex-wrap: nowrap !important;
+    gap: 4px !important;
   }
-  .footer-timers .timer-chip{
-    flex: 0 0 auto !important;
-    min-width: 0 !important;
-    padding: 4px 5px !important;
-  }
-  .footer-timers .timer-chip .k{ font-size: clamp(.5rem, 2.5vw, .65rem) !important; }
-  .footer-timers .timer-chip .v{ font-size: clamp(.65rem, 2.8vw, .85rem) !important; min-width: 0 !important; padding: 2px 4px !important; }
-  .footer-timers .ctot-pill{ font-size: clamp(.65rem, 2.8vw, .85rem) !important; width: clamp(52px, 14vw, 80px) !important; padding: 2px 3px !important; }
   .timer-chip{
     min-width: 0 !important;
-    padding: 4px 5px !important;
-    gap: 3px !important;
+    padding: 4px 6px !important;
+    gap: 4px !important;
+    flex: 0 0 auto;
   }
   .timer-chip .v{
     min-width: 0 !important;
-    padding: 2px 4px !important;
-    font-size: clamp(.72rem, 2.5vw, .95rem) !important;
+    padding: 3px 5px !important;
+    font-size: .72rem !important;
   }
-  .timer-chip .k{ font-size: clamp(.55rem, 1.8vw, .72rem) !important; }
+  .timer-chip .k{ font-size: .58rem !important; }
   .ctot-pill{
     min-width: 0 !important;
     width: 100% !important;
-    padding: 2px 4px !important;
-    font-size: clamp(.72rem, 2.5vw, .95rem) !important;
+    padding: 3px 4px !important;
+    font-size: .72rem !important;
   }
 }
 
@@ -1224,7 +1214,7 @@ html.dark .tw-color-is-bordeaux { border-color: #ef4444 !important; color: #ef44
 
 /* Timing : réduction espacement */
 #timing-grid .card-content { padding: 10px 12px !important; }
-#timing-grid .grid-auto { gap: 6px !important; row-gap: 12px !important; }
+#timing-grid .grid-auto { gap: 6px !important; row-gap: 6px !important; }
 #timing-grid .card.mb-4 { margin-bottom: 8px !important; }
 #timing-grid .hor-col-head { margin-bottom: 6px !important; }
 
@@ -1339,243 +1329,6 @@ html.dark .tw-color-is-bordeaux { border-color: #ef4444 !important; color: #ef44
   width: 100%;
   z-index: 3;
   cursor: default;
-}
-
-/* Boutons extra départ en mode sombre */
-html.dark #btn-recherche-bag,
-html.dark #btn-inad,
-html.dark #btn-gpu {
-  background: #353839 !important;
-  color: #f3f4f6 !important;
-  border-color: #444 !important;
-}
-html.dark #btn-recherche-bag.is-info,
-html.dark #btn-inad.is-info,
-html.dark #btn-gpu.is-info {
-  background: #2563eb !important;
-  color: #fff !important;
-  border-color: #2563eb !important;
-}
-
-/* Sur téléphone : timing en 2 colonnes */
-@media(max-width:480px){
-  #timing-grid .grid-auto{
-    grid-template-columns: 1fr 1fr !important;
-  }
-  #timing-grid .span-12{
-    grid-column: span 2 !important;
-  }
-  #timing-grid .span-6{
-    grid-column: span 1 !important;
-  }
-  #timing-grid .span-4{
-    grid-column: span 1 !important;
-  }
-}
-
-@media(max-width:480px){
-  #btn-recherche-bag, #btn-inad, #btn-gpu{
-    width: auto !important;
-    font-size: .75rem !important;
-    padding: .35rem .75rem !important;
-    height: auto !important;
-  }
-}
-
-@media(max-width:480px){
-  .tw-zone-left, .tw-zone-right{
-    font-size: .7rem !important;
-    width: 30px !important;
-  }
-  .tw-display{
-    font-size: .95rem !important;
-  }
-  #timing-grid .grid-auto .span-6,
-  #timing-grid .grid-auto .span-4{
-    grid-column: span 1 !important;
-  }
-  /* SIBT SOBT AIBT AOBT en section horaires aussi */
-  .hor-block{
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 6px !important;
-  }
-}
-
-/* SIBT/AIBT/SOBT/AOBT : 2 colonnes sur mobile */
-@media(max-width:480px){
-  .hor-wrap{
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 8px !important;
-  }
-  .hor-block{
-    flex-direction: column !important;
-  }
-  .hor-col-head{
-    font-size: .65rem !important;
-  }
-}
-
-/* =========================================
-   RESPONSIVE UNIFIÉ — mobile/tablette
-   breakpoints: mobile < 600px, tablette 600-900px
-   ========================================= */
-
-/* === TABLETTE (600px – 900px) === */
-@media (min-width:600px) and (max-width:900px){
-  :root{
-    --gap: 8px;
-    --padCard: 10px;
-    --labelSize: .75rem;
-    --inputH: 36px;
-  }
-  .app-wrap{ padding: 0 12px; }
-  .grid-auto .span-6{ grid-column: span 6; }
-  .grid-auto .span-4{ grid-column: span 4; }
-  .grid-auto .span-3{ grid-column: span 3; }
-  #timing-grid .grid-auto .span-6,
-  #timing-grid .grid-auto .span-4{ grid-column: span 6; }
-  .horaires-grid{ grid-template-columns: 1fr 1fr !important; }
-  .timer-chip{ min-width: 110px; }
-  .footer-timers{ gap: 8px !important; flex-wrap: nowrap !important; }
-}
-
-/* === MOBILE (< 600px) === */
-@media (max-width:599px){
-  :root{
-    --gap: 6px;
-    --padCard: 8px;
-    --labelSize: .7rem;
-    --inputH: 34px;
-    --fixed-footer-h: 58px;
-    --radius: 10px;
-  }
-  .app-wrap{ padding: 0 8px; }
-  .app-wrap > *:first-child{ margin-top: 0 !important; }
-
-  /* Grille : max 2 colonnes */
-  .grid-auto .span-6{ grid-column: span 6; }
-  .grid-auto .span-4{ grid-column: span 6; }
-  .grid-auto .span-3{ grid-column: span 6; }
-  .grid-auto .span-12{ grid-column: span 12; }
-  #timing-grid .grid-auto .span-6,
-  #timing-grid .grid-auto .span-4{ grid-column: span 6; }
-  #timing-grid .grid-auto .span-12{ grid-column: span 12; }
-
-  /* Horaires toujours 2 colonnes */
-  .horaires-grid{ grid-template-columns: 1fr 1fr !important; gap: 6px !important; }
-
-  /* Timing champs */
-  .tw-zone-left, .tw-zone-right{ width: 28px !important; font-size: .68rem !important; }
-  .tw-display{ font-size: .9rem !important; }
-
-  /* Cards */
-  .card{ border-radius: var(--radius); }
-  .card-content{ padding: var(--padCard) !important; }
-  .card-header-title{ font-size: .85rem; }
-  .kv-card{ padding: 8px 10px; border-radius: 10px; }
-  .kv-title{ font-size: .58rem; }
-  .kv-value{ font-size: .85rem; }
-
-  /* Info strip - toujours visible */
-  .kv-grid-strip{ gap: 6px !important; overflow: visible !important; }
-  #infoStrip{ display: flex !important; opacity: 1 !important; }
-
-  /* Header timers (HLE/H-15/LID) - taille fixe, jamais élargi */
-  .timer-row{ gap: 6px !important; flex-wrap: nowrap !important; justify-content: center !important; }
-  .timer-chip{
-    min-width: 0 !important;
-    flex: 0 0 auto !important;
-    padding: 4px 6px !important;
-    gap: 4px !important;
-  }
-  .timer-chip .k{ font-size: .6rem !important; white-space: nowrap; }
-  .timer-chip .v{
-    min-width: 52px !important;
-    max-width: 70px !important;
-    padding: 2px 4px !important;
-    font-size: .78rem !important;
-  }
-
-  /* Footer (EOBT/CTOT/CD) */
-  .footer-timers{
-    gap: 4px !important;
-    flex-wrap: nowrap !important;
-  }
-  .footer-timers .timer-chip{
-    flex: 0 0 auto !important;
-    padding: 4px 5px !important;
-  }
-  .footer-timers .timer-chip .k{ font-size: .6rem !important; white-space: nowrap; }
-  .footer-timers .timer-chip .v{
-    min-width: 52px !important;
-    max-width: 70px !important;
-    padding: 2px 4px !important;
-    font-size: .78rem !important;
-  }
-  .ctot-pill{
-    min-width: 52px !important;
-    max-width: 70px !important;
-    width: 64px !important;
-    padding: 2px 4px !important;
-    font-size: .78rem !important;
-  }
-  .footer-row{
-    grid-template-columns: 30px 1fr 30px !important;
-    gap: 4px !important;
-  }
-  .footer-refresh-btn{
-    width: 30px !important;
-    height: 30px !important;
-    font-size: .85rem !important;
-  }
-
-  /* Inputs/selects */
-  .input, .select select{
-    font-size: .85rem !important;
-    height: var(--inputH) !important;
-    padding-left: 8px !important;
-    padding-right: 8px !important;
-  }
-
-  /* Boutons actions */
-  .btn-action-main{ font-size: .9rem !important; height: 38px !important; padding: 0 14px !important; }
-  .btn-actions{ gap: 6px !important; }
-
-  /* Tabs */
-  .tabs-chip{ padding: 6px 8px; gap: 4px; }
-  .tabs-chip .button{ font-size: .72rem; padding: 0 8px; height: 30px; }
-
-  /* FAB */
-  #loadFab, #settingsFab{ width: 42px !important; height: 42px !important; font-size: .85rem !important; }
-
-  /* Boutons dep extra */
-  #btn-recherche-bag, #btn-inad, #btn-gpu{
-    width: auto !important;
-    font-size: .72rem !important;
-    padding: .3rem .65rem !important;
-    height: auto !important;
-  }
-}
-
-@media(max-width:400px){
-  #timing-grid .grid-auto .span-6,
-  #timing-grid .grid-auto .span-4{
-    grid-column: span 12 !important;
-  }
-}
-
-/* Toggle ARR/DEP timing : responsive */
-.timing-toggle-wrap .tabs .is-toggle a{
-  font-size: clamp(.78rem, 3vw, 1rem) !important;
-  padding: .4em clamp(.6em, 3vw, 1.25em) !important;
-}
-@media(max-width:599px){
-  .tabs.is-toggle.is-toggle-rounded li a{
-    font-size: clamp(.78rem, 3.5vw, .95rem) !important;
-    padding: .35em clamp(.5em, 2.5vw, 1em) !important;
-  }
 }
 </style>
 </head>
@@ -2039,7 +1792,7 @@ html.dark #btn-gpu.is-info {
     <div class="horaires-grid mb-3">
 
       <!-- Bloc ARR -->
-      <div class="hor-block hor-block-arr">
+      <div class="hor-block">
         <div class="hor-col-head"><span class="hor-badge hor-badge-arr">ARR</span><span id="ivBadgeArr" style="margin-left:6px;"></span></div>
         <div class="hor-cell">
           <label class="label">SIBT</label>
@@ -2062,7 +1815,7 @@ html.dark #btn-gpu.is-info {
       </div>
 
       <!-- Bloc DEP -->
-      <div class="hor-block hor-block-dep">
+      <div class="hor-block">
         <div class="hor-col-head"><span class="hor-badge hor-badge-dep">DEP</span><span id="ivBadgeDep" style="margin-left:6px;"></span></div>
         <div class="hor-cell">
           <label class="label">SOBT</label>
@@ -2340,15 +2093,6 @@ function unlockScroll(){
 }
 
 /* Header height */
-// Observe header resize to update offset dynamically
-if(typeof ResizeObserver !== "undefined"){
-  const _hdrObserver = new ResizeObserver(() => updateHeaderOffset());
-  window.addEventListener('DOMContentLoaded', () => {
-    const hdr = document.getElementById('fixedHeader');
-    if(hdr) _hdrObserver.observe(hdr);
-  });
-}
-
 function updateHeaderOffset(){
   const header = document.getElementById('fixedHeader');
   const footer = document.getElementById('fixedFooter');
@@ -3985,12 +3729,10 @@ function generateTimingFields(){
 
   const colorDot = {
     'is-link':     '#3273dc',
-    'is-success':  '#15803d',
+    'is-success':  '#23d160',
     'is-warning':  '#d97706',
     'is-dark':     '#636363',
     'is-bordeaux': '#7f1d1d',
-    'is-purple':   '#7c3aed',
-    'is-jaune':    '#f5c400',
   };
   const fieldHTML = (id,label,full=false,optional=false,nowColor='is-link')=>`
     <div class="${full ? 'span-12' : 'span-6'}">
@@ -4013,75 +3755,41 @@ function generateTimingFields(){
     <div class="card mb-4">
       <div class="card-content">
         <div class="grid-auto">
-          <div class="span-6">${fieldHTML('PremierDebarque','1er débarqué (L1)')}</div>
-          <div class="span-6">${fieldHTML('PremierDebarqueL2','1er débarqué (L2)')}</div>
-          <div class="span-6">${fieldHTML('ArriveeFuel','Arrivée Avitair',true,false,'is-warning')}</div>
-          <div class="span-6">${fieldHTML('DernierDebarque','Dernier débarqué')}</div>
-          <div class="span-6">${fieldHTML('ArriveeLiftArr','Arrivée lift',false,false,'is-success')}</div>
-          <div class="span-6">${fieldHTML('DepartLiftArr','Départ lift',false,false,'is-success')}</div>
+          ${fieldHTML('ArriveeFuel','Arrivée Avitair',true,false,'is-warning')}
+          ${fieldHTML('PremierDebarque','Premier débarqué')}
+          ${fieldHTML('DernierDebarque','Dernier débarqué')}
+          ${fieldHTML('ArriveeLiftArr','Arrivée lift',false,false,'is-success')}
+          ${fieldHTML('DepartLiftArr','Départ lift',false,false,'is-success')}
         </div>
       </div>
     </div>`;
 
   /* ===== DÉPART ===== */
   const depNoHeader = `
-    <div class="buttons mb-4" style="justify-content:center;gap:.5rem;">
-      <button class="button is-rounded is-light" id="btn-recherche-bag" type="button" onclick="toggleDepExtra('recherche-bag')" style="font-weight:700;width:160px;">Recherche bag</button>
-      <button class="button is-rounded is-light" id="btn-inad" type="button" onclick="toggleDepExtra('inad')" style="font-weight:700;width:160px;">INAD</button>
-      <button class="button is-rounded is-light" id="btn-gpu" type="button" onclick="toggleDepExtra('gpu')" style="font-weight:700;width:160px;">GPU</button>
-    </div>
-
-    <!-- Panneau Recherche bag -->
-    <div id="panel-recherche-bag" class="card mb-3" style="display:none;">
-      <div class="card-content">
-        <div class="grid-auto">
-          <div class="span-4">
-            <div class="field">
-              <label class="label"><span class="tw-dot" style="background:#636363;"></span>Nombre de bags</label>
-              <div class="control">
-                <input class="input" type="number" id="RechercheBagNombre" min="0" placeholder="0" style="text-align:center;" oninput="twSync('RechercheBagNombre')">
-              </div>
-            </div>
-          </div>
-          <div class="span-4">${fieldHTML('RechercheBagDebut','Début de recherche',false,false,'is-dark')}</div>
-          <div class="span-4">${fieldHTML('RechercheBagFin','Fin de recherche',false,false,'is-dark')}</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Panneau INAD -->
-    <div id="panel-inad" class="card mb-3" style="display:none;">
-      <div class="card-content">
-        <div class="grid-auto">
-          <div class="span-6">${fieldHTML('AnnonceINAD','Annonce INAD',false,true,'is-dark')}</div>
-          <div class="span-6">${fieldHTML('ArriveeINAD','Arrivée INAD',false,true,'is-dark')}</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Panneau GPU -->
-    <div id="panel-gpu" class="card mb-3" style="display:none;">
-      <div class="card-content">
-        <div class="grid-auto">
-          <div class="span-6">${fieldHTML('BranchementGPU','Branchement GPU',false,false,'is-jaune')}</div>
-          <div class="span-6">${fieldHTML('DebranchementGPU','Débranchement GPU',false,false,'is-jaune')}</div>
-        </div>
-      </div>
-    </div>
-
     <div class="card">
       <div class="card-content">
         <div class="grid-auto">
-          <div class="span-6">${fieldHTML('ArrPNT','Arrivée PNT',false,true,'is-dark')}</div>
-          <div class="span-6">${fieldHTML('ArrPNC','Arrivée PNC',false,true,'is-dark')}</div>
-          <div class="span-6">${fieldHTML('AvionPremierEmbarque','Premier embarqué')}</div>
-          <div class="span-6">${fieldHTML('AvionDernierEmbarque','Dernier embarqué')}</div>
-          <div class="span-6">${fieldHTML('ArriveeLift','Arrivée lift',false,false,'is-success')}</div>
-          <div class="span-6">${fieldHTML('DepartLift','Départ lift',false,false,'is-success')}</div>
-          <div class="span-6">${fieldHTML('DepartFuel','Départ Avitair',false,false,'is-warning')}</div>
-          <div class="span-6">${fieldHTML('RemiseLID','Remise LID/LDS')}</div>
-          <div class="span-6">${fieldHTML('FermeturePorteAvion','Fermeture porte avion',false,false,'is-bordeaux')}</div>
-          <div class="span-6">${fieldHTML('ConnexionAgentCasque','Connexion casque',false,false,'is-purple')}</div>
+          ${fieldHTML('ArrPNT','Arrivée PNT',false,true,'is-dark')}
+          ${fieldHTML('ArrPNC','Arrivée PNC',false,true,'is-dark')}
+          ${fieldHTML('AvionPremierEmbarque','Premier embarqué')}
+          ${fieldHTML('AvionDernierEmbarque','Dernier embarqué')}
+          ${fieldHTML('ArriveeLift','Arrivée lift',false,false,'is-success')}
+          ${fieldHTML('DepartLift','Départ lift',false,false,'is-success')}
+
+          <!-- Départ Avitair + Arrivée INAD sur la même ligne -->
+          <div class="span-12">
+            <div class="grid-auto">
+              <div class="span-6">
+                ${fieldHTML('DepartFuel','Départ Avitair',false,false,'is-warning')}
+              </div>
+              <div class="span-6">
+                ${fieldHTML('ArriveeINAD','Arrivée INAD',false,true,'is-dark')}
+              </div>
+            </div>
+          </div>
+
+          ${fieldHTML('RemiseLID','Remise LID/LDS')}
+          ${fieldHTML('FermeturePorteAvion','Fermeture porte avion',false,false,'is-bordeaux')}
         </div>
       </div>
     </div>`;
@@ -4611,7 +4319,7 @@ function setTimeModeUTC(enable, fromInit=false){
   if(!fromInit){
     const offsetHours = -new Date().getTimezoneOffset() / 60;
     const timeFields = ['SIBT','AIBT','SOBT','AOBT','CTOT',
-      'ArriveeFuel','PremierDebarque','PremierDebarqueL2','DernierDebarque',
+      'ArriveeFuel','PremierDebarque','DernierDebarque',
       'ArriveeLiftArr','DepartLiftArr','ArrPNT','ArrPNC',
       'AvionPremierEmbarque','AvionDernierEmbarque',
       'ArriveeLift','DepartLift','DepartFuel','ArriveeINAD',
@@ -6057,45 +5765,34 @@ function toggleSettings(){
 
 function clearAutoSave() {
   if (confirm("Tout réinitialiser ?")) {
+    // Envoyer __delete pour chaque onglet ouvert via WebSocket
     const tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
-    const WS_BASE = 'wss://turnaround-sync.deruellehugo-49c.workers.dev/';
-    const deletePromises = [];
 
+    // Pour l'onglet courant : envoyer via le socket actif
+    if(socket && socket.readyState === WebSocket.OPEN){
+      socket.send(JSON.stringify({ __delete: '1' }));
+    }
+
+    // Pour les autres onglets : construire leur clé et envoyer DELETE HTTP
     tabs.forEach(tid => {
+      if(tid === currentTabId) return;
       try{
         const data = JSON.parse(localStorage.getItem('tab-'+tid) || '{}');
         const meta = data?.akMeta;
-        if(!meta?.id) return;
-        const key = `AK_${meta.id}`;
-
-        if(tid === currentTabId && socket && socket.readyState === WebSocket.OPEN){
-          // Onglet courant : socket déjà ouvert
-          socket.send(JSON.stringify({ __delete: '1' }));
-        } else {
-          // Autres onglets : ouvrir un socket temporaire
-          const p = new Promise(resolve => {
-            try{
-              const ws = new WebSocket(WS_BASE + encodeURIComponent(key));
-              ws.onopen = () => {
-                ws.send(JSON.stringify({ __delete: '1' }));
-                setTimeout(() => { try{ ws.close(); }catch(_){} resolve(); }, 200);
-              };
-              ws.onerror = () => resolve();
-              setTimeout(resolve, 2000); // timeout sécurité
-            }catch(_){ resolve(); }
-          });
-          deletePromises.push(p);
+        let key = null;
+        if(meta?.id) key = `AK_${meta.id}`;
+        if(key){
+          fetch(`https://turnaround-sync.deruellehugo-49c.workers.dev/${encodeURIComponent(key)}`, {
+            method: "DELETE"
+          }).catch(_=>{});
         }
       }catch(_){}
     });
 
-    // Attendre que tous les deletes soient envoyés avant de recharger
-    Promise.all(deletePromises).then(() => {
-      setTimeout(() => {
-        localStorage.clear();
-        location.reload();
-      }, 300);
-    });
+    setTimeout(() => {
+      localStorage.clear();
+      location.reload();
+    }, 300); // laisser le temps aux messages de partir
   }
 }
 
@@ -6127,21 +5824,6 @@ function toggleDelayCodes() {
   box.style.display = (box.style.display === 'none') ? 'block' : 'none';
 }
 
-
-function toggleDepExtra(panel){
-  const el = document.getElementById('panel-' + panel)
-  const btn = document.getElementById('btn-' + panel)
-  if(!el) return
-  const isOpen = el.style.display !== 'none'
-  el.style.display = isOpen ? 'none' : 'block'
-  if(btn){
-    if(isOpen){
-      btn.classList.remove('is-info', 'is-selected')
-    } else {
-      btn.classList.add('is-info', 'is-selected')
-    }
-  }
-}
 </script>
 
 <!-- ===== Airport Keeper Picker ===== -->
@@ -6342,7 +6024,6 @@ function collectFlightState() {
 
     "ArriveeFuel",
     "PremierDebarque",
-    "PremierDebarqueL2",
     "DernierDebarque",
     "ArriveeLiftArr",
     "DepartLiftArr",
@@ -6357,8 +6038,6 @@ function collectFlightState() {
     "ArriveeINAD",
     "RemiseLID",
     "FermeturePorteAvion",
-    "ConnexionAgentCasque",
-    "RechercheBagNombre","RechercheBagDebut","RechercheBagFin","AnnonceINAD","BranchementGPU","DebranchementGPU",
 
     "ArrPAX_MAIN",
     "ArrPAX_INF",
@@ -6640,7 +6319,6 @@ function setupRealtimeSync() {
 
     "ArriveeFuel",
     "PremierDebarque",
-    "PremierDebarqueL2",
     "DernierDebarque",
     "ArriveeLiftArr",
     "DepartLiftArr",
@@ -6655,8 +6333,6 @@ function setupRealtimeSync() {
     "ArriveeINAD",
     "RemiseLID",
     "FermeturePorteAvion",
-    "ConnexionAgentCasque",
-    "RechercheBagNombre","RechercheBagDebut","RechercheBagFin","AnnonceINAD","BranchementGPU","DebranchementGPU",
 
     "ArrPAX_MAIN",
     "ArrPAX_INF",
@@ -6913,7 +6589,15 @@ function updateIVBadges(){
     if(!el) return;
     el.className = '';
     el.textContent = '';
-    // Badges retard/avance désactivés
+    if(mins == null) return;
+    let label, cls;
+    if(mins >= 15)      { label = `RETARDÉ +${mins}min`; cls = 'tag is-danger'; }
+    else if(mins >= 5)  { label = `RETARDÉ +${mins}min`; cls = 'tag is-warning'; }
+    else if(mins <= -10){ label = `EN AVANCE ${mins}min`; cls = 'tag is-info'; }
+    else                { label = "À L'HEURE"; cls = 'tag is-success'; }
+    el.className = cls;
+    el.style.fontWeight = '900';
+    el.textContent = label;
   }
 
   const arrEl = document.getElementById('ivBadgeArr');
