@@ -1419,6 +1419,143 @@ html.dark #btn-gpu.is-info {
     font-size: .65rem !important;
   }
 }
+
+/* =========================================
+   RESPONSIVE UNIFIÉ — mobile/tablette
+   breakpoints: mobile < 600px, tablette 600-900px
+   ========================================= */
+
+/* === TABLETTE (600px – 900px) === */
+@media (min-width:600px) and (max-width:900px){
+  :root{
+    --gap: 8px;
+    --padCard: 10px;
+    --labelSize: .75rem;
+    --inputH: 36px;
+  }
+  .app-wrap{ padding: 0 12px; }
+  .grid-auto .span-6{ grid-column: span 6; }
+  .grid-auto .span-4{ grid-column: span 4; }
+  .grid-auto .span-3{ grid-column: span 3; }
+  #timing-grid .grid-auto .span-6,
+  #timing-grid .grid-auto .span-4{ grid-column: span 6; }
+  .horaires-grid{ grid-template-columns: 1fr 1fr !important; }
+  .timer-chip{ min-width: 110px; }
+  .footer-timers{ gap: 8px !important; flex-wrap: nowrap !important; }
+}
+
+/* === MOBILE (< 600px) === */
+@media (max-width:599px){
+  :root{
+    --gap: 6px;
+    --padCard: 8px;
+    --labelSize: .7rem;
+    --inputH: 34px;
+    --fixed-footer-h: 58px;
+    --radius: 10px;
+  }
+  .app-wrap{ padding: 0 8px; }
+
+  /* Grille : max 2 colonnes */
+  .grid-auto .span-6{ grid-column: span 6; }
+  .grid-auto .span-4{ grid-column: span 6; }
+  .grid-auto .span-3{ grid-column: span 6; }
+  .grid-auto .span-12{ grid-column: span 12; }
+  #timing-grid .grid-auto .span-6,
+  #timing-grid .grid-auto .span-4{ grid-column: span 6; }
+  #timing-grid .grid-auto .span-12{ grid-column: span 12; }
+
+  /* Horaires toujours 2 colonnes */
+  .horaires-grid{ grid-template-columns: 1fr 1fr !important; gap: 6px !important; }
+
+  /* Timing champs */
+  .tw-zone-left, .tw-zone-right{ width: 28px !important; font-size: .68rem !important; }
+  .tw-display{ font-size: .9rem !important; }
+
+  /* Cards */
+  .card{ border-radius: var(--radius); }
+  .card-content{ padding: var(--padCard) !important; }
+  .card-header-title{ font-size: .85rem; }
+  .kv-card{ padding: 8px 10px; border-radius: 10px; }
+  .kv-title{ font-size: .58rem; }
+  .kv-value{ font-size: .85rem; }
+
+  /* Info strip */
+  .kv-grid-strip{ gap: 6px !important; }
+
+  /* Header timers (HLE/H-15/LID) */
+  .timer-row{ gap: 6px !important; flex-wrap: nowrap !important; }
+  .timer-chip{
+    min-width: 0 !important;
+    flex: 1 0 auto;
+    padding: 4px 6px !important;
+    gap: 4px !important;
+  }
+  .timer-chip .k{ font-size: clamp(.5rem, 2.2vw, .65rem) !important; }
+  .timer-chip .v{
+    min-width: 0 !important;
+    padding: 2px 4px !important;
+    font-size: clamp(.65rem, 2.8vw, .82rem) !important;
+  }
+
+  /* Footer (EOBT/CTOT/CD) */
+  .footer-timers{
+    gap: 4px !important;
+    flex-wrap: nowrap !important;
+  }
+  .footer-timers .timer-chip{
+    flex: 0 0 auto !important;
+    padding: 4px 5px !important;
+  }
+  .footer-timers .timer-chip .k{ font-size: clamp(.5rem, 2.2vw, .62rem) !important; }
+  .footer-timers .timer-chip .v{
+    min-width: 0 !important;
+    padding: 2px 4px !important;
+    font-size: clamp(.65rem, 2.8vw, .82rem) !important;
+  }
+  .ctot-pill{
+    min-width: 0 !important;
+    width: clamp(52px, 15vw, 76px) !important;
+    padding: 2px 4px !important;
+    font-size: clamp(.65rem, 2.8vw, .82rem) !important;
+  }
+  .footer-row{
+    grid-template-columns: 30px 1fr 30px !important;
+    gap: 4px !important;
+  }
+  .footer-refresh-btn{
+    width: 30px !important;
+    height: 30px !important;
+    font-size: .85rem !important;
+  }
+
+  /* Inputs/selects */
+  .input, .select select{
+    font-size: .85rem !important;
+    height: var(--inputH) !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  /* Boutons actions */
+  .btn-action-main{ font-size: .9rem !important; height: 38px !important; padding: 0 14px !important; }
+  .btn-actions{ gap: 6px !important; }
+
+  /* Tabs */
+  .tabs-chip{ padding: 6px 8px; gap: 4px; }
+  .tabs-chip .button{ font-size: .72rem; padding: 0 8px; height: 30px; }
+
+  /* FAB */
+  #loadFab, #settingsFab{ width: 42px !important; height: 42px !important; font-size: .85rem !important; }
+
+  /* Boutons dep extra */
+  #btn-recherche-bag, #btn-inad, #btn-gpu{
+    width: auto !important;
+    font-size: .72rem !important;
+    padding: .3rem .65rem !important;
+    height: auto !important;
+  }
+}
 </style>
 </head>
 
