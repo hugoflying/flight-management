@@ -228,24 +228,7 @@ body.has-tab .app-wrap { display: block; }
 .ctot-pill::-webkit-datetime-edit{ color:#fff; }
 .ctot-pill::-webkit-calendar-picker-indicator{ display:none; -webkit-appearance:none; }
 
-/* CTOT footer — time-wrap dimensionné comme .v */
-.timer-chip .time-wrap {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-.timer-chip .time-wrap .tw-display {
-  position: relative;
-  width: 100%;
-}
-/* Éditeur CTOT : style pill dark */
-.timer-chip .time-wrap .tw-editor {
-  border-radius: 999px;
-  background: #334155;
-  color: #fff;
-  border-color: #5a9eff;
-}
+
 /*
  * Le préfixe "html" (ou "html body") monte la spécificité
  * suffisamment pour surclasser Bulma sans polluer avec !important.
@@ -1949,6 +1932,12 @@ function setValAK(id, v){
   el.dispatchEvent(new Event('input',  { bubbles:true }));
   el.dispatchEvent(new Event('change', { bubbles:true }));
   settingFromAK = false;
+
+  // Sync affichage CTOT
+  if(id === 'CTOT'){
+    const d = document.getElementById('timer-ctot');
+    if(d) d.textContent = el.value || '--:--';
+  }
 }
 
 function setTimeFromISOAK(id, iso){
@@ -3498,6 +3487,7 @@ function saveCurrentTabData(){
   data.timer_h8=document.getElementById('timer-h8')?.textContent || '--:--';
   data.timer_tobt=document.getElementById('timer-eobt')?.textContent || '--:--';
   data.timer_cd=document.getElementById('timer-cd')?.textContent || '--:--';
+  data.timer_ctot=document.getElementById('timer-ctot')?.textContent || '--:--';
 
   data.timingPanel = localStorage.getItem('timingPanel') || 'dep';
 
@@ -3538,6 +3528,7 @@ function loadTabData(id){
   setTxt('timer-h8',   data.timer_h8);
   setTxt('timer-eobt', data.timer_tobt);
   setTxt('timer-cd',   data.timer_cd);
+  setTxt('timer-ctot', data.timer_ctot);
 
   // ✅ re-sync modes globaux (UI + variables)
   const storedDark = (localStorage.getItem('modeDark') || '0') === '1';
@@ -5784,11 +5775,8 @@ function toggleDepExtra(panel){
 
       <div class="timer-chip">
         <div class="k">CTOT</div>
-        <div class="time-wrap" data-id="CTOT">
-          <input type="time" id="CTOT" class="tw-hidden-input" onchange="updateAllCalculations(); document.getElementById('ctot-disp').textContent = this.value||'--:--';">
-          <div id="ctot-disp" class="v tw-display" style="background:#334155;color:#fff;font-size:1rem;">--:--</div>
-          <div class="tw-zone tw-zone-center tw-sched-zone" data-action="now"></div>
-        </div>
+        <div id="timer-ctot" class="v" style="background:#334155;">--:--</div>
+        <input id="CTOT" type="hidden">
       </div>
 
       <div class="timer-chip">
