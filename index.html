@@ -200,10 +200,11 @@ body.has-tab .app-wrap { display: block; }
 
 /* ===== 9. CTOT PILL ===== */
 .ctot-pill{
-  width: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-width: 70px;
-  border: 0;
-  outline: 0;
+  width: 70px;
   box-shadow: none;
   background:#334155;
   color:#fff;
@@ -216,6 +217,10 @@ body.has-tab .app-wrap { display: block; }
   font-size: 1rem;
   appearance: none;
   -webkit-appearance: none;
+  border: none;
+  outline: none;
+  cursor: default;
+  box-sizing: border-box;
 }
 .ctot-pill::-webkit-datetime-edit{ color:#fff; }
 .ctot-pill::-webkit-calendar-picker-indicator{ display:none; -webkit-appearance:none; }
@@ -5759,7 +5764,9 @@ function toggleDepExtra(panel){
 
       <div class="timer-chip">
         <div class="k">CTOT</div>
-        <input id="CTOT" class="ctot-pill" type="time" onchange="updateAllCalculations()">
+        <input id="CTOT" class="ctot-pill" type="text" readonly
+               placeholder="--:--"
+               onchange="updateAllCalculations()">
       </div>
 
       <div class="timer-chip">
