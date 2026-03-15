@@ -47,28 +47,7 @@
   --inputH:    42px;
 }
 
-/* ===== 2. DARK MODE — Auto (OS) + Manuel (toggle JS) ===== */
-/*
- * Priorité :
- *  1. html.dark  (toggle JS explicite)
- *  2. prefers-color-scheme (auto OS, sans JS)
- *  html.light bloque la détection auto si l'utilisateur a forcé le clair.
- */
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) {
-    --bg:                #0f1115;
-    --card:              #151922;
-    --text:              #e5e7eb;
-    --muted:             #9ca3af;
-    --shadow:            0 10px 28px rgba(0,0,0,.45);
-    --shadow2:           0 6px 18px rgba(0,0,0,.50);
-    --field-bg:          #0f172a;
-    --field-text:        #e5e7eb;
-    --field-border:      rgba(229,231,235,.16);
-    --field-placeholder: rgba(156,163,175,.95);
-  }
-}
-
+/* ===== 2. DARK MODE — Manuel uniquement (bouton Clair/Sombre) ===== */
 html.dark {
   --bg:                #0f1115;
   --card:              #151922;
@@ -6510,14 +6489,7 @@ function checkAndDeleteIfEmpty(){
   new ResizeObserver(update).observe(header);
 })();
 
-/* ===== prefers-color-scheme : sync avec toggle JS ===== */
-(function() {
-  /* Si aucune préférence manuelle enregistrée, laisse le CSS auto agir.
-     Si l'utilisateur a déjà toggledark, applique la classe au chargement. */
-  const pref = localStorage.getItem('colorScheme');
-  if (pref === 'dark')  document.documentElement.classList.add('dark');
-  if (pref === 'light') document.documentElement.classList.add('light');
-})();
+
 </script>
 
 </body>
