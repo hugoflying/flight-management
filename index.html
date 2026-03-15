@@ -987,7 +987,7 @@ html.dark .fixed-footer{
   align-items: start;
 }
 @media (max-width: 480px){
-  .horaires-grid{ grid-template-columns: 1fr; }
+  .horaires-grid{ grid-template-columns: 1fr 1fr; gap: 8px; }
 }
 .hor-block{
   display: flex;
@@ -1370,6 +1370,41 @@ html.dark #btn-gpu.is-info {
     font-size: .75rem !important;
     padding: .35rem .75rem !important;
     height: auto !important;
+  }
+}
+
+@media(max-width:480px){
+  .tw-zone-left, .tw-zone-right{
+    font-size: .7rem !important;
+    width: 30px !important;
+  }
+  .tw-display{
+    font-size: .95rem !important;
+  }
+  #timing-grid .grid-auto .span-6,
+  #timing-grid .grid-auto .span-4{
+    grid-column: span 1 !important;
+  }
+  /* SIBT SOBT AIBT AOBT en section horaires aussi */
+  .hor-block{
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 6px !important;
+  }
+}
+
+/* SIBT/AIBT/SOBT/AOBT : 2 colonnes sur mobile */
+@media(max-width:480px){
+  .hor-wrap{
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+  .hor-block{
+    flex-direction: column !important;
+  }
+  .hor-col-head{
+    font-size: .65rem !important;
   }
 }
 </style>
@@ -1834,7 +1869,7 @@ html.dark #btn-gpu.is-info {
     <div class="horaires-grid mb-3">
 
       <!-- Bloc ARR -->
-      <div class="hor-block">
+      <div class="hor-block hor-block-arr">
         <div class="hor-col-head"><span class="hor-badge hor-badge-arr">ARR</span><span id="ivBadgeArr" style="margin-left:6px;"></span></div>
         <div class="hor-cell">
           <label class="label">SIBT</label>
@@ -1857,7 +1892,7 @@ html.dark #btn-gpu.is-info {
       </div>
 
       <!-- Bloc DEP -->
-      <div class="hor-block">
+      <div class="hor-block hor-block-dep">
         <div class="hor-col-head"><span class="hor-badge hor-badge-dep">DEP</span><span id="ivBadgeDep" style="margin-left:6px;"></span></div>
         <div class="hor-cell">
           <label class="label">SOBT</label>
