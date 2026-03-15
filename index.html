@@ -6674,15 +6674,7 @@ function updateIVBadges(){
     if(!el) return;
     el.className = '';
     el.textContent = '';
-    if(mins == null) return;
-    let label, cls;
-    if(mins >= 15)      { label = `RETARDÉ +${mins}min`; cls = 'tag is-danger'; }
-    else if(mins >= 5)  { label = `RETARDÉ +${mins}min`; cls = 'tag is-warning'; }
-    else if(mins <= -10){ label = `EN AVANCE ${mins}min`; cls = 'tag is-info'; }
-    else                { label = "À L'HEURE"; cls = 'tag is-success'; }
-    el.className = cls;
-    el.style.fontWeight = '900';
-    el.textContent = label;
+    // Badges INFO VOL désactivés
   }
 
   const arrEl = document.getElementById('ivBadgeArr');
