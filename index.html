@@ -3755,11 +3755,12 @@ function generateTimingFields(){
     <div class="card mb-4">
       <div class="card-content">
         <div class="grid-auto">
-          ${fieldHTML('ArriveeFuel','Arrivée Avitair',true,false,'is-warning')}
-          ${fieldHTML('PremierDebarque','Premier débarqué')}
-          ${fieldHTML('DernierDebarque','Dernier débarqué')}
-          ${fieldHTML('ArriveeLiftArr','Arrivée lift',false,false,'is-success')}
-          ${fieldHTML('DepartLiftArr','Départ lift',false,false,'is-success')}
+          <div class="span-4">${fieldHTML('PremierDebarque','1er débarqué (L1)')}</div>
+          <div class="span-4">${fieldHTML('PremierDebarqueL2','1er débarqué (L2)')}</div>
+          <div class="span-4">${fieldHTML('DernierDebarque','Dernier débarqué')}</div>
+          <div class="span-6">${fieldHTML('ArriveeFuel','Arrivée Avitair',true,false,'is-warning')}</div>
+          <div class="span-3">${fieldHTML('ArriveeLiftArr','Arrivée lift',false,false,'is-success')}</div>
+          <div class="span-3">${fieldHTML('DepartLiftArr','Départ lift',false,false,'is-success')}</div>
         </div>
       </div>
     </div>`;
@@ -4319,7 +4320,7 @@ function setTimeModeUTC(enable, fromInit=false){
   if(!fromInit){
     const offsetHours = -new Date().getTimezoneOffset() / 60;
     const timeFields = ['SIBT','AIBT','SOBT','AOBT','CTOT',
-      'ArriveeFuel','PremierDebarque','DernierDebarque',
+      'ArriveeFuel','PremierDebarque','PremierDebarqueL2','DernierDebarque',
       'ArriveeLiftArr','DepartLiftArr','ArrPNT','ArrPNC',
       'AvionPremierEmbarque','AvionDernierEmbarque',
       'ArriveeLift','DepartLift','DepartFuel','ArriveeINAD',
@@ -6035,6 +6036,7 @@ function collectFlightState() {
 
     "ArriveeFuel",
     "PremierDebarque",
+    "PremierDebarqueL2",
     "DernierDebarque",
     "ArriveeLiftArr",
     "DepartLiftArr",
@@ -6330,6 +6332,7 @@ function setupRealtimeSync() {
 
     "ArriveeFuel",
     "PremierDebarque",
+    "PremierDebarqueL2",
     "DernierDebarque",
     "ArriveeLiftArr",
     "DepartLiftArr",
