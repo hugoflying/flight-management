@@ -258,6 +258,7 @@ textarea.si-uppercase{ text-transform: uppercase; }
   letter-spacing: .02em;
   text-transform: uppercase;
   opacity: .9;
+  margin-bottom: 2px !important;
 }
 
 /* FORCE couleur TOB */
@@ -1214,7 +1215,7 @@ html.dark .tw-color-is-bordeaux { border-color: #ef4444 !important; color: #ef44
 
 /* Timing : réduction espacement */
 #timing-grid .card-content { padding: 10px 12px !important; }
-#timing-grid .grid-auto { gap: 6px !important; row-gap: 6px !important; }
+#timing-grid .grid-auto { gap: 6px !important; row-gap: 12px !important; }
 #timing-grid .card.mb-4 { margin-bottom: 8px !important; }
 #timing-grid .hor-col-head { margin-bottom: 6px !important; }
 
@@ -1329,6 +1330,22 @@ html.dark .tw-color-is-bordeaux { border-color: #ef4444 !important; color: #ef44
   width: 100%;
   z-index: 3;
   cursor: default;
+}
+
+/* Boutons extra départ en mode sombre */
+html.dark #btn-recherche-bag,
+html.dark #btn-inad,
+html.dark #btn-gpu {
+  background: #353839 !important;
+  color: #f3f4f6 !important;
+  border-color: #444 !important;
+}
+html.dark #btn-recherche-bag.is-info,
+html.dark #btn-inad.is-info,
+html.dark #btn-gpu.is-info {
+  background: #2563eb !important;
+  color: #fff !important;
+  border-color: #2563eb !important;
 }
 </style>
 </head>
@@ -3729,10 +3746,12 @@ function generateTimingFields(){
 
   const colorDot = {
     'is-link':     '#3273dc',
-    'is-success':  '#23d160',
+    'is-success':  '#15803d',
     'is-warning':  '#d97706',
     'is-dark':     '#636363',
     'is-bordeaux': '#7f1d1d',
+    'is-purple':   '#7c3aed',
+    'is-jaune':    '#f5c400',
   };
   const fieldHTML = (id,label,full=false,optional=false,nowColor='is-link')=>`
     <div class="${full ? 'span-12' : 'span-6'}">
@@ -3755,41 +3774,75 @@ function generateTimingFields(){
     <div class="card mb-4">
       <div class="card-content">
         <div class="grid-auto">
-          ${fieldHTML('ArriveeFuel','Arrivée Avitair',true,false,'is-warning')}
-          ${fieldHTML('PremierDebarque','Premier débarqué')}
-          ${fieldHTML('DernierDebarque','Dernier débarqué')}
-          ${fieldHTML('ArriveeLiftArr','Arrivée lift',false,false,'is-success')}
-          ${fieldHTML('DepartLiftArr','Départ lift',false,false,'is-success')}
+          <div class="span-6">${fieldHTML('PremierDebarque','1er débarqué (L1)')}</div>
+          <div class="span-6">${fieldHTML('PremierDebarqueL2','1er débarqué (L2)')}</div>
+          <div class="span-6">${fieldHTML('ArriveeFuel','Arrivée Avitair',true,false,'is-warning')}</div>
+          <div class="span-6">${fieldHTML('DernierDebarque','Dernier débarqué')}</div>
+          <div class="span-6">${fieldHTML('ArriveeLiftArr','Arrivée lift',false,false,'is-success')}</div>
+          <div class="span-6">${fieldHTML('DepartLiftArr','Départ lift',false,false,'is-success')}</div>
         </div>
       </div>
     </div>`;
 
   /* ===== DÉPART ===== */
   const depNoHeader = `
-    <div class="card">
+    <div class="buttons mb-4" style="justify-content:center;gap:.5rem;">
+      <button class="button is-rounded is-light" id="btn-recherche-bag" type="button" onclick="toggleDepExtra('recherche-bag')" style="font-weight:700;width:160px;">Recherche bag</button>
+      <button class="button is-rounded is-light" id="btn-inad" type="button" onclick="toggleDepExtra('inad')" style="font-weight:700;width:160px;">INAD</button>
+      <button class="button is-rounded is-light" id="btn-gpu" type="button" onclick="toggleDepExtra('gpu')" style="font-weight:700;width:160px;">GPU</button>
+    </div>
+
+    <!-- Panneau Recherche bag -->
+    <div id="panel-recherche-bag" class="card mb-3" style="display:none;">
       <div class="card-content">
         <div class="grid-auto">
-          ${fieldHTML('ArrPNT','Arrivée PNT',false,true,'is-dark')}
-          ${fieldHTML('ArrPNC','Arrivée PNC',false,true,'is-dark')}
-          ${fieldHTML('AvionPremierEmbarque','Premier embarqué')}
-          ${fieldHTML('AvionDernierEmbarque','Dernier embarqué')}
-          ${fieldHTML('ArriveeLift','Arrivée lift',false,false,'is-success')}
-          ${fieldHTML('DepartLift','Départ lift',false,false,'is-success')}
-
-          <!-- Départ Avitair + Arrivée INAD sur la même ligne -->
-          <div class="span-12">
-            <div class="grid-auto">
-              <div class="span-6">
-                ${fieldHTML('DepartFuel','Départ Avitair',false,false,'is-warning')}
-              </div>
-              <div class="span-6">
-                ${fieldHTML('ArriveeINAD','Arrivée INAD',false,true,'is-dark')}
+          <div class="span-4">
+            <div class="field">
+              <label class="label"><span class="tw-dot" style="background:#636363;"></span>Nombre de bags</label>
+              <div class="control">
+                <input class="input" type="number" id="RechercheBagNombre" min="0" placeholder="0" style="text-align:center;" oninput="twSync('RechercheBagNombre')">
               </div>
             </div>
           </div>
+          <div class="span-4">${fieldHTML('RechercheBagDebut','Début de recherche',false,false,'is-dark')}</div>
+          <div class="span-4">${fieldHTML('RechercheBagFin','Fin de recherche',false,false,'is-dark')}</div>
+        </div>
+      </div>
+    </div>
 
-          ${fieldHTML('RemiseLID','Remise LID/LDS')}
-          ${fieldHTML('FermeturePorteAvion','Fermeture porte avion',false,false,'is-bordeaux')}
+    <!-- Panneau INAD -->
+    <div id="panel-inad" class="card mb-3" style="display:none;">
+      <div class="card-content">
+        <div class="grid-auto">
+          <div class="span-6">${fieldHTML('AnnonceINAD','Annonce INAD',false,true,'is-dark')}</div>
+          <div class="span-6">${fieldHTML('ArriveeINAD','Arrivée INAD',false,true,'is-dark')}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panneau GPU -->
+    <div id="panel-gpu" class="card mb-3" style="display:none;">
+      <div class="card-content">
+        <div class="grid-auto">
+          <div class="span-6">${fieldHTML('BranchementGPU','Branchement GPU',false,false,'is-jaune')}</div>
+          <div class="span-6">${fieldHTML('DebranchementGPU','Débranchement GPU',false,false,'is-jaune')}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-content">
+        <div class="grid-auto">
+          <div class="span-6">${fieldHTML('ArrPNT','Arrivée PNT',false,true,'is-dark')}</div>
+          <div class="span-6">${fieldHTML('ArrPNC','Arrivée PNC',false,true,'is-dark')}</div>
+          <div class="span-6">${fieldHTML('AvionPremierEmbarque','Premier embarqué')}</div>
+          <div class="span-6">${fieldHTML('AvionDernierEmbarque','Dernier embarqué')}</div>
+          <div class="span-6">${fieldHTML('ArriveeLift','Arrivée lift',false,false,'is-success')}</div>
+          <div class="span-6">${fieldHTML('DepartLift','Départ lift',false,false,'is-success')}</div>
+          <div class="span-6">${fieldHTML('DepartFuel','Départ Avitair',false,false,'is-warning')}</div>
+          <div class="span-6">${fieldHTML('RemiseLID','Remise LID/LDS')}</div>
+          <div class="span-6">${fieldHTML('FermeturePorteAvion','Fermeture porte avion',false,false,'is-bordeaux')}</div>
+          <div class="span-6">${fieldHTML('ConnexionAgentCasque','Connexion agent casque',false,false,'is-purple')}</div>
         </div>
       </div>
     </div>`;
@@ -4319,7 +4372,7 @@ function setTimeModeUTC(enable, fromInit=false){
   if(!fromInit){
     const offsetHours = -new Date().getTimezoneOffset() / 60;
     const timeFields = ['SIBT','AIBT','SOBT','AOBT','CTOT',
-      'ArriveeFuel','PremierDebarque','DernierDebarque',
+      'ArriveeFuel','PremierDebarque','PremierDebarqueL2','DernierDebarque',
       'ArriveeLiftArr','DepartLiftArr','ArrPNT','ArrPNC',
       'AvionPremierEmbarque','AvionDernierEmbarque',
       'ArriveeLift','DepartLift','DepartFuel','ArriveeINAD',
@@ -5765,34 +5818,45 @@ function toggleSettings(){
 
 function clearAutoSave() {
   if (confirm("Tout réinitialiser ?")) {
-    // Envoyer __delete pour chaque onglet ouvert via WebSocket
     const tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
+    const WS_BASE = 'wss://turnaround-sync.deruellehugo-49c.workers.dev/';
+    const deletePromises = [];
 
-    // Pour l'onglet courant : envoyer via le socket actif
-    if(socket && socket.readyState === WebSocket.OPEN){
-      socket.send(JSON.stringify({ __delete: '1' }));
-    }
-
-    // Pour les autres onglets : construire leur clé et envoyer DELETE HTTP
     tabs.forEach(tid => {
-      if(tid === currentTabId) return;
       try{
         const data = JSON.parse(localStorage.getItem('tab-'+tid) || '{}');
         const meta = data?.akMeta;
-        let key = null;
-        if(meta?.id) key = `AK_${meta.id}`;
-        if(key){
-          fetch(`https://turnaround-sync.deruellehugo-49c.workers.dev/${encodeURIComponent(key)}`, {
-            method: "DELETE"
-          }).catch(_=>{});
+        if(!meta?.id) return;
+        const key = `AK_${meta.id}`;
+
+        if(tid === currentTabId && socket && socket.readyState === WebSocket.OPEN){
+          // Onglet courant : socket déjà ouvert
+          socket.send(JSON.stringify({ __delete: '1' }));
+        } else {
+          // Autres onglets : ouvrir un socket temporaire
+          const p = new Promise(resolve => {
+            try{
+              const ws = new WebSocket(WS_BASE + encodeURIComponent(key));
+              ws.onopen = () => {
+                ws.send(JSON.stringify({ __delete: '1' }));
+                setTimeout(() => { try{ ws.close(); }catch(_){} resolve(); }, 200);
+              };
+              ws.onerror = () => resolve();
+              setTimeout(resolve, 2000); // timeout sécurité
+            }catch(_){ resolve(); }
+          });
+          deletePromises.push(p);
         }
       }catch(_){}
     });
 
-    setTimeout(() => {
-      localStorage.clear();
-      location.reload();
-    }, 300); // laisser le temps aux messages de partir
+    // Attendre que tous les deletes soient envoyés avant de recharger
+    Promise.all(deletePromises).then(() => {
+      setTimeout(() => {
+        localStorage.clear();
+        location.reload();
+      }, 300);
+    });
   }
 }
 
@@ -5824,6 +5888,21 @@ function toggleDelayCodes() {
   box.style.display = (box.style.display === 'none') ? 'block' : 'none';
 }
 
+
+function toggleDepExtra(panel){
+  const el = document.getElementById('panel-' + panel)
+  const btn = document.getElementById('btn-' + panel)
+  if(!el) return
+  const isOpen = el.style.display !== 'none'
+  el.style.display = isOpen ? 'none' : 'block'
+  if(btn){
+    if(isOpen){
+      btn.classList.remove('is-info', 'is-selected')
+    } else {
+      btn.classList.add('is-info', 'is-selected')
+    }
+  }
+}
 </script>
 
 <!-- ===== Airport Keeper Picker ===== -->
@@ -6024,6 +6103,7 @@ function collectFlightState() {
 
     "ArriveeFuel",
     "PremierDebarque",
+    "PremierDebarqueL2",
     "DernierDebarque",
     "ArriveeLiftArr",
     "DepartLiftArr",
@@ -6038,6 +6118,8 @@ function collectFlightState() {
     "ArriveeINAD",
     "RemiseLID",
     "FermeturePorteAvion",
+    "ConnexionAgentCasque",
+    "RechercheBagNombre","RechercheBagDebut","RechercheBagFin","AnnonceINAD","BranchementGPU","DebranchementGPU",
 
     "ArrPAX_MAIN",
     "ArrPAX_INF",
@@ -6319,6 +6401,7 @@ function setupRealtimeSync() {
 
     "ArriveeFuel",
     "PremierDebarque",
+    "PremierDebarqueL2",
     "DernierDebarque",
     "ArriveeLiftArr",
     "DepartLiftArr",
@@ -6333,6 +6416,8 @@ function setupRealtimeSync() {
     "ArriveeINAD",
     "RemiseLID",
     "FermeturePorteAvion",
+    "ConnexionAgentCasque",
+    "RechercheBagNombre","RechercheBagDebut","RechercheBagFin","AnnonceINAD","BranchementGPU","DebranchementGPU",
 
     "ArrPAX_MAIN",
     "ArrPAX_INF",
