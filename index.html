@@ -5759,11 +5759,7 @@ function toggleDepExtra(panel){
 
       <div class="timer-chip">
         <div class="k">CTOT</div>
-        <div class="time-wrap" data-id="CTOT" style="position:relative; display:inline-flex; align-items:center; min-width:70px; height:34px; border-radius:999px;">
-          <input type="time" id="CTOT" class="tw-hidden-input" onchange="updateAllCalculations(); twSync('CTOT')">
-          <div class="ctot-pill tw-display" id="tw-disp-CTOT" style="position:relative; z-index:0; width:100%; height:100%; min-height:unset;">--:--</div>
-          <div class="tw-zone tw-zone-center tw-sched-zone" data-action="now" style="border-radius:999px;"></div>
-        </div>
+        <input id="CTOT" class="ctot-pill" type="time" onchange="updateAllCalculations()">
       </div>
 
       <div class="timer-chip">
@@ -6435,97 +6431,7 @@ async function footerRefreshAK(){
   });
 })();
 
-/* ===== CTOT — gestes directs sur la pill (long press = éditer, double clic/tap = effacer) ===== */
-(function(){
-  const LONG_MS = 600;
-  const DBL_MS  = 320;
-  let timer = null, fired = false, lastTap = 0;
 
-  function getDisp(){ return document.getElementById('tw-disp-CTOT'); }
-
-  function doOpen(){
-    fired = true;
-    // réutilise openEdit de la IIFE ci-dessus via data-id
-    const wrap = document.querySelector('.time-wrap[data-id="CTOT"]');
-    const inp  = document.getElementById('CTOT');
-    const disp = getDisp();
-    if(!wrap || !inp || !disp) return;
-    if(wrap.querySelector('.tw-editor')) return;
-
-    const ed = document.createElement('input');
-    ed.type='text'; ed.className='input tw-editor';
-    ed.value = inp.value || ''; ed.placeholder='HH:MM';
-    ed.maxLength=5; ed.inputMode='numeric';
-    // Adapte le style de l'éditeur à la pill
-    ed.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;' +
-      'border-radius:999px;background:#334155;color:#fff;font-weight:900;' +
-      'font-size:1rem;text-align:center;border:2px solid #5a9eff;padding:0;z-index:10;';
-    disp.style.visibility = 'hidden';
-    wrap.appendChild(ed);
-    setTimeout(()=>{ ed.focus(); ed.select(); }, 30);
-
-    let done = false;
-    function commit(){
-      if(done) return; done = true;
-      const m = ed.value.trim().match(/^(\d{1,2}):?(\d{2})$/);
-      if(m){
-        const hh=m[1].padStart(2,'0'), mm=m[2];
-        if(+hh<24 && +mm<60){
-          inp.value = hh+':'+mm;
-          inp.dispatchEvent(new Event('change',{bubbles:true}));
-          twSync('CTOT'); updateAllCalculations();
-        }
-      }
-      ed.remove(); disp.style.visibility = '';
-    }
-    ed.addEventListener('blur', commit);
-    ed.addEventListener('keydown', e=>{
-      if(e.key==='Enter'){ e.preventDefault(); ed.blur(); }
-      if(e.key==='Escape'){ done=true; ed.remove(); disp.style.visibility=''; }
-    });
-  }
-
-  function doClear(){
-    const inp = document.getElementById('CTOT'); if(!inp) return;
-    inp.value = '';
-    inp.dispatchEvent(new Event('change',{bubbles:true}));
-    twSync('CTOT'); updateAllCalculations();
-  }
-
-  function target(e){ return e.target.closest('#tw-disp-CTOT, .time-wrap[data-id="CTOT"] .tw-sched-zone'); }
-
-  /* ── Desktop ── */
-  document.addEventListener('mousedown', e=>{
-    if(e.button !== 0 || !target(e)) return;
-    fired = false;
-    timer = setTimeout(()=>{ doOpen(); }, LONG_MS);
-  });
-  document.addEventListener('mouseup',  e=>{ clearTimeout(timer); timer=null; });
-  document.addEventListener('dblclick', e=>{
-    if(!target(e)) return;
-    clearTimeout(timer);
-    doClear();
-  });
-
-  /* ── Touch ── */
-  document.addEventListener('touchstart', e=>{
-    if(!target(e)) return;
-    fired = false;
-    timer = setTimeout(()=>{ doOpen(); }, LONG_MS);
-  }, {passive:true});
-  document.addEventListener('touchend', e=>{
-    if(!target(e)) return;
-    clearTimeout(timer);
-    if(fired) return;
-    const now = Date.now();
-    if(now - lastTap < DBL_MS){ lastTap=0; doClear(); }
-    else { lastTap = now; }
-  }, {passive:true});
-  document.addEventListener('touchmove', e=>{
-    if(!target(e)) return;
-    clearTimeout(timer);
-  }, {passive:true});
-})();
   const inp = document.getElementById(id);
   const disp = document.getElementById('tw-disp-' + id);
   if(!inp || !disp) return;
