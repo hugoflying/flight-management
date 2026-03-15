@@ -1087,22 +1087,23 @@ body.iv-editing .iv-edit-btn{ opacity: 1; }
 .footer-refresh-btn.is-loading{ pointer-events:none; opacity:.6; }
 @media (max-width: 480px){
   .footer-refresh-btn{
-    width: 34px !important;
-    height: 34px !important;
-    font-size: .9rem !important;
+    width: 30px !important;
+    height: 30px !important;
+    font-size: .85rem !important;
   }
   .footer-row{
-    grid-template-columns: 34px 1fr 34px;
+    grid-template-columns: 30px 1fr 30px;
     gap: 4px;
   }
   .footer-timers{
     gap: 4px !important;
+    flex-wrap: nowrap !important;
   }
   .timer-chip{
     min-width: 0 !important;
-    padding: 4px 6px !important;
-    gap: 4px !important;
-    flex: 0 0 auto;
+    flex: 1 1 0 !important;
+    padding: 4px 5px !important;
+    gap: 3px !important;
   }
   .timer-chip .v{
     min-width: 0 !important;
