@@ -5765,34 +5765,45 @@ function toggleSettings(){
 
 function clearAutoSave() {
   if (confirm("Tout réinitialiser ?")) {
-    // Envoyer __delete pour chaque onglet ouvert via WebSocket
     const tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
+    const WS_BASE = 'wss://turnaround-sync.deruellehugo-49c.workers.dev/';
+    const deletePromises = [];
 
-    // Pour l'onglet courant : envoyer via le socket actif
-    if(socket && socket.readyState === WebSocket.OPEN){
-      socket.send(JSON.stringify({ __delete: '1' }));
-    }
-
-    // Pour les autres onglets : construire leur clé et envoyer DELETE HTTP
     tabs.forEach(tid => {
-      if(tid === currentTabId) return;
       try{
         const data = JSON.parse(localStorage.getItem('tab-'+tid) || '{}');
         const meta = data?.akMeta;
-        let key = null;
-        if(meta?.id) key = `AK_${meta.id}`;
-        if(key){
-          fetch(`https://turnaround-sync.deruellehugo-49c.workers.dev/${encodeURIComponent(key)}`, {
-            method: "DELETE"
-          }).catch(_=>{});
+        if(!meta?.id) return;
+        const key = `AK_${meta.id}`;
+
+        if(tid === currentTabId && socket && socket.readyState === WebSocket.OPEN){
+          // Onglet courant : socket déjà ouvert
+          socket.send(JSON.stringify({ __delete: '1' }));
+        } else {
+          // Autres onglets : ouvrir un socket temporaire
+          const p = new Promise(resolve => {
+            try{
+              const ws = new WebSocket(WS_BASE + encodeURIComponent(key));
+              ws.onopen = () => {
+                ws.send(JSON.stringify({ __delete: '1' }));
+                setTimeout(() => { try{ ws.close(); }catch(_){} resolve(); }, 200);
+              };
+              ws.onerror = () => resolve();
+              setTimeout(resolve, 2000); // timeout sécurité
+            }catch(_){ resolve(); }
+          });
+          deletePromises.push(p);
         }
       }catch(_){}
     });
 
-    setTimeout(() => {
-      localStorage.clear();
-      location.reload();
-    }, 300); // laisser le temps aux messages de partir
+    // Attendre que tous les deletes soient envoyés avant de recharger
+    Promise.all(deletePromises).then(() => {
+      setTimeout(() => {
+        localStorage.clear();
+        location.reload();
+      }, 300);
+    });
   }
 }
 
