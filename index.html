@@ -228,7 +228,24 @@ body.has-tab .app-wrap { display: block; }
 .ctot-pill::-webkit-datetime-edit{ color:#fff; }
 .ctot-pill::-webkit-calendar-picker-indicator{ display:none; -webkit-appearance:none; }
 
-/* ===== 10. BULMA OVERRIDES — via spécificité, sans !important ===== */
+/* CTOT footer — time-wrap dimensionné comme .v */
+.timer-chip .time-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.timer-chip .time-wrap .tw-display {
+  position: relative;
+  width: 100%;
+}
+/* Éditeur CTOT : style pill dark */
+.timer-chip .time-wrap .tw-editor {
+  border-radius: 999px;
+  background: #334155;
+  color: #fff;
+  border-color: #5a9eff;
+}
 /*
  * Le préfixe "html" (ou "html body") monte la spécificité
  * suffisamment pour surclasser Bulma sans polluer avec !important.
@@ -5767,8 +5784,11 @@ function toggleDepExtra(panel){
 
       <div class="timer-chip">
         <div class="k">CTOT</div>
-        <div class="v" style="background:#334155;" id="ctot-disp">--:--</div>
-        <input id="CTOT" type="text" style="display:none;" onchange="updateAllCalculations(); document.getElementById('ctot-disp').textContent = this.value||'--:--';">
+        <div class="time-wrap" data-id="CTOT">
+          <input type="time" id="CTOT" class="tw-hidden-input" onchange="updateAllCalculations(); document.getElementById('ctot-disp').textContent = this.value||'--:--';">
+          <div id="ctot-disp" class="v tw-display" style="background:#334155;color:#fff;font-size:1rem;">--:--</div>
+          <div class="tw-zone tw-zone-center tw-sched-zone" data-action="now"></div>
+        </div>
       </div>
 
       <div class="timer-chip">
@@ -6569,112 +6589,7 @@ self.addEventListener('fetch', e => {
 }
 </script>
 
-<script>
-/* ===== CTOT — appui long = éditer, double-clic/tap = effacer ===== */
-(function(){
-  const LONG_MS = 600, DBL_MS = 320;
-  let t = null, lastTap = 0;
 
-  function inp(){ return document.getElementById('CTOT'); }
-  function disp(){ return document.getElementById('ctot-disp'); }
-
-  function syncDisp(){
-    const d = disp(), v = inp()?.value || '';
-    if(d) d.textContent = v || '--:--';
-  }
-
-  function openEdit(){
-    const input = inp(); if(!input) return;
-    const d = disp(); if(!d) return;
-    const rect = d.getBoundingClientRect();
-
-    const ed = document.createElement('input');
-    ed.type = 'text';
-    ed.placeholder = 'HH:MM';
-    ed.maxLength = 5;
-    ed.inputMode = 'numeric';
-    ed.value = input.value || '';
-    ed.style.cssText =
-      'position:fixed;z-index:9999;' +
-      'left:'+rect.left+'px;top:'+rect.top+'px;' +
-      'width:'+rect.width+'px;height:'+rect.height+'px;' +
-      'border-radius:999px;border:2px solid #5a9eff;' +
-      'background:#334155;color:#fff;font-weight:900;' +
-      'font-size:1rem;text-align:center;padding:0;outline:none;';
-    document.body.appendChild(ed);
-    setTimeout(()=>{ ed.focus(); ed.select(); }, 30);
-
-    let done = false;
-    function commit(){
-      if(done) return; done = true;
-      const m = ed.value.trim().match(/^(\d{1,2}):?(\d{2})$/);
-      if(m){
-        const hh = m[1].padStart(2,'0'), mm = m[2];
-        if(+hh < 24 && +mm < 60){
-          input.value = hh+':'+mm;
-          input.dispatchEvent(new Event('change', {bubbles:true}));
-          syncDisp();
-        }
-      }
-      ed.remove();
-    }
-    ed.addEventListener('blur', commit);
-    ed.addEventListener('keydown', e=>{
-      if(e.key==='Enter'){ e.preventDefault(); ed.blur(); }
-      if(e.key==='Escape'){ done=true; ed.remove(); }
-    });
-  }
-
-  function clearCTOT(){
-    const input = inp(); if(!input) return;
-    input.value = '';
-    input.dispatchEvent(new Event('change', {bubbles:true}));
-    syncDisp();
-  }
-
-  function onTarget(e){ return !!e.target.closest('#ctot-disp'); }
-
-  /* Desktop */
-  document.addEventListener('mousedown', e=>{
-    if(e.button!==0 || !onTarget(e)) return;
-    clearTimeout(t);
-    t = setTimeout(openEdit, LONG_MS);
-  });
-  document.addEventListener('mouseup',  ()=>{ clearTimeout(t); });
-  document.addEventListener('dblclick', e=>{
-    if(!onTarget(e)) return;
-    clearTimeout(t); clearCTOT();
-  });
-
-  /* Touch */
-  document.addEventListener('touchstart', e=>{
-    if(!onTarget(e)) return;
-    clearTimeout(t);
-    t = setTimeout(openEdit, LONG_MS);
-  }, {passive:true});
-  document.addEventListener('touchend', e=>{
-    if(!onTarget(e)) return;
-    clearTimeout(t);
-    const now = Date.now();
-    if(now - lastTap < DBL_MS){ lastTap=0; clearCTOT(); }
-    else { lastTap = now; }
-  }, {passive:true});
-  document.addEventListener('touchmove', e=>{
-    if(!onTarget(e)) return;
-    clearTimeout(t);
-  }, {passive:true});
-
-  /* Sync affichage au chargement et après calculs */
-  document.addEventListener('DOMContentLoaded', syncDisp);
-  const _origUpdate = window.updateAllCalculations;
-  if(typeof _origUpdate === 'function'){
-    window.updateAllCalculations = function(){
-      _origUpdate.apply(this, arguments);
-      syncDisp();
-    };
-  }
-})();
-</script>
 
 </body>
 </html>
