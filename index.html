@@ -200,27 +200,30 @@ body.has-tab .app-wrap { display: block; }
 
 /* ===== 9. CTOT PILL ===== */
 .ctot-pill{
+  /* Identique à .timer-chip .v */
+  font-weight: 900;
+  padding: 6px 10px;
+  border-radius: 999px;
+  min-width: 70px;
+  text-align: center;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 70px;
-  width: 70px;
-  box-shadow: none;
-  background:#334155;
-  color:#fff;
-  font-weight: 900;
-  border-radius: 999px;
-  padding: 6px 10px;
-  text-align:center;
-  height: auto;
-  line-height: 1.2;
-  font-size: 1rem;
-  appearance: none;
-  -webkit-appearance: none;
+  /* Couleur propre CTOT */
+  background: #334155;
+  color: #fff;
+  /* Reset input */
   border: none;
   outline: none;
+  box-shadow: none;
+  appearance: none;
+  -webkit-appearance: none;
   cursor: default;
-  box-sizing: border-box;
+  font-size: inherit;
+  line-height: inherit;
+  width: auto;
+  height: auto;
+  box-sizing: content-box;
 }
 .ctot-pill::-webkit-datetime-edit{ color:#fff; }
 .ctot-pill::-webkit-calendar-picker-indicator{ display:none; -webkit-appearance:none; }
@@ -5764,9 +5767,8 @@ function toggleDepExtra(panel){
 
       <div class="timer-chip">
         <div class="k">CTOT</div>
-        <input id="CTOT" class="ctot-pill" type="text" readonly
-               placeholder="--:--"
-               onchange="updateAllCalculations()">
+        <div class="v" style="background:#334155;" id="ctot-disp">--:--</div>
+        <input id="CTOT" type="text" style="display:none;" onchange="updateAllCalculations(); document.getElementById('ctot-disp').textContent = this.value||'--:--';">
       </div>
 
       <div class="timer-chip">
@@ -6573,18 +6575,25 @@ self.addEventListener('fetch', e => {
   const LONG_MS = 600, DBL_MS = 320;
   let t = null, lastTap = 0;
 
-  function pill(){ return document.getElementById('CTOT'); }
+  function inp(){ return document.getElementById('CTOT'); }
+  function disp(){ return document.getElementById('ctot-disp'); }
+
+  function syncDisp(){
+    const d = disp(), v = inp()?.value || '';
+    if(d) d.textContent = v || '--:--';
+  }
 
   function openEdit(){
-    const inp = pill(); if(!inp) return;
-    const rect = inp.getBoundingClientRect();
+    const input = inp(); if(!input) return;
+    const d = disp(); if(!d) return;
+    const rect = d.getBoundingClientRect();
 
     const ed = document.createElement('input');
     ed.type = 'text';
     ed.placeholder = 'HH:MM';
     ed.maxLength = 5;
     ed.inputMode = 'numeric';
-    ed.value = inp.value || '';
+    ed.value = input.value || '';
     ed.style.cssText =
       'position:fixed;z-index:9999;' +
       'left:'+rect.left+'px;top:'+rect.top+'px;' +
@@ -6602,8 +6611,9 @@ self.addEventListener('fetch', e => {
       if(m){
         const hh = m[1].padStart(2,'0'), mm = m[2];
         if(+hh < 24 && +mm < 60){
-          inp.value = hh+':'+mm;
-          inp.dispatchEvent(new Event('change', {bubbles:true}));
+          input.value = hh+':'+mm;
+          input.dispatchEvent(new Event('change', {bubbles:true}));
+          syncDisp();
         }
       }
       ed.remove();
@@ -6616,12 +6626,13 @@ self.addEventListener('fetch', e => {
   }
 
   function clearCTOT(){
-    const inp = pill(); if(!inp) return;
-    inp.value = '';
-    inp.dispatchEvent(new Event('change', {bubbles:true}));
+    const input = inp(); if(!input) return;
+    input.value = '';
+    input.dispatchEvent(new Event('change', {bubbles:true}));
+    syncDisp();
   }
 
-  function onTarget(e){ return !!e.target.closest('#CTOT'); }
+  function onTarget(e){ return !!e.target.closest('#ctot-disp'); }
 
   /* Desktop */
   document.addEventListener('mousedown', e=>{
@@ -6652,6 +6663,16 @@ self.addEventListener('fetch', e => {
     if(!onTarget(e)) return;
     clearTimeout(t);
   }, {passive:true});
+
+  /* Sync affichage au chargement et après calculs */
+  document.addEventListener('DOMContentLoaded', syncDisp);
+  const _origUpdate = window.updateAllCalculations;
+  if(typeof _origUpdate === 'function'){
+    window.updateAllCalculations = function(){
+      _origUpdate.apply(this, arguments);
+      syncDisp();
+    };
+  }
 })();
 </script>
 
