@@ -3238,7 +3238,7 @@ function attachAutoSave(){
       saveCurrentTabData();
       renderTimeline();
       updateHeaderOffset();
-    }, 300);
+    }, 1000);
   };
   document.addEventListener('input', handler, true);
   document.addEventListener('change', handler, true);
@@ -3546,9 +3546,10 @@ function loadTabData(id){
 
   connectFlightSocket();
 
-  setTimeout(() => {
+  clearTimeout(window._sendFullDebounce);
+  window._sendFullDebounce = setTimeout(() => {
     sendFullFlightState();
-  }, 150);
+  }, 2000);
 }
   
 function updateTabLabelInstant(){ saveCurrentTabData(); renderTabs(); }
@@ -5669,7 +5670,7 @@ function clearAutoSave() {
       setTimeout(() => {
         localStorage.clear();
         location.reload();
-      }, 300);
+      }, 1000);
     });
   }
 }
@@ -6089,7 +6090,8 @@ function connectFlightSocket() {
         applyRemotePayload(msg.payload || {});
         flushPendingPatch();
         // Envoyer le state complet pour que le dashboard ait toutes les infos
-        setTimeout(sendFullFlightState, 100);
+        clearTimeout(window._sendFullDebounce);
+        window._sendFullDebounce = setTimeout(sendFullFlightState, 2000);
         return;
       }
 
@@ -6117,7 +6119,7 @@ function connectFlightSocket() {
   };
 }
 
-function ensureSocketConnection(retries = 15, delay = 300) {
+function ensureSocketConnection(retries = 3, delay = 2000) {
   let count = 0;
 
   const tryConnect = () => {
@@ -6179,12 +6181,9 @@ function setupRealtimeSync() {
     const el = document.getElementById(id);
     if (!el) return;
 
-    const reconnect = () => {
+    el.addEventListener("change", () => {
       ensureSocketConnection();
-    };
-
-    el.addEventListener("input", reconnect);
-    el.addEventListener("change", reconnect);
+    });
   });
 
   const syncFields = new Set([
@@ -6296,7 +6295,7 @@ function setupRealtimeSync() {
     clearTimeout(debounceTimers[el.id]);
     debounceTimers[el.id] = setTimeout(() => {
       sendFieldUpdate(el.id, el.value);
-    }, 300);
+    }, 1000);
   };
 
   document.addEventListener("input", pushIfSyncField);
