@@ -5802,6 +5802,7 @@ let currentSocketKey = null;
 const debounceTimers = {};
 let realtimeSyncInitialized = false;
 let pendingPatch = {};
+let _flushTimer = null;           /* batch debounce — regroupe les envois */
 let hasReceivedInitialState = false;
 
 function buildFlightKey() {
@@ -6148,11 +6149,14 @@ function sendFieldUpdate(id, value) {
     return;
   }
 
-  if (socket.readyState !== WebSocket.OPEN) {
-    return;
-  }
+  if (socket.readyState !== WebSocket.OPEN) return;
 
-  flushPendingPatch();
+  /* Batch debounce : on attend 200ms pour regrouper tous les changements
+     déclenchés par une même interaction avant d'envoyer un seul patch */
+  clearTimeout(_flushTimer);
+  _flushTimer = setTimeout(() => {
+    flushPendingPatch();
+  }, 200);
 }
 
 function setupRealtimeSync() {
