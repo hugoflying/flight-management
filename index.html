@@ -5005,6 +5005,23 @@ function renderAKList(pairs){
     const json     = safe(f);
     const suf      = tSuffix ? ' <span style="font-size:.7em;opacity:.65;font-weight:600;">('+tSuffix+')</span>' : '';
     const timeStr  = t ? escapeHtml(t)+suf : '—';
+
+    // Heure estimée : affichée si la meilleure heure est S et qu'il existe une E différente
+    let estimatedStr = '';
+    if(tSuffix === 'S'){
+      const toHHMM = (iso)=>{
+        const d = iso ? new Date(iso) : null;
+        if(!d || isNaN(d.getTime())) return '';
+        const hh = String(isUTC ? d.getUTCHours() : d.getHours()).padStart(2,'0');
+        const mm = String(isUTC ? d.getUTCMinutes() : d.getMinutes()).padStart(2,'0');
+        return `${hh}:${mm}`;
+      };
+      const est = flow==='DEP' ? toHHMM(f.eobt||f.etot||'') : toHHMM(f.eibt||f.eldt||'');
+      if(est && est !== t){
+        estimatedStr = ' <span style="font-weight:900;color:'+barColor+';">→ '+escapeHtml(est)+'<span style="font-size:.7em;opacity:.8;"> (E)</span></span>';
+      }
+    }
+
     const opacity  = done ? 'opacity:.55;' : '';
     // Bandeau coloré : gauche pour ARR, droite pour DEP
     const barSide  = flow==='ARR' ? 'left:0;' : 'right:0;';
@@ -5019,7 +5036,7 @@ function renderAKList(pairs){
       + '<span style="font-weight:900;font-size:.95rem;">'+escapeHtml(iata||'---')+'</span>'
       + '</div>'
       + '<div style="color:var(--muted);font-size:.78rem;font-weight:700;">'+escapeHtml(ff||'—')+' · Std '+escapeHtml(stand||'—')+' · '+escapeHtml(reg||'—')+'</div>'
-      + '<div style="color:var(--muted);font-size:.75rem;font-weight:700;">'+timeStr+(status?' · '+escapeHtml(status):'')+'</div>'
+      + '<div style="color:var(--muted);font-size:.75rem;font-weight:700;">'+timeStr+estimatedStr+(status?' · '+escapeHtml(status):'')+'</div>'
       + '</div>';
   }
 
