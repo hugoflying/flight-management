@@ -4959,10 +4959,10 @@ function getDelayBadgeHtml(mins){
 // ===== Couleur bandeau retard (identique au dashboard) =====
 function delayBarColor(mins){
   if(mins == null) return null;
-  if(mins < 0)   return '#3b82f6'; // bleu — en avance
-  if(mins === 0) return '#16a34a'; // vert — à l'heure
-  if(mins < 15)  return '#f97316'; // orange — retard < 15min
-  return           '#ef4444';     // rouge — retard >= 15min
+  if(mins <= -11)  return '#3b82f6'; // bleu — en avance (<= -11min)
+  if(mins <= 5)    return '#16a34a'; // vert — à l'heure (-10 à +5min)
+  if(mins < 15)    return '#f97316'; // orange — retard < 15min
+  return             '#ef4444';     // rouge — retard >= 15min
 }
 
 // ===== Rendu liste : ARR = provenance, DEP = destination =====
