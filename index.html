@@ -6090,9 +6090,7 @@ function connectFlightSocket() {
         hasReceivedInitialState = true;
         applyRemotePayload(msg.payload || {});
         flushPendingPatch();
-        // Envoyer le state complet pour que le dashboard ait toutes les infos
-        clearTimeout(window._sendFullDebounce);
-        window._sendFullDebounce = setTimeout(sendFullFlightState, 2000);
+        /* Le serveur a déjà le state complet — pas besoin de le renvoyer */
         return;
       }
 
