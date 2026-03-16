@@ -5017,7 +5017,7 @@ function renderAKList(pairs){
         return `${hh}:${mm}`;
       };
       const est = flow==='DEP' ? toHHMM(f.eobt||f.etot||'') : toHHMM(f.eibt||f.eldt||'');
-      if(est && est !== t){
+      if(est && est !== t && barColor !== '#16a34a'){
         estimatedStr = ' <span style="font-weight:900;color:'+barColor+';">→ '+escapeHtml(est)+'<span style="font-size:.7em;opacity:.8;"> (E)</span></span>';
       }
     }
