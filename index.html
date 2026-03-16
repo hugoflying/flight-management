@@ -5006,9 +5006,10 @@ function renderAKList(pairs){
     const suf      = tSuffix ? ' <span style="font-size:.7em;opacity:.65;font-weight:600;">('+tSuffix+')</span>' : '';
     const timeStr  = t ? escapeHtml(t)+suf : '—';
     const opacity  = done ? 'opacity:.55;' : '';
-    // Bandeau coloré toujours sur le bord gauche de chaque moitié
+    // Bandeau coloré : gauche pour ARR, droite pour DEP
+    const barSide  = flow==='ARR' ? 'left:0;' : 'right:0;';
     const barHtml  = barColor
-      ? '<div style="position:absolute;top:0;bottom:0;width:5px;left:0;background:'+barColor+';border-radius:0;"></div>'
+      ? '<div style="position:absolute;top:0;bottom:0;width:5px;'+barSide+'background:'+barColor+';border-radius:0;"></div>'
       : '';
     const halfClass = flow==='ARR' ? 'ak-half ak-half-arr' : 'ak-half ak-half-dep';
     return '<div class="'+halfClass+'" style="position:relative;cursor:pointer;'+opacity+'" onclick=\'applyAKFlight('+json+',"'+flow+'")\'>'
