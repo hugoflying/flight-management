@@ -945,19 +945,27 @@ html.dark .tw-color-is-bordeaux { border-color: #ef4444; color: #ef4444; }
 /* ===== 30. AK LIST ===== */
 .ak-pair-row {
   display: flex;
-  border: 1px solid rgba(0,0,0,.08);
+  border: 1px solid rgba(0,0,0,.10);
   border-radius: var(--radius);
   background: var(--card);
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   overflow: hidden;
+  box-shadow: var(--shadow2);
 }
 html.dark .ak-pair-row { border-color: rgba(255,255,255,.10); }
 
-.ak-half         { flex: 1; padding: 10px; min-width: 0; }
+/* Teinte de fond différente ARR (gauche) vs DEP (droite) */
+.ak-half-arr { background: rgba(219,234,254,.25); }   /* bleu très léger */
+.ak-half-dep { background: rgba(220,252,231,.25); }   /* vert très léger */
+html.dark .ak-half-arr { background: rgba(30,58,138,.15); }
+html.dark .ak-half-dep { background: rgba(20,83,45,.15); }
+
+.ak-half         { flex: 1; padding: 10px 10px 10px 14px; min-width: 0; }
 .ak-half-done    { opacity: .5; }
 .ak-half-empty   { flex: 1; background: rgba(0,0,0,.02); min-height: 60px; }
 html.dark .ak-half-empty { background: rgba(255,255,255,.02); }
-.ak-pair-divider { width: auto; flex-shrink: 0; display: flex; align-items: center; justify-content: center; padding: 0 4px; font-size: .9rem; color: var(--muted); }
+.ak-pair-divider { width: 1px; flex-shrink: 0; background: rgba(0,0,0,.08); display: flex; align-items: center; justify-content: center; padding: 0; font-size: .9rem; color: var(--muted); }
+html.dark .ak-pair-divider { background: rgba(255,255,255,.10); }
 .ak-half-top     { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; margin-bottom: 2px; }
 .ak-flow-badge   { font-size: .62rem; font-weight: 900; padding: 1px 6px; border-radius: 6px; }
 .ak-iata         { font-weight: 900; font-size: .95rem; }
@@ -5003,7 +5011,8 @@ function renderAKList(pairs){
     const barHtml  = barColor
       ? '<div style="position:absolute;top:0;bottom:0;width:5px;'+barSide+'background:'+barColor+';border-radius:0;"></div>'
       : '';
-    return '<div class="ak-half" style="position:relative;cursor:pointer;'+opacity+'" onclick=\'applyAKFlight('+json+',"'+flow+'")\'>'
+    const halfClass = flow==='ARR' ? 'ak-half ak-half-arr' : 'ak-half ak-half-dep';
+    return '<div class="'+halfClass+'" style="position:relative;cursor:pointer;'+opacity+'" onclick=\'applyAKFlight('+json+',"'+flow+'")\'>'
       + barHtml
       + '<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:3px;">'
       + '<span style="font-size:.62rem;font-weight:900;background:'+bgBadge+';color:'+txtBadge+';padding:1px 6px;border-radius:6px;">'+flow+'</span>'
