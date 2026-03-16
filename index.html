@@ -4948,6 +4948,15 @@ function getDelayBadgeHtml(mins){
 }
 
 
+// ===== Couleur bandeau retard (identique au dashboard) =====
+function delayBarColor(mins){
+  if(mins == null) return null;
+  if(mins < 0)   return '#3b82f6'; // bleu — en avance
+  if(mins === 0) return '#16a34a'; // vert — à l'heure
+  if(mins < 15)  return '#f97316'; // orange — retard < 15min
+  return           '#ef4444';     // rouge — retard >= 15min
+}
+
 // ===== Rendu liste : ARR = provenance, DEP = destination =====
 function renderAKList(pairs){
   const list = document.getElementById('akList');
@@ -4980,20 +4989,25 @@ function renderAKList(pairs){
     const {time:t, suffix:tSuffix} = pickBestTimeForList(f, flow);
     const status = getStatus(f, flow);
     const iata  = flow==='ARR' ? (f.adepIata||f.adepIcao||'') : (f.adesIata||f.adesIcao||'');
-    const dly   = delayMinFrom(flow==='ARR'?(f.sibt||''):(f.sobt||''), flow==='ARR'?actualArrIso(f):actualDepIso(f));
-    const badge = getDelayBadgeHtml(dly);
-    const done  = (flow==='ARR'&&status==='ARRIVÉ')||(flow==='DEP'&&status==='DÉCOLLÉ');
+    const dly      = delayMinFrom(flow==='ARR'?(f.sibt||''):(f.sobt||''), flow==='ARR'?actualArrIso(f):actualDepIso(f));
+    const barColor = delayBarColor(dly);
+    const done     = (flow==='ARR'&&status==='ARRIVÉ')||(flow==='DEP'&&status==='DÉCOLLÉ');
     const bgBadge  = flow==='ARR' ? '#dbeafe' : '#dcfce7';
     const txtBadge = flow==='ARR' ? '#1d4ed8' : '#15803d';
-    const json  = safe(f);
-    const suf   = tSuffix ? ' <span style="font-size:.7em;opacity:.65;font-weight:600;">('+tSuffix+')</span>' : '';
-    const timeStr = t ? escapeHtml(t)+suf : '—';
-    const opacity = done ? 'opacity:.55;' : '';
-    return '<div class="ak-half" style="cursor:pointer;'+opacity+'" onclick=\'applyAKFlight('+json+',"'+flow+'")\'>'
+    const json     = safe(f);
+    const suf      = tSuffix ? ' <span style="font-size:.7em;opacity:.65;font-weight:600;">('+tSuffix+')</span>' : '';
+    const timeStr  = t ? escapeHtml(t)+suf : '—';
+    const opacity  = done ? 'opacity:.55;' : '';
+    // Bandeau coloré : gauche pour ARR, droite pour DEP
+    const barSide  = flow==='ARR' ? 'left:0;' : 'right:0;';
+    const barHtml  = barColor
+      ? '<div style="position:absolute;top:0;bottom:0;width:5px;'+barSide+'background:'+barColor+';border-radius:0;"></div>'
+      : '';
+    return '<div class="ak-half" style="position:relative;cursor:pointer;'+opacity+'" onclick=\'applyAKFlight('+json+',"'+flow+'")\'>'
+      + barHtml
       + '<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:3px;">'
       + '<span style="font-size:.62rem;font-weight:900;background:'+bgBadge+';color:'+txtBadge+';padding:1px 6px;border-radius:6px;">'+flow+'</span>'
       + '<span style="font-weight:900;font-size:.95rem;">'+escapeHtml(iata||'---')+'</span>'
-      + badge
       + '</div>'
       + '<div style="color:var(--muted);font-size:.78rem;font-weight:700;">'+escapeHtml(ff||'—')+' · Std '+escapeHtml(stand||'—')+' · '+escapeHtml(reg||'—')+'</div>'
       + '<div style="color:var(--muted);font-size:.75rem;font-weight:700;">'+timeStr+(status?' · '+escapeHtml(status):'')+'</div>'
