@@ -6145,19 +6145,21 @@ function toggleSettings(){
     if(!c || _bnReady) return;
     _bnReady = true;
 
-    // Taille responsive
+    // Taille responsive — haute résolution (devicePixelRatio)
     function resize(){
-      const w = c.offsetWidth;
-      const h = Math.round(w * 0.45);
-      if(c.width !== w || c.height !== h){
-        const snapshot = c.toDataURL();
-        c.width  = w;
-        c.height = h;
+      const dpr = window.devicePixelRatio || 1;
+      const w   = c.offsetWidth;
+      const h   = Math.round(w * 0.45);
+      const pw  = Math.round(w * dpr);
+      const ph  = Math.round(h * dpr);
+      if(c.width !== pw || c.height !== ph){
+        c.width  = pw;
+        c.height = ph;
+        c.style.width  = w  + 'px';
+        c.style.height = h  + 'px';
+        const g = ctx();
+        if(g) g.scale(dpr, dpr);
         bnRedraw();
-        // Restore image après resize
-        const img = new Image();
-        img.onload = ()=>{ ctx()?.drawImage(img,0,0,w,h); };
-        img.src = snapshot;
       }
     }
     new ResizeObserver(resize).observe(c);
@@ -6177,9 +6179,8 @@ function toggleSettings(){
   function bnPt(e){
     const c = canvas();
     const r = c.getBoundingClientRect();
-    const sx = c.width  / r.width;
-    const sy = c.height / r.height;
-    return { x:(e.clientX-r.left)*sx, y:(e.clientY-r.top)*sy };
+    // Pas de multiplication DPR ici — on travaille en CSS pixels, le scale() du ctx s'en charge
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
   }
 
   function bnStart(e){
@@ -6254,7 +6255,9 @@ function toggleSettings(){
   function bnRedraw(){
     const c2 = canvas(); const g = ctx();
     if(!c2||!g) return;
-    g.clearRect(0,0,c2.width,c2.height);
+    const dpr = window.devicePixelRatio || 1;
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, c2.width / dpr, c2.height / dpr);
     _strokes.forEach(s => bnDrawStroke(s, g));
   }
 
