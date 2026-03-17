@@ -76,15 +76,10 @@ html.dark {
 
 /* ===== 3. BASE ===== */
 html, body {
-  height: 100%;
-  max-height: 100%;
+  min-height: 100%;
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  /* iOS : empêche le scroll sur body pour que position:fixed reste fixe */
-  overflow: hidden;
-  position: fixed;
-  width: 100%;
 }
 
 /* ===== 4. FIXED HEADER ===== */
@@ -112,14 +107,6 @@ html.dark .fixed-header { border-bottom-color: rgba(255,255,255,.08); }
   max-width: 1120px;
   margin: 0 auto;
   padding: calc(var(--fixed-header-h) + 14px) 14px calc(var(--fixed-footer-h) + 18px);
-  /* iOS scroll container — permet au footer/header de rester fixes */
-  height: 100%;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: none;
-  box-sizing: border-box;
-  position: fixed;
-  inset: 0;
 }
 body.has-tab .app-wrap { display: block; }
 
@@ -5956,7 +5943,8 @@ let currentSocketKey = null;
 const debounceTimers = {};
 let realtimeSyncInitialized = false;
 let pendingPatch = {};
-let _flushTimer = null;           /* batch debounce — regroupe les envois */
+let _flushTimer = null;
+const _recentlyEdited = new Map(); /* id → timer — protège les champs saisis localement */           /* batch debounce — regroupe les envois */
 let hasReceivedInitialState = false;
 
 function buildFlightKey() {
@@ -6037,8 +6025,11 @@ function applyRemotePayload(payload) {
       const newValue = value ?? "";
       if (el.value === newValue) return;
 
-      // Ne pas écraser un champ en cours d'édition (tablette)
+      // Ne pas écraser un champ en cours d'édition
       if (document.activeElement === el) return;
+
+      // Ne pas écraser un champ modifié récemment par l'utilisateur
+      if (_recentlyEdited.has(id)) return;
 
       el.value = newValue;
       el.dispatchEvent(new Event("input", { bubbles: true }));
@@ -6450,6 +6441,11 @@ function setupRealtimeSync() {
     if (!el || !el.id) return;
     if (!syncFields.has(el.id)) return;
     if (el.readOnly) return;
+
+    // Marque ce champ comme "modifié récemment" — protège contre l'écho distant
+    clearTimeout(_recentlyEdited.get(el.id));
+    _recentlyEdited.set(el.id, setTimeout(() => _recentlyEdited.delete(el.id), 3000));
+
     // Vérifier si le vol est devenu vide
     setTimeout(checkAndDeleteIfEmpty, 200);
 
