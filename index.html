@@ -888,6 +888,7 @@ html.dark .ldm-card-hdr {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px 14px;
 }
+.ldm-grid .field { margin: 0; }
 .ldm-span-2 { grid-column: span 2; }
 
 .ldm-row-4 {
@@ -1249,6 +1250,10 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
   /* LDM */
   #ldmModal  { inset: calc(var(--fixed-header-h) + 10px) 8px 8px 8px; }
   .ldm-row-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #hBagsRow       { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  #bagsPoidsBgRow { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  #ldmFinal .ldm-grid { row-gap: 6px; }
+  #ldmFinal .ldm-row-4 { row-gap: 6px; }
   html .ldm-in { height: 36px; padding: 6px 8px; }
   html .ldm-ta { min-height: 86px; }
   .ldm-header  { padding: 8px 10px; gap: 6px; }
@@ -1551,7 +1556,7 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
         </div>
 
         <!-- Ligne 3 : BAGS POIDS GB -->
-        <div class="ldm-row-4">
+        <div class="ldm-row-4" id="bagsPoidsBgRow" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
           <div class="field">
             <label class="label">BAGS</label>
             <input class="input ldm-in" id="FinalBAGS"
@@ -2474,24 +2479,13 @@ function updateHWeights(){
     const lbl = document.getElementById(id + 'w');
     if(!inp) return;
 
-    // Poids (FR/RK uniquement)
+    // poids (FR/RK uniquement)
     if(lbl){
       lbl.style.display = show ? '' : 'none';
       if(show){
         const bags = parseInt(inp.value, 10);
         lbl.textContent = isNaN(bags) || bags === 0 ? '' : (bags * 13) + ' kg';
       }
-    }
-
-    // Rouge si valeur > max du placeholder (ex: "5 pcs" → max 5)
-    const phMatch = (inp.placeholder || '').match(/^(\d+)/);
-    if(phMatch){
-      const max = parseInt(phMatch[1], 10);
-      const val = parseInt(inp.value, 10);
-      if(!isNaN(val) && val > max) inp.classList.add('is-danger');
-      else if(inp !== document.activeElement) inp.classList.remove('is-danger');
-    } else {
-      if(inp !== document.activeElement) inp.classList.remove('is-danger');
     }
   });
 }
@@ -2521,21 +2515,6 @@ function updateHBagsValidity(mode){
   });
 
   bagsEl.classList.toggle('is-invalid', bags > 0 && sum !== bags);
-
-  // Rouge si zone dépasse la valeur max du placeholder
-  ['FinalOA','FinalOB','FinalOC','FinalOD'].forEach(id => {
-    const el = document.getElementById(id);
-    if(!el) return;
-    const phMatch = (el.placeholder || '').match(/^(\d+)/);
-    if(phMatch){
-      const max = parseInt(phMatch[1], 10);
-      const val = parseInt(el.value, 10);
-      if(!isNaN(val) && val > max) el.classList.add('is-danger');
-      else if(el !== document.activeElement) el.classList.remove('is-danger');
-    } else {
-      if(el !== document.activeElement) el.classList.remove('is-danger');
-    }
-  });
 }
 
 function syncAdultGenderLocks(){
@@ -2605,7 +2584,22 @@ function updateArrExpWeightIfNeeded(){
   }
 }
 
-/* ===== Placeholders LOAD FINAL (FR/RK uniquement) ===== */
+/* ===== Validation rouge persistante — max plateau ===== */
+function revalidateDangerFields(){
+  const ids = ['FinalOA','FinalOB','FinalOC','FinalOD','FinalH1','FinalH2','FinalH3','FinalH4'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    const phMatch = (el.placeholder || '').match(/^(\d+)/);
+    if(!phMatch) return;
+    const max = parseInt(phMatch[1], 10);
+    const val = parseInt(el.value, 10);
+    if(!isNaN(val) && val > max) el.classList.add('is-danger');
+    // On ne retire jamais ici — seulement via oninput
+  });
+}
+
+
 function updateFinalPlaceholdersFRRK(){
   const cie  = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
   const type = (document.getElementById('TypeAvion')?.value || '').toUpperCase().trim();
@@ -2767,6 +2761,12 @@ function updateFinalLoadLayout(){
     if(cache.paxGrid) putBack(cache.paxGrid);
 
     if(paxGridOrig) paxGridOrig.style.display = '';
+
+    // Remettre les conteneurs statiques visibles
+    const bpb = document.getElementById('bagsPoidsBgRow');
+    if(bpb) bpb.style.display = '';
+    const hbr = document.getElementById('hBagsRow');
+    if(hbr) hbr.style.display = '';
   };
 
   const makeRow4 = (className)=>{
@@ -2776,6 +2776,7 @@ function updateFinalLoadLayout(){
     d.style.display = 'grid';
     d.style.gridTemplateColumns = 'repeat(4, minmax(0, 1fr))';
     d.style.gap = '12px';
+    d.querySelectorAll && setTimeout(()=>d.querySelectorAll('.field').forEach(f=>f.style.margin='0'),0);
     return d;
   };
 
@@ -2786,6 +2787,7 @@ function updateFinalLoadLayout(){
     d.style.display = 'grid';
     d.style.gridTemplateColumns = 'repeat(3, minmax(0, 1fr))';
     d.style.gap = '12px';
+    d.querySelectorAll && setTimeout(()=>d.querySelectorAll('.field').forEach(f=>f.style.margin='0'),0);
     return d;
   };
 
@@ -2844,6 +2846,10 @@ function updateFinalLoadLayout(){
       finalGrid.insertBefore(zonesRow, bagsRow);
       finalGrid.insertBefore(tobRow, zonesRow);
       finalGrid.insertBefore(paxRow, tobRow);
+
+      // Masquer les conteneurs statiques vidés
+      const bpb = document.getElementById('bagsPoidsBgRow');
+      if(bpb) bpb.style.display = 'none';
     }
 
   }else{
@@ -2877,11 +2883,18 @@ function updateFinalLoadLayout(){
       finalGrid.insertBefore(paxLine, tobLine);
 
       if(paxGridOrig) paxGridOrig.style.display = 'none';
+
+      // Masquer bagsPoidsBgRow vidé, repositionner hBagsRow juste après bagsLine
+      const bpb = document.getElementById('bagsPoidsBgRow');
+      if(bpb) bpb.style.display = 'none';
+      const hbr = document.getElementById('hBagsRow');
+      if(hbr) bagsLine.after(hbr);
     }
   }
 
   // ✅ placeholders après labels/layout (pour coller au type avion)
   updateFinalPlaceholdersFRRK();
+  revalidateDangerFields();
 }
 
 // ===== LOAD PREVI (layout switch) =====
@@ -3195,21 +3208,22 @@ function openLDM(mode=null){
   updateHWeights(); // poids soutes FR/RK
   updateCrewThobVisibility(); // CREW/THOB FR/RK
 
-  // Validation max plateau au blur (rouge persistant)
+  // Validation max plateau — rouge persistant sur input, jamais retiré ailleurs
   const zoneIds = ['FinalOA','FinalOB','FinalOC','FinalOD','FinalH1','FinalH2','FinalH3','FinalH4'];
   zoneIds.forEach(id => {
     const el = document.getElementById(id);
-    if(!el || el._blurValidated) return;
-    el._blurValidated = true;
-    el.addEventListener('blur', () => {
-      setTimeout(() => {
-        const phMatch = (el.placeholder || '').match(/^(\d+)/);
-        if(!phMatch){ el.classList.remove('is-danger'); return; }
-        const max = parseInt(phMatch[1], 10);
-        const val = parseInt(el.value, 10);
-        el.classList.toggle('is-danger', !isNaN(val) && val > max);
-      }, 50);
-    });
+    if(!el || el._dangerValidated) return;
+    el._dangerValidated = true;
+    const validate = () => {
+      const phMatch = (el.placeholder || '').match(/^(\d+)/);
+      if(!phMatch) return;
+      const max = parseInt(phMatch[1], 10);
+      const val = parseInt(el.value, 10);
+      if(!isNaN(val) && val > max) el.classList.add('is-danger');
+      else el.classList.remove('is-danger');
+    };
+    el.addEventListener('input', validate);
+    el.addEventListener('change', validate);
   });
 
   if(mode === null){
