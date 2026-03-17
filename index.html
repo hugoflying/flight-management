@@ -3981,6 +3981,49 @@ function updateAllCalculations() {
   updateHeaderOffset();
 
   updateInfoStrip();
+  updateDelayBands();
+}
+
+/* Bandeaux de retard sur AIBT et AOBT */
+function updateDelayBands(){
+  const pairs = [
+    { actual: 'AIBT', planned: 'SIBT', wrap: 'tw-disp-AIBT' },
+    { actual: 'AOBT', planned: 'SOBT', wrap: 'tw-disp-AOBT' }
+  ];
+
+  pairs.forEach(({ actual, planned, wrap }) => {
+    const disp = document.getElementById(wrap);
+    if(!disp) return;
+
+    const aVal = document.getElementById(actual)?.value || '';
+    const pVal = document.getElementById(planned)?.value || '';
+
+    // Supprimer ancien bandeau
+    disp.querySelectorAll('.tw-delay-band').forEach(el => el.remove());
+
+    if(!aVal || !pVal) return;
+
+    const toMins = hhmm => {
+      const [h, m] = hhmm.split(':').map(Number);
+      return isNaN(h) ? null : h * 60 + m;
+    };
+
+    let diff = (toMins(aVal) ?? 0) - (toMins(pVal) ?? 0);
+    if(diff > 720)  diff -= 1440;
+    if(diff < -720) diff += 1440;
+
+    let color;
+    if     (diff <= -6)  color = '#3b82f6'; // bleu — en avance (≤ -6)
+    else if(diff <=  0)  color = '#16a34a'; // vert — à l'heure (-5 à 0)
+    else if(diff <  15)  color = '#f97316'; // orange — retard +1 à +14
+    else                 color = '#ef4444'; // rouge — retard ≥ +15
+
+    const band = document.createElement('div');
+    band.className = 'tw-delay-band';
+    band.style.cssText = 'position:absolute;bottom:0;left:0;right:0;height:4px;border-radius:0 0 8px 8px;pointer-events:none;background:' + color + ';';
+    disp.style.position = 'relative';
+    disp.appendChild(band);
+  });
 }
 
 /* TIMERS HLE/H-15 */
