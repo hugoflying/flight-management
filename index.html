@@ -6559,9 +6559,11 @@ async function footerRefreshAK(){
   document.addEventListener('click',function(e){
     const zone=e.target.closest('.tw-zone');
     if(!zone) return;
-    if(zone.classList.contains('tw-sched-zone')) return; // gérée par long press
+    if(zone.classList.contains('tw-sched-zone')) return;
     const wrap=zone.closest('.time-wrap'); if(!wrap) return;
     const id=wrap.dataset.id; if(!id) return;
+    // Évite le double déclenchement après touch sur mobile
+    if(_touchHandled && (zone.classList.contains('tw-zone-left')||zone.classList.contains('tw-zone-right'))) return;
     const action=zone.dataset.action;
     if(action==='minus') adjustTime(id,-1);
     else if(action==='plus') adjustTime(id,1);
@@ -6594,6 +6596,7 @@ async function footerRefreshAK(){
   },{passive:true});
 
   /* ---- touch sur -1/+1 : géré directement en touch pour éviter saut scroll ---- */
+  let _touchHandled = false;
   document.addEventListener('touchend',function(e){
     const zone=e.target.closest('.tw-zone-left, .tw-zone-right');
     if(!zone) return;
@@ -6605,6 +6608,8 @@ async function footerRefreshAK(){
     else if(action==='plus') adjustTime(id,1);
     updateAllCalculations(); twSync(id);
     if(window.getSelection) window.getSelection().removeAllRanges();
+    _touchHandled = true;
+    setTimeout(()=>{ _touchHandled = false; }, 400);
   },{passive:true});
   document.addEventListener('touchend',function(e){
     const z=e.target.closest('.tw-zone-center, .tw-sched-zone'); if(!z) return;
