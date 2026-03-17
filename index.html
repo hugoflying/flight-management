@@ -1994,7 +1994,7 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
     <div class="card-content" style="padding:10px 12px;">
 
       <!-- Toolbar : tout sur une ligne -->
-      <div style="display:flex; align-items:center; gap:6px; margin-bottom:10px; flex-wrap:nowrap;">
+      <div style="display:flex; align-items:center; gap:6px; margin-bottom:10px; flex-wrap:wrap;">
         <button id="bnModeDrawBtn" class="button is-small is-link" type="button" onclick="bnSwitchMode('draw')" title="Dessin">✏️ Stylet</button>
         <button id="bnModeTextBtn" class="button is-small is-light" type="button" onclick="bnSwitchMode('text')" title="Clavier">⌨️ Clavier</button>
 
@@ -5194,7 +5194,7 @@ document.addEventListener('keydown', (e)=>{
 });
 
 // ===== Airport Keeper (AK) =====
-const AK_PROXY = "/ak";
+const AK_PROXY = "https://airportkeeper-proxy.deruellehugo-49c.workers.dev/ak";
 
 // Ouvrir/Fermer
 function openAKPicker(){
@@ -6382,11 +6382,12 @@ function toggleSettings(){
     try{
       const data = JSON.stringify(_strokes);
       localStorage.setItem(_historyKey, data);
-      // Sync WebSocket
+      // Sync WebSocket — forcer via twSync directement
       const el = document.getElementById('BlocNote');
-      if(el && el.value !== data){
+      if(el){
         el.value = data;
-        el.dispatchEvent(new Event('change', {bubbles:true}));
+        // twSync est défini globalement
+        if(typeof twSync === 'function') twSync('BlocNote');
       }
     }catch(e){}
   }
@@ -6858,6 +6859,8 @@ function collectFlightState() {
     "DLcode1", "DLcode2", "DLcode3",
     "DLduree1", "DLduree2", "DLduree3",
     "FaitsSaillants",
+    "BlocNote",
+    "BlocNote",
 
     "ArriveeFuel",
     "PremierDebarque",
