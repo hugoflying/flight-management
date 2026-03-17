@@ -6593,12 +6593,19 @@ async function footerRefreshAK(){
     onStart(id);
   },{passive:true});
 
-  /* ---- touch sur -1/+1 : preventDefault pour éviter saut scroll Android ---- */
-  document.addEventListener('touchstart',function(e){
+  /* ---- touch sur -1/+1 : géré directement en touch pour éviter saut scroll ---- */
+  document.addEventListener('touchend',function(e){
     const zone=e.target.closest('.tw-zone-left, .tw-zone-right');
     if(!zone) return;
-    e.preventDefault(); // bloque le scroll pendant le tap
-  },{passive:false});
+    if(zone.classList.contains('tw-sched-zone')) return;
+    const wrap=zone.closest('.time-wrap'); if(!wrap) return;
+    const id=wrap.dataset.id; if(!id) return;
+    const action=zone.dataset.action;
+    if(action==='minus') adjustTime(id,-1);
+    else if(action==='plus') adjustTime(id,1);
+    updateAllCalculations(); twSync(id);
+    if(window.getSelection) window.getSelection().removeAllRanges();
+  },{passive:true});
   document.addEventListener('touchend',function(e){
     const z=e.target.closest('.tw-zone-center, .tw-sched-zone'); if(!z) return;
     const id=z.closest('.time-wrap')?.dataset?.id; if(!id) return;
