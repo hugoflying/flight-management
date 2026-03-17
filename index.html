@@ -350,7 +350,7 @@ html .ldm-ta {
   gap: var(--gap);
 }
 .span-12 { grid-column: span 12; }
-.span-6  { grid-column: span 12; }   /* mobile : pleine largeur */
+.span-6  { grid-column: span 6; }    /* mobile : 2 colonnes */
 .span-4  { grid-column: span 6; }
 .span-3  { grid-column: span 6; }
 
@@ -4005,7 +4005,7 @@ function generateTimingFields(){
           <div class="span-6">${fieldHTML('DepartFuel','Départ Avitair',false,false,'is-warning')}</div>
           <div class="span-6">${fieldHTML('RemiseLID','Remise LID/LDS')}</div>
           <div class="span-6">${fieldHTML('FermeturePorteAvion','Fermeture porte avion',false,false,'is-bordeaux')}</div>
-          <div class="span-6">${fieldHTML('ConnexionAgentCasque','Connexion agent casque',false,false,'is-purple')}</div>
+          <div class="span-6">${fieldHTML('ConnexionAgentCasque','Connexion casque',false,false,'is-purple')}</div>
         </div>
       </div>
     </div>`;
