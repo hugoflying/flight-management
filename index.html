@@ -2004,6 +2004,22 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
   </div>
 </div>
 
+<!-- BLOC NOTE — modal confirmation effacement -->
+<div id="bnClearModal" style="display:none; position:fixed; inset:0; z-index:6200; background:rgba(0,0,0,.45); align-items:center; justify-content:center; padding:14px;">
+  <div class="card" style="width:min(360px, 100%);">
+    <header class="card-header">
+      <p class="card-header-title">Effacer le bloc note ?</p>
+    </header>
+    <div class="card-content">
+      <p style="margin-bottom:16px;">Cette action est irréversible.</p>
+      <div class="buttons is-right">
+        <button class="button is-light" type="button" onclick="document.getElementById('bnClearModal').style.display='none'">Annuler</button>
+        <button class="button is-danger" type="button" onclick="bnConfirmClear()">Effacer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 
 /* Collapse */
@@ -6269,7 +6285,12 @@ function toggleSettings(){
   };
 
   window.bnClear = function(){
-    if(!confirm('Effacer le bloc note ?')) return;
+    const m = document.getElementById('bnClearModal');
+    if(m){ m.style.display = 'flex'; }
+  };
+
+  window.bnConfirmClear = function(){
+    document.getElementById('bnClearModal').style.display = 'none';
     _strokes = [];
     bnRedraw();
     bnSave();
