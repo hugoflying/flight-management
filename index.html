@@ -1966,7 +1966,7 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
       <!-- Mode dessin -->
       <div id="bnDrawMode" style="overflow:hidden; width:100%;">
         <canvas id="bnCanvas"
-                style="width:100%; max-width:100%; border-radius:12px; border:1.5px solid var(--field-border); background:#fff; touch-action:none; cursor:crosshair; display:block; box-sizing:border-box;">
+                style="width:100%; max-width:100%; border-radius:12px; border:1.5px solid var(--field-border); background:#fff; touch-action:none; cursor:crosshair; display:block; box-sizing:border-box; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;">
         </canvas>
       </div>
 
@@ -6197,6 +6197,9 @@ function toggleSettings(){
     c.addEventListener('pointermove', e=>{ e.preventDefault(); bnMove(e);  }, {passive:false});
     c.addEventListener('pointerup',   e=>{ e.preventDefault(); bnEnd(e);   }, {passive:false});
     c.addEventListener('pointerleave',e=>{ bnEnd(e); }, {passive:false});
+    // Empêcher menu contextuel et sélection sur appui long (mobile)
+    c.addEventListener('contextmenu', e=>{ e.preventDefault(); }, {passive:false});
+    c.addEventListener('selectstart',  e=>{ e.preventDefault(); }, {passive:false});
   }
 
   function bnPt(e){
