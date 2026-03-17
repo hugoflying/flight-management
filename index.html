@@ -689,6 +689,12 @@ html.dark .settings-item {
   background: var(--bg);
   border-top: 1px solid rgba(0,0,0,.08);
   overflow: visible;
+  /* iOS : force le footer à rester fixe même lors du scroll */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  will-change: transform;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 html.dark .fixed-footer { border-top-color: rgba(255,255,255,.08); }
 
@@ -6388,7 +6394,7 @@ function toggleSettings(){
     _current = null;
     _drawing = false;
     // Restaurer le mode (dessin ou clavier)
-    const savedMode = localStorage.getItem('bnMode_'+(currentTabId||'default')) || 'draw';
+    const savedMode = localStorage.getItem('bnMode_'+(currentTabId||'default')) || 'text';
     setTimeout(()=>{ window.bnSwitchMode?.(savedMode); bnInit(); bnLoad(); }, 100);
   };
 
