@@ -824,29 +824,31 @@ html.dark #ldmModal { border-color: rgba(255,255,255,.10); }
   z-index: 3;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 16px;
   background: var(--card);
   border-bottom: 1px solid rgba(0,0,0,.08);
 }
 html.dark .ldm-header { border-bottom-color: rgba(255,255,255,.10); }
 
-.ldm-title              { display: flex; align-items: center; gap: 10px; flex: 1 1 auto; }
+.ldm-title              { display: flex; align-items: center; gap: 10px; flex: 1 1 auto; min-width: 0; }
 .ldm-title strong       { font-weight: 900; font-size: 1.1rem; }
 #ldmHint                { font-weight: 900; border-radius: 999px; }
 
 /* Onglets ARR / PREVI / FINAL / FUEL */
 .lm-seg {
   display: inline-flex;
-  gap: 4px;
+  flex-shrink: 0;
+  gap: 3px;
   background: #e5e5e5;
   background: color-mix(in srgb, var(--card) 86%, #000 14%);
-  padding: 5px;
+  padding: 4px;
   border-radius: 999px;
   box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
 }
 html.dark .lm-seg { box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
-.lm-seg .button              { border-radius: 999px; font-weight: 900; height: 38px; font-size: .9rem; padding: 0 14px; }
+.lm-seg .button              { border-radius: 999px; font-weight: 900; height: 34px; font-size: .82rem; padding: 0 10px; }
 .lm-seg .button.is-active    { background: #2563eb; color: #fff; border-color: transparent; }
 
 .ldm-body { padding: 14px; overflow: auto; }
@@ -1249,6 +1251,8 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
   .ldm-row-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   html .ldm-in { height: 36px; padding: 6px 8px; }
   html .ldm-ta { min-height: 86px; }
+  .ldm-header  { padding: 8px 10px; gap: 6px; }
+  .lm-seg .button { height: 30px; font-size: .74rem; padding: 0 8px; }
 
   /* AK list */
   .ak-half        { padding: 7px; }
