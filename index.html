@@ -343,6 +343,44 @@ html .ldm-ta {
 .btn-actions .button { border-radius: 12px; font-weight: 900; height: 40px; }
 .btn-action-main     { font-size: 1.1rem; height: 44px; padding: 0 22px; }
 
+/* ===== ACTION BAR ===== */
+.action-bar {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 4px 0 12px;
+}
+.action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 54px;
+  min-width: 90px;
+  border-radius: 14px;
+  font-weight: 900;
+  border: none;
+  cursor: pointer;
+  padding: 6px 14px;
+}
+.action-btn-icon { font-size: 1.2rem; line-height: 1; }
+.action-btn-label { font-size: .7rem; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; }
+.action-btn--validate { background: #16a34a; color: #fff; }
+.action-btn--validate:hover { background: #15803d; }
+.action-btn--clear    { background: #f59e0b; color: #fff; }
+.action-btn--clear:hover { background: #d97706; }
+.action-btn--reset    { background: #f1f5f9; color: #ef4444; border: 1.5px solid #fca5a5; }
+.action-btn--reset:hover { background: #fee2e2; }
+html.dark .action-btn--reset { background: #1e293b; border-color: #ef4444; }
+
+@media (max-width: 599px) {
+  .action-btn { height: 46px; min-width: 76px; padding: 4px 10px; }
+  .action-btn-icon  { font-size: 1rem; }
+  .action-btn-label { font-size: .62rem; }
+}
+
 /* ===== 13. RESPONSIVE GRID (12 colonnes) ===== */
 .grid-auto {
   display: grid;
@@ -1989,9 +2027,16 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
     </div>
   </div>
 
-  <div class="buttons is-centered">
-    <button class="button is-success btn-action-main" id="validate" onclick="openRZAModal()">VALIDER</button>
-    <button class="button is-danger is-light btn-action-main" id="reset" onclick="clearAutoSave()">RÉINITIALISER TOUT</button>
+  <div class="action-bar">
+    <button class="button action-btn action-btn--validate" id="validate" onclick="openRZAModal()">
+      <span class="action-btn-icon">✅</span><span class="action-btn-label">Valider</span>
+    </button>
+    <button class="button action-btn action-btn--clear" id="clearFields" onclick="openClearFieldsModal()">
+      <span class="action-btn-icon">🧹</span><span class="action-btn-label">Effacer</span>
+    </button>
+    <button class="button action-btn action-btn--reset" id="reset" onclick="openCloseAllModal()">
+      <span class="action-btn-icon">🗑</span><span class="action-btn-label">Tout fermer</span>
+    </button>
   </div>
 
 </div>
@@ -2016,6 +2061,38 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
       <div class="buttons is-right">
         <button class="button is-light" type="button" onclick="closeRZAModal(false)">Annuler</button>
         <button class="button is-link" type="button" onclick="submitRZAModal()">Valider</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal confirmation TOUT FERMER -->
+<div id="closeAllModal" style="display:none; position:fixed; inset:0; z-index:6400; background:rgba(0,0,0,.45); align-items:center; justify-content:center; padding:14px;">
+  <div class="card" style="width:min(360px, 100%);">
+    <header class="card-header">
+      <p class="card-header-title">Tout fermer ?</p>
+    </header>
+    <div class="card-content">
+      <p style="margin-bottom:16px; color:var(--muted); font-size:.9rem;">Tous les onglets ouverts seront fermés.</p>
+      <div class="buttons is-right">
+        <button class="button is-light" type="button" onclick="document.getElementById('closeAllModal').style.display='none'">Annuler</button>
+        <button class="button is-danger" type="button" onclick="document.getElementById('closeAllModal').style.display='none'; clearAutoSave();">Fermer tout</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal confirmation EFFACER champs -->
+<div id="clearFieldsModal" style="display:none; position:fixed; inset:0; z-index:6300; background:rgba(0,0,0,.45); align-items:center; justify-content:center; padding:14px;">
+  <div class="card" style="width:min(360px, 100%);">
+    <header class="card-header">
+      <p class="card-header-title">Effacer les données du vol ?</p>
+    </header>
+    <div class="card-content">
+      <p style="margin-bottom:16px; color:var(--muted); font-size:.9rem;">Les timings, les loads et les retards seront effacés.<br>Les infos vol (Cie, N°, Date…) sont conservées.</p>
+      <div class="buttons is-right">
+        <button class="button is-light" type="button" onclick="document.getElementById('clearFieldsModal').style.display='none'">Annuler</button>
+        <button class="button is-warning" type="button" onclick="confirmClearFields()">Effacer</button>
       </div>
     </div>
   </div>
@@ -6404,9 +6481,62 @@ function toggleSettings(){
   });
 })();
 
+function openClearFieldsModal(){
+  document.getElementById('clearFieldsModal').style.display = 'flex';
+}
+
+function confirmClearFields(){
+  document.getElementById('clearFieldsModal').style.display = 'none';
+
+  // Champs de timing à effacer (pas les infos vol)
+  const timingIds = [
+    'AIBT','AOBT','PremierDebarque','PremierDebarqueL2','DernierDebarque',
+    'ArrPNT','ArrPNC','ArriveeFuel','DepartFuel','ArriveeLiftArr','DepartLiftArr',
+    'ArriveeLift','DepartLift','AvionPremierEmbarque','AvionDernierEmbarque',
+    'FermeturePorteAvion','RemiseLID','ConnexionAgentCasque','ArriveeINAD',
+    'CommChiffresPorte',
+    'ArrPAX_MAIN','ArrPAX_INF','ArrBAGS','ArrPOIDS','ArrSI',
+    'PreviPAX_MAIN','PreviPAX_INF','PreviBAGS','PreviPOIDS','PreviSI',
+    'FinalMALE','FinalFEMALE','FinalADULT','FinalCHILD','FinalINFANT',
+    'FinalTOB','FinalOA','FinalOB','FinalOC','FinalOD',
+    'FinalBAGS','FinalPOIDS','FinalGB','FinalH1','FinalH2','FinalH3','FinalH4','FinalSI',
+    'BlockFuel','TripFuel','TaxiFuel','FuelUplift',
+    'DLcode1','DLcode2','DLcode3','DLduree1','DLduree2','DLduree3',
+    'FaitsSaillants'
+  ];
+
+  timingIds.forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.value = '';
+    el.dispatchEvent(new Event('input',  { bubbles:true }));
+    el.dispatchEvent(new Event('change', { bubbles:true }));
+  });
+
+  updateAllCalculations();
+
+  // Effacer aussi le bloc note (canvas + clavier)
+  if(typeof window.bnConfirmClear === 'function'){
+    // Effacer canvas sans confirmation
+    try{
+      window.bnConfirmClear._silent = true;
+      const strokes = [];
+      // Accès direct via bnReloadFromRemote avec tableau vide
+      window.bnReloadFromRemote?.(JSON.stringify(strokes));
+      document.getElementById('BlocNote') && (document.getElementById('BlocNote').value = '[]');
+    }catch(e){}
+  }
+  // Effacer le textarea clavier
+  const fsEl = document.getElementById('FaitsSaillants');
+  if(fsEl){ fsEl.value = ''; fsEl.dispatchEvent(new Event('change',{bubbles:true})); }
+}
+
+function openCloseAllModal(){
+  document.getElementById('closeAllModal').style.display = 'flex';
+}
+
 function clearAutoSave() {
-  if (confirm("Tout réinitialiser ?")) {
-    const tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
+  const tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
     const WS_BASE = 'wss://turnaround-sync.deruellehugo-49c.workers.dev/';
     const deletePromises = [];
 
@@ -6445,7 +6575,6 @@ function clearAutoSave() {
         location.reload();
       }, 1000);
     });
-  }
 }
 
 function shouldOpenFinalLoad(){
