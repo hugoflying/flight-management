@@ -4768,13 +4768,13 @@ function renderTimeline(){
   const canvasPx = Math.max(viewport, Math.round(viewport * timelineZoom));
   canvas.style.width = canvasPx + 'px';
 
-  const MIN_HEIGHT = 180;
-  const PT_LANE_H  = 50;
-  const DUR_LANE_H = 50;
-  const TOP_PAD    = 40;
-  const AFTER_POINTS = 28;
-  const AFTER_TRACK  = 36;
-  const BOTTOM_PAD   = 40;
+  const MIN_HEIGHT = 120;
+  const PT_LANE_H  = 42;
+  const DUR_LANE_H = 36;
+  const TOP_PAD    = 28;
+  const AFTER_POINTS = 18;
+  const AFTER_TRACK  = 24;
+  const BOTTOM_PAD   = 28;
 
   const lanesEndX = [];
   const pointEls = [];
@@ -4795,10 +4795,13 @@ function renderTimeline(){
     el.appendChild(dot); el.appendChild(label);
     canvas.appendChild(el);
 
-    const w = Math.max(label.offsetWidth, 12);
+    // Estimer la largeur du label (offsetWidth=0 car visibility:hidden)
+    const labelText = label.textContent;
+    const charPx = 7.5; // px par caractère approximatif
+    const w = Math.max(labelText.length * charPx + 20, 30);
     const centerX = (leftPct/100) * canvasPx;
-    const startX = centerX - (w/2) - 16;
-    const endX   = centerX + (w/2) + 16;
+    const startX = centerX - (w/2) - 8;
+    const endX   = centerX + (w/2) + 8;
 
     let lane = 0;
     while(lanesEndX[lane] !== undefined && startX <= lanesEndX[lane]) lane++;
@@ -4816,7 +4819,7 @@ function renderTimeline(){
     return { ...d, start: Math.min(aExt,bExt), end: Math.max(aExt,bExt) };
   }).sort((x,y)=> x.start - y.start);
 
-  function packLanes(items, pad = 2){
+  function packLanes(items, pad = 1){
     const lanes = [];
     return items.map(it => {
       let laneIdx = lanes.findIndex(nextFree => it.start >= nextFree);
