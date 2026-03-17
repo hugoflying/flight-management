@@ -2310,11 +2310,29 @@ function updateHWeights(){
   ['FinalH1','FinalH2','FinalH3','FinalH4'].forEach(id => {
     const inp = document.getElementById(id);
     const lbl = document.getElementById(id + 'w');
-    if(!inp || !lbl) return;
-    lbl.style.display = show ? '' : 'none';
-    if(show){
-      const bags = parseInt(inp.value, 10);
-      lbl.textContent = isNaN(bags) || bags === 0 ? '' : (bags * 13) + ' kg';
+    if(!inp) return;
+
+    // Poids (FR/RK uniquement)
+    if(lbl){
+      lbl.style.display = show ? '' : 'none';
+      if(show){
+        const bags = parseInt(inp.value, 10);
+        lbl.textContent = isNaN(bags) || bags === 0 ? '' : (bags * 13) + ' kg';
+      }
+    }
+
+    // Rouge si valeur > max du placeholder (ex: "5 pcs" → max 5)
+    const phMatch = (inp.placeholder || '').match(/^(\d+)/);
+    if(phMatch){
+      const max = parseInt(phMatch[1], 10);
+      const val = parseInt(inp.value, 10);
+      if(!isNaN(val) && val > max){
+        inp.classList.add('is-danger');
+      } else {
+        inp.classList.remove('is-danger');
+      }
+    } else {
+      inp.classList.remove('is-danger');
     }
   });
 }
