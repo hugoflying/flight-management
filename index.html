@@ -5110,7 +5110,7 @@ document.addEventListener('keydown', (e)=>{
 });
 
 // ===== Airport Keeper (AK) =====
-const AK_PROXY = "/ak";
+const AK_PROXY = "https://airportkeeper-proxy.deruellehugo-49c.workers.dev/ak";
 
 // Ouvrir/Fermer
 function openAKPicker(){
@@ -7235,14 +7235,30 @@ async function footerRefreshAK(){
     const inp  = document.getElementById(id);
     const disp = document.getElementById('tw-disp-'+id);
     if(!wrap||!inp||!disp) return;
-    if(wrap.querySelector('.tw-editor')) return;
+    if(document.querySelector('.tw-editor[data-for="'+id+'"]')) return;
+
+    const rect = wrap.getBoundingClientRect();
 
     const ed = document.createElement('input');
     ed.type='text'; ed.className='input tw-editor';
+    ed.setAttribute('data-for', id);
     ed.value=inp.value||''; ed.placeholder='HH:MM';
     ed.maxLength=5; ed.inputMode='numeric';
-    disp.style.display='none';
-    wrap.appendChild(ed);
+    ed.setAttribute('enterkeyhint','done');
+
+    // Position fixe sur le wrap, en dehors du time-wrap pour éviter overflow:hidden
+    ed.style.cssText = `
+      position:fixed;
+      top:${rect.top}px; left:${rect.left}px;
+      width:${rect.width}px; height:${rect.height}px;
+      z-index:9999;
+      text-align:center; font-weight:900; font-size:1rem;
+      border-radius:var(--radius);
+      background:var(--card); color:var(--text);
+      border:2px solid #3273dc; padding:0; box-sizing:border-box;
+    `;
+    disp.style.visibility='hidden';
+    document.body.appendChild(ed);
     setTimeout(()=>{ ed.focus(); ed.select(); },30);
 
     let done=false;
@@ -7257,12 +7273,12 @@ async function footerRefreshAK(){
           twSync(id); updateAllCalculations();
         }
       }
-      ed.remove(); disp.style.display='';
+      ed.remove(); disp.style.visibility='';
     }
     ed.addEventListener('blur',commit);
     ed.addEventListener('keydown',e=>{
-      if(e.key==='Enter'){e.preventDefault();ed.blur();}
-      if(e.key==='Escape'){done=true;ed.remove();disp.style.display='';}
+      if(e.key==='Enter'){e.preventDefault();commit();}
+      if(e.key==='Escape'){done=true;ed.remove();disp.style.visibility='';}
     });
   }
 
