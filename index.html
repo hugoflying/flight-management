@@ -3035,6 +3035,21 @@ function openLDM(mode=null){
   updateHWeights(); // poids soutes FR/RK
   updateCrewThobVisibility(); // CREW/THOB FR/RK
 
+  // Validation max plateau au blur (rouge persistant)
+  const zoneIds = ['FinalOA','FinalOB','FinalOC','FinalOD','FinalH1','FinalH2','FinalH3','FinalH4'];
+  zoneIds.forEach(id => {
+    const el = document.getElementById(id);
+    if(!el || el._blurValidated) return;
+    el._blurValidated = true;
+    el.addEventListener('blur', () => {
+      const phMatch = (el.placeholder || '').match(/^(\d+)/);
+      if(!phMatch){ el.classList.remove('is-danger'); return; }
+      const max = parseInt(phMatch[1], 10);
+      const val = parseInt(el.value, 10);
+      el.classList.toggle('is-danger', !isNaN(val) && val > max);
+    });
+  });
+
   if(mode === null){
     if(shouldOpenFinalLoad()){
       ldmSwitch('final');
