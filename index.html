@@ -1934,14 +1934,41 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
   </div>
 </div>
 
-  <!-- FAITS SAILLANTS -->
+  <!-- BLOC NOTE -->
   <div class="card mb-5">
     <header class="card-header section-collapse" onclick="toggleCardBody(this)">
-      <p class="card-header-title">FAITS SAILLANTS</p>
+      <p class="card-header-title">BLOC NOTE</p>
       <span class="card-header-icon"><span class="icon">⌄</span></span>
     </header>
-    <div class="card-content">
-      <textarea class="textarea" id="FaitsSaillants" placeholder="Faits saillants…"></textarea>
+    <div class="card-content" style="padding:10px 12px;">
+
+      <!-- Toolbar -->
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
+        <button id="bnPen" class="button is-small is-link" type="button" onclick="bnSetTool('pen')" title="Stylet">✏️ Stylet</button>
+        <button id="bnEraserStroke" class="button is-small is-light" type="button" onclick="bnSetTool('eraser-stroke')" title="Gomme trait">⬜ Gomme trait</button>
+        <button id="bnEraserAll" class="button is-small is-danger is-light" type="button" onclick="bnClear()" title="Effacer tout">🗑 Tout effacer</button>
+
+        <!-- Épaisseur -->
+        <input id="bnSize" type="range" min="1" max="12" value="3"
+               style="width:80px; cursor:pointer;"
+               oninput="document.getElementById('bnSizeLbl').textContent=this.value+'px'"
+               title="Épaisseur">
+        <span id="bnSizeLbl" style="font-size:.75rem;font-weight:700;color:var(--muted);min-width:28px;">3px</span>
+
+        <!-- Couleur -->
+        <input id="bnColor" type="color" value="#1e3a8a"
+               style="width:32px;height:32px;border:none;border-radius:8px;cursor:pointer;padding:2px;"
+               oninput="bnUpdateColor(this.value)" title="Couleur">
+      </div>
+
+      <!-- Canvas -->
+      <canvas id="bnCanvas"
+              style="width:100%; border-radius:12px; border:1.5px solid var(--field-border); background:#fff; touch-action:none; cursor:crosshair; display:block;">
+      </canvas>
+
+      <!-- Sauvegarde invisible pour le mail/export -->
+      <textarea id="FaitsSaillants" style="display:none;"></textarea>
+
     </div>
   </div>
 
@@ -3673,6 +3700,9 @@ function switchTab(id){
 
   // Fermer LOAD après chargement — évite de l'avoir ouvert sur le nouvel onglet
   closeLDM?.();
+
+  // Recharger le bloc note pour le nouvel onglet
+  window.bnReloadTab?.();
 
   renderTabs();
   refreshUIForTabs();
@@ -6081,6 +6111,186 @@ function toggleSettings(){
     backdrop.style.display = 'block';
   }
 }
+
+/* ===== BLOC NOTE CANVAS ===== */
+(function(){
+  let _bnReady = false;
+  let _tool = 'pen';      // 'pen' | 'eraser-stroke'
+  let _strokes = [];      // [{tool, color, size, pts:[{x,y}]}]
+  let _current = null;
+  let _drawing = false;
+  let _historyKey = null;
+
+  function canvas(){ return document.getElementById('bnCanvas'); }
+  function ctx(){ const c=canvas(); return c ? c.getContext('2d') : null; }
+
+  function bnInit(){
+    const c = canvas();
+    if(!c || _bnReady) return;
+    _bnReady = true;
+
+    // Taille responsive
+    function resize(){
+      const w = c.offsetWidth;
+      const h = Math.round(w * 0.45);
+      if(c.width !== w || c.height !== h){
+        const snapshot = c.toDataURL();
+        c.width  = w;
+        c.height = h;
+        bnRedraw();
+        // Restore image après resize
+        const img = new Image();
+        img.onload = ()=>{ ctx()?.drawImage(img,0,0,w,h); };
+        img.src = snapshot;
+      }
+    }
+    new ResizeObserver(resize).observe(c);
+    resize();
+
+    // Charger depuis storage
+    _historyKey = 'bnCanvas_' + (currentTabId||'default');
+    bnLoad();
+
+    // Événements pointer (stylet + doigt + souris)
+    c.addEventListener('pointerdown', e=>{ e.preventDefault(); bnStart(e); }, {passive:false});
+    c.addEventListener('pointermove', e=>{ e.preventDefault(); bnMove(e);  }, {passive:false});
+    c.addEventListener('pointerup',   e=>{ e.preventDefault(); bnEnd(e);   }, {passive:false});
+    c.addEventListener('pointerleave',e=>{ bnEnd(e); }, {passive:false});
+  }
+
+  function bnPt(e){
+    const c = canvas();
+    const r = c.getBoundingClientRect();
+    const sx = c.width  / r.width;
+    const sy = c.height / r.height;
+    return { x:(e.clientX-r.left)*sx, y:(e.clientY-r.top)*sy };
+  }
+
+  function bnStart(e){
+    _drawing = true;
+    const pt = bnPt(e);
+    if(_tool === 'eraser-stroke'){
+      _current = { tool:'eraser-stroke', pts:[pt] };
+    } else {
+      const color = document.getElementById('bnColor')?.value || '#1e3a8a';
+      const size  = parseInt(document.getElementById('bnSize')?.value || '3', 10);
+      _current = { tool:'pen', color, size, pts:[pt] };
+    }
+  }
+
+  function bnMove(e){
+    if(!_drawing || !_current) return;
+    _current.pts.push(bnPt(e));
+    bnRedraw();
+    // Dessine le trait en cours
+    bnDrawStroke(_current, ctx());
+  }
+
+  function bnEnd(e){
+    if(!_drawing || !_current) return;
+    _drawing = false;
+    if(_tool === 'eraser-stroke'){
+      // Supprimer les traits qui intersectent le chemin de gomme
+      const erasePts = _current.pts;
+      _strokes = _strokes.filter(s => !bnStrokeIntersects(s, erasePts));
+    } else if(_current.pts.length > 0){
+      _strokes.push(_current);
+    }
+    _current = null;
+    bnRedraw();
+    bnSave();
+  }
+
+  function bnStrokeIntersects(stroke, erasePts){
+    const threshold = 18;
+    for(const ep of erasePts){
+      for(const sp of stroke.pts){
+        const dx = ep.x - sp.x, dy = ep.y - sp.y;
+        if(dx*dx + dy*dy < threshold*threshold) return true;
+      }
+    }
+    return false;
+  }
+
+  function bnDrawStroke(s, c){
+    if(!c || s.pts.length < 1) return;
+    c.save();
+    if(s.tool === 'eraser-stroke'){
+      c.globalCompositeOperation = 'source-over';
+      c.strokeStyle = 'rgba(200,200,200,0.5)';
+      c.lineWidth   = 18;
+      c.setLineDash([4,4]);
+    } else {
+      c.globalCompositeOperation = 'source-over';
+      c.strokeStyle = s.color;
+      c.lineWidth   = s.size;
+      c.setLineDash([]);
+      c.lineCap     = 'round';
+      c.lineJoin    = 'round';
+    }
+    c.beginPath();
+    c.moveTo(s.pts[0].x, s.pts[0].y);
+    for(let i=1; i<s.pts.length; i++) c.lineTo(s.pts[i].x, s.pts[i].y);
+    c.stroke();
+    c.restore();
+  }
+
+  function bnRedraw(){
+    const c2 = canvas(); const g = ctx();
+    if(!c2||!g) return;
+    g.clearRect(0,0,c2.width,c2.height);
+    _strokes.forEach(s => bnDrawStroke(s, g));
+  }
+
+  function bnSave(){
+    if(!_historyKey) return;
+    try{
+      const data = JSON.stringify(_strokes);
+      localStorage.setItem(_historyKey, data);
+    }catch(e){}
+  }
+
+  function bnLoad(){
+    _historyKey = 'bnCanvas_' + (currentTabId||'default');
+    try{
+      const raw = localStorage.getItem(_historyKey);
+      if(raw) _strokes = JSON.parse(raw);
+      else     _strokes = [];
+    }catch(e){ _strokes=[]; }
+    setTimeout(bnRedraw, 50);
+  }
+
+  window.bnSetTool = function(tool){
+    _tool = tool;
+    document.getElementById('bnPen')?.classList.toggle('is-link',   tool==='pen');
+    document.getElementById('bnPen')?.classList.toggle('is-light',  tool!=='pen');
+    document.getElementById('bnEraserStroke')?.classList.toggle('is-warning', tool==='eraser-stroke');
+    document.getElementById('bnEraserStroke')?.classList.toggle('is-light',   tool!=='eraser-stroke');
+  };
+
+  window.bnClear = function(){
+    if(!confirm('Effacer le bloc note ?')) return;
+    _strokes = [];
+    bnRedraw();
+    bnSave();
+  };
+
+  window.bnUpdateColor = function(){ /* color picker auto */ };
+
+  // Réinitialiser quand on change d'onglet
+  window.bnReloadTab = function(){
+    _bnReady = false;
+    _strokes = [];
+    _current = null;
+    _drawing = false;
+    setTimeout(()=>{ bnInit(); bnLoad(); }, 100);
+  };
+
+  // Init dès que le canvas est visible
+  document.addEventListener('DOMContentLoaded', ()=>{
+    setTimeout(bnInit, 200);
+  });
+})();
 
 function clearAutoSave() {
   if (confirm("Tout réinitialiser ?")) {
