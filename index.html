@@ -1932,6 +1932,76 @@ function updateHeaderOffset(){
 
 /* Vars */
 let isUTC=false;
+
+/* =====================================================================
+   UTC REFACTOR — conversion à la frontière WebSocket uniquement
+   DOM/localStorage : HH:MM
+   WebSocket/DO     : ISO 8601 UTC (ex: 2026-03-16T14:30:00Z)
+   ===================================================================== */
+
+/** Champs horaires qui transitent en ISO UTC sur le wire */
+const UTC_TIME_FIELDS = new Set([
+  'SIBT','AIBT','SOBT','AOBT','CTOT',
+  'PremierDebarque','PremierDebarqueL2','DernierDebarque',
+  'ArrPNT','ArrPNC',
+  'ArriveeFuel','DepartFuel',
+  'ArriveeLiftArr','DepartLiftArr',
+  'ArriveeLift','DepartLift',
+  'AvionPremierEmbarque','AvionDernierEmbarque',
+  'FermeturePorteAvion','RemiseLID',
+  'ConnexionAgentCasque','ArriveeINAD'
+]);
+
+/** HH:MM + date vol + mode → ISO UTC */
+function hhmmToISO(hhmm, dateStr, utcMode) {
+  if (!hhmm || !/^\d{2}:\d{2}$/.test(hhmm)) return '';
+  if (!dateStr || dateStr.length < 10) return hhmm; // pas de date → fallback brut
+  try {
+    if (utcMode) {
+      return dateStr + 'T' + hhmm + ':00Z';
+    } else {
+      const d = new Date(dateStr + 'T' + hhmm + ':00');
+      if (isNaN(d.getTime())) return hhmm;
+      return d.toISOString().slice(0, 19) + 'Z';
+    }
+  } catch(e) { return hhmm; }
+}
+
+/** ISO UTC → HH:MM selon le mode de cet appareil */
+function isoToHHMM(value, utcMode) {
+  if (!value) return '';
+  if (/^\d{2}:\d{2}$/.test(String(value))) return value; // HH:MM legacy
+  try {
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return value;
+    const h = utcMode ? d.getUTCHours() : d.getHours();
+    const m = utcMode ? d.getUTCMinutes() : d.getMinutes();
+    return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+  } catch(e) { return value; }
+}
+
+/** Convertit un patch HH:MM → ISO avant envoi WebSocket */
+function outboundPatch(patch) {
+  const dateStr = document.getElementById('Date')?.value || '';
+  const result  = { ...patch };
+  for (const [id, val] of Object.entries(result)) {
+    if (UTC_TIME_FIELDS.has(id) && val && /^\d{2}:\d{2}$/.test(val)) {
+      result[id] = hhmmToISO(val, dateStr, isUTC);
+    }
+  }
+  return result;
+}
+
+/** Convertit un patch ISO → HH:MM à la réception WebSocket */
+function inboundPatch(patch) {
+  const result = { ...patch };
+  for (const [id, val] of Object.entries(result)) {
+    if (UTC_TIME_FIELDS.has(id) && val) {
+      result[id] = isoToHHMM(val, isUTC);
+    }
+  }
+  return result;
+}
 let manualSOBT=false;
 let currentTabId=null;
 let saveTimer=null;
@@ -5951,9 +6021,12 @@ function applyRemotePayload(payload) {
     }catch(e){}
   }
 
+  // Convertit les ISO → HH:MM selon le mode de cet appareil
+  const converted = inboundPatch(payload);
+
   isApplyingRemoteUpdate = true;
   try {
-    Object.entries(payload).forEach(([id, value]) => {
+    Object.entries(converted).forEach(([id, value]) => {
       if(id === '__akMeta') return; // déjà traité
       const el = document.getElementById(id);
       if (!el) return;
@@ -6090,6 +6163,14 @@ function collectFlightState() {
     }
   }catch(_){}
 
+  // Convertit les champs horaires en ISO UTC
+  const dateStr = document.getElementById('Date')?.value || '';
+  for (const id of UTC_TIME_FIELDS) {
+    if (payload[id] && /^\d{2}:\d{2}$/.test(payload[id])) {
+      payload[id] = hhmmToISO(payload[id], dateStr, isUTC);
+    }
+  }
+
   return payload;
 }
 
@@ -6100,8 +6181,11 @@ function flushPendingPatch() {
   const entries = Object.entries(pendingPatch);
   if (!entries.length) return;
 
-  const payload = { ...pendingPatch };
+  const raw = { ...pendingPatch };
   pendingPatch = {};
+
+  // Convertit les champs horaires en ISO UTC avant envoi
+  const payload = outboundPatch(raw);
 
   // ✅ Toujours inclure __linkedRoom si une rotation liée existe
   const lr = getLinkedRoom();
