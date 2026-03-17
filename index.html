@@ -1942,32 +1942,43 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
     </header>
     <div class="card-content" style="padding:10px 12px;">
 
-      <!-- Toolbar -->
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
-        <button id="bnPen" class="button is-small is-link" type="button" onclick="bnSetTool('pen')" title="Stylet">✏️ Stylet</button>
-        <button id="bnEraserStroke" class="button is-small is-light" type="button" onclick="bnSetTool('eraser-stroke')" title="Gomme trait">⬜ Gomme trait</button>
-        <button id="bnEraserAll" class="button is-small is-danger is-light" type="button" onclick="bnClear()" title="Effacer tout">🗑 Tout effacer</button>
+      <!-- Toolbar : tout sur une ligne -->
+      <div style="display:flex; align-items:center; gap:6px; margin-bottom:10px; flex-wrap:nowrap;">
+        <button id="bnModeDrawBtn" class="button is-small is-link" type="button" onclick="bnSwitchMode('draw')" title="Dessin">✏️ Stylet</button>
+        <button id="bnModeTextBtn" class="button is-small is-light" type="button" onclick="bnSwitchMode('text')" title="Clavier">⌨️ Clavier</button>
 
-        <!-- Épaisseur -->
-        <input id="bnSize" type="range" min="1" max="12" value="3"
-               style="width:80px; cursor:pointer;"
-               oninput="document.getElementById('bnSizeLbl').textContent=this.value+'px'"
-               title="Épaisseur">
-        <span id="bnSizeLbl" style="font-size:.75rem;font-weight:700;color:var(--muted);min-width:28px;">3px</span>
+        <!-- Outils dessin (cachés en mode clavier) -->
+        <div id="bnDrawTools" style="display:flex; align-items:center; gap:6px; flex:1;">
+          <button id="bnEraserStroke" class="button is-small is-light" type="button" onclick="bnSetTool('eraser-stroke')" title="Gomme trait">⬜ Gomme</button>
+          <input id="bnSize" type="range" min="1" max="12" value="3"
+                 style="width:70px; cursor:pointer;"
+                 oninput="document.getElementById('bnSizeLbl').textContent=this.value+'px'"
+                 title="Épaisseur">
+          <span id="bnSizeLbl" style="font-size:.75rem;font-weight:700;color:var(--muted);min-width:26px;">3px</span>
+          <input id="bnColor" type="color" value="#1e3a8a"
+                 style="width:30px;height:30px;border:none;border-radius:8px;cursor:pointer;padding:2px;"
+                 title="Couleur">
+        </div>
 
-        <!-- Couleur -->
-        <input id="bnColor" type="color" value="#1e3a8a"
-               style="width:32px;height:32px;border:none;border-radius:8px;cursor:pointer;padding:2px;"
-               oninput="bnUpdateColor(this.value)" title="Couleur">
+        <button id="bnEraserAll" class="button is-small is-danger is-light" type="button" onclick="bnClear()" title="Tout effacer">🗑 Effacer</button>
       </div>
 
-      <!-- Canvas -->
-      <canvas id="bnCanvas"
-              style="width:100%; border-radius:12px; border:1.5px solid var(--field-border); background:#fff; touch-action:none; cursor:crosshair; display:block;">
-      </canvas>
+      <!-- Mode dessin -->
+      <div id="bnDrawMode" style="overflow:hidden; width:100%;">
+        <canvas id="bnCanvas"
+                style="width:100%; max-width:100%; border-radius:12px; border:1.5px solid var(--field-border); background:#fff; touch-action:none; cursor:crosshair; display:block; box-sizing:border-box;">
+        </canvas>
+      </div>
 
-      <!-- Sauvegarde invisible pour le mail/export -->
-      <textarea id="FaitsSaillants" style="display:none;"></textarea>
+      <!-- Mode clavier -->
+      <div id="bnTextMode" style="display:none;">
+        <textarea id="FaitsSaillants" class="textarea" rows="6"
+                  placeholder="Notes libres…"
+                  style="border-radius:12px; resize:vertical;"
+                  oninput="twSync('FaitsSaillants')"></textarea>
+      </div>
+
+      <input id="BlocNote" type="hidden">
 
     </div>
   </div>
@@ -6146,26 +6157,35 @@ function toggleSettings(){
   function bnInit(){
     const c = canvas();
     if(!c || _bnReady) return;
+
+    // Attendre que le canvas soit visible et ait une taille
+    const w = c.offsetWidth || c.closest('.card-content')?.offsetWidth || 300;
+    if(w === 0){
+      setTimeout(bnInit, 100);
+      return;
+    }
+
     _bnReady = true;
 
     // Taille responsive — haute résolution (devicePixelRatio)
     function resize(){
       const dpr = window.devicePixelRatio || 1;
-      const w   = c.offsetWidth;
-      const h   = Math.round(w * 0.45);
-      const pw  = Math.round(w * dpr);
+      const parent = c.parentElement || c.closest('.card-content');
+      const cw  = (parent?.clientWidth || c.offsetWidth || 300);
+      const h   = Math.round(cw * 0.45);
+      const pw  = Math.round(cw * dpr);
       const ph  = Math.round(h * dpr);
       if(c.width !== pw || c.height !== ph){
         c.width  = pw;
         c.height = ph;
-        c.style.width  = w  + 'px';
+        c.style.width  = cw + 'px';
         c.style.height = h  + 'px';
         const g = ctx();
         if(g) g.scale(dpr, dpr);
         bnRedraw();
       }
     }
-    new ResizeObserver(resize).observe(c);
+    new ResizeObserver(()=>requestAnimationFrame(resize)).observe(c);
     resize();
 
     // Charger depuis storage
@@ -6269,6 +6289,12 @@ function toggleSettings(){
     try{
       const data = JSON.stringify(_strokes);
       localStorage.setItem(_historyKey, data);
+      // Sync WebSocket
+      const el = document.getElementById('BlocNote');
+      if(el && el.value !== data){
+        el.value = data;
+        el.dispatchEvent(new Event('change', {bubbles:true}));
+      }
     }catch(e){}
   }
 
@@ -6276,8 +6302,10 @@ function toggleSettings(){
     _historyKey = 'bnCanvas_' + (currentTabId||'default');
     try{
       const raw = localStorage.getItem(_historyKey);
-      if(raw) _strokes = JSON.parse(raw);
-      else     _strokes = [];
+      const elRaw = document.getElementById('BlocNote')?.value || '';
+      const source = raw || elRaw;
+      if(source) _strokes = JSON.parse(source);
+      else        _strokes = [];
     }catch(e){ _strokes=[]; }
     setTimeout(bnRedraw, 50);
   }
@@ -6288,6 +6316,52 @@ function toggleSettings(){
     document.getElementById('bnPen')?.classList.toggle('is-light',  tool!=='pen');
     document.getElementById('bnEraserStroke')?.classList.toggle('is-warning', tool==='eraser-stroke');
     document.getElementById('bnEraserStroke')?.classList.toggle('is-light',   tool!=='eraser-stroke');
+  };
+
+  window.bnReloadFromRemote = function(raw){
+    try{
+      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      if(!Array.isArray(parsed)) return;
+      _strokes = parsed;
+      if(_historyKey) localStorage.setItem(_historyKey, JSON.stringify(_strokes));
+      bnRedraw();
+    }catch(e){}
+  };
+  window.bnSwitchMode = function(mode){
+    const drawDiv = document.getElementById('bnDrawMode');
+    const textDiv = document.getElementById('bnTextMode');
+    const drawBtn = document.getElementById('bnModeDrawBtn');
+    const textBtn = document.getElementById('bnModeTextBtn');
+    if(!drawDiv || !textDiv) return;
+    const isDraw = mode === 'draw';
+    drawDiv.style.display = isDraw ? '' : 'none';
+    textDiv.style.display = isDraw ? 'none' : '';
+    const drawTools = document.getElementById('bnDrawTools');
+    if(drawTools) drawTools.style.display = isDraw ? 'flex' : 'none';
+    drawBtn.classList.toggle('is-link',  isDraw);
+    drawBtn.classList.toggle('is-light', !isDraw);
+    textBtn.classList.toggle('is-link',  !isDraw);
+    textBtn.classList.toggle('is-light', isDraw);
+    if(isDraw){
+      setTimeout(()=>{
+        const c = document.getElementById('bnCanvas');
+        if(!c) return;
+        const dpr = window.devicePixelRatio || 1;
+        const w   = c.offsetWidth || c.parentElement?.offsetWidth || 300;
+        const h   = Math.round(w * 0.45);
+        // Forcer les dimensions même si inchangées
+        c.width  = Math.round(w * dpr);
+        c.height = Math.round(h * dpr);
+        c.style.width  = w + 'px';
+        c.style.height = h + 'px';
+        const g = c.getContext('2d');
+        if(g) g.setTransform(dpr, 0, 0, dpr, 0, 0);
+        _bnReady = false;
+        bnInit();
+        bnRedraw();
+      }, 80);
+    }
+    try{ localStorage.setItem('bnMode_'+(currentTabId||'default'), mode); }catch(e){}
   };
 
   window.bnClear = function(){
@@ -6310,7 +6384,9 @@ function toggleSettings(){
     _strokes = [];
     _current = null;
     _drawing = false;
-    setTimeout(()=>{ bnInit(); bnLoad(); }, 100);
+    // Restaurer le mode (dessin ou clavier)
+    const savedMode = localStorage.getItem('bnMode_'+(currentTabId||'default')) || 'draw';
+    setTimeout(()=>{ window.bnSwitchMode?.(savedMode); bnInit(); bnLoad(); }, 100);
   };
 
   // Init dès que le canvas est visible
@@ -6576,6 +6652,16 @@ function applyRemotePayload(payload) {
 
   // Convertit les ISO → HH:MM selon le mode de cet appareil
   const converted = inboundPatch(payload);
+
+  // Mise à jour du bloc note si BlocNote reçu
+  if(converted.BlocNote !== undefined){
+    try{
+      const el = document.getElementById('BlocNote');
+      if(el) el.value = converted.BlocNote;
+      // Recharger les strokes dans le canvas
+      if(typeof window.bnReloadFromRemote === 'function') window.bnReloadFromRemote(converted.BlocNote);
+    }catch(e){}
+  }
 
   isApplyingRemoteUpdate = true;
   try {
