@@ -2326,13 +2326,10 @@ function updateHWeights(){
     if(phMatch){
       const max = parseInt(phMatch[1], 10);
       const val = parseInt(inp.value, 10);
-      if(!isNaN(val) && val > max){
-        inp.classList.add('is-danger');
-      } else {
-        inp.classList.remove('is-danger');
-      }
+      if(!isNaN(val) && val > max) inp.classList.add('is-danger');
+      else if(inp !== document.activeElement) inp.classList.remove('is-danger');
     } else {
-      inp.classList.remove('is-danger');
+      if(inp !== document.activeElement) inp.classList.remove('is-danger');
     }
   });
 }
@@ -2371,9 +2368,10 @@ function updateHBagsValidity(mode){
     if(phMatch){
       const max = parseInt(phMatch[1], 10);
       const val = parseInt(el.value, 10);
-      el.classList.toggle('is-danger', !isNaN(val) && val > max);
+      if(!isNaN(val) && val > max) el.classList.add('is-danger');
+      else if(el !== document.activeElement) el.classList.remove('is-danger');
     } else {
-      el.classList.remove('is-danger');
+      if(el !== document.activeElement) el.classList.remove('is-danger');
     }
   });
 }
@@ -3042,11 +3040,13 @@ function openLDM(mode=null){
     if(!el || el._blurValidated) return;
     el._blurValidated = true;
     el.addEventListener('blur', () => {
-      const phMatch = (el.placeholder || '').match(/^(\d+)/);
-      if(!phMatch){ el.classList.remove('is-danger'); return; }
-      const max = parseInt(phMatch[1], 10);
-      const val = parseInt(el.value, 10);
-      el.classList.toggle('is-danger', !isNaN(val) && val > max);
+      setTimeout(() => {
+        const phMatch = (el.placeholder || '').match(/^(\d+)/);
+        if(!phMatch){ el.classList.remove('is-danger'); return; }
+        const max = parseInt(phMatch[1], 10);
+        const val = parseInt(el.value, 10);
+        el.classList.toggle('is-danger', !isNaN(val) && val > max);
+      }, 50);
     });
   });
 
