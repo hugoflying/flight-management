@@ -306,7 +306,14 @@ html .field .label {
   opacity: .9;
   margin-bottom: 2px;
 }
-.field-optional .label { opacity: .55; }
+.hor-cell .label {
+  font-weight: 900;
+  font-size: var(--labelSize);
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  opacity: .9;
+  margin-bottom: 2px;
+}
 
 /* LDM inputs (surclasse le reset global ci-dessus via spécificité) */
 html .ldm-in {
@@ -930,7 +937,7 @@ body.modal-open {
   gap: 12px;
   align-items: start;
 }
-.hor-block    { display: flex; flex-direction: column; gap: 10px; }
+.hor-block    { display: flex; flex-direction: column; gap: 12px; }
 .hor-col-head { display: flex; justify-content: center; padding-bottom: 6px; border-bottom: 2px solid var(--field-border); }
 .hor-badge    { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; font-size: .72rem; font-weight: 900; padding: 4px 10px; min-width: 44px; }
 
@@ -939,7 +946,7 @@ html.dark .hor-badge-arr { background: #1e3a8a; color: #93c5fd; }
 .hor-badge-dep          { background: #dcfce7; color: #15803d; }
 html.dark .hor-badge-dep { background: #14532d; color: #86efac; }
 
-.hor-cell { display: flex; flex-direction: column; gap: 4px; }
+.hor-cell { display: flex; flex-direction: column; gap: 2px; }
 .hor-input-sched        { opacity: .6; border-style: dashed; }
 .hor-input-sched:focus  { opacity: 1; border-style: solid; }
 
