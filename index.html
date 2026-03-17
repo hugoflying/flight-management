@@ -641,7 +641,8 @@ html.dark #settingsMenu { border-color: rgba(255,255,255,.10); }
   border-bottom: 1px solid rgba(0,0,0,.08);
 }
 html.dark .settings-header { border-bottom-color: rgba(255,255,255,.10); }
-.settings-header strong { font-weight: 900; font-size: 1rem; flex: 1; }
+.settings-header strong { font-weight: 900; font-size: 1rem; flex: 1; color: #111; }
+html.dark .settings-header strong { color: var(--text); }
 
 .settings-body {
   padding: 12px;
@@ -742,7 +743,7 @@ html.dark .fixed-footer { border-top-color: rgba(255,255,255,.08); }
 #loadFab {
   position: fixed;
   right: 14px;
-  bottom: calc(var(--fixed-footer-h) + 86px);
+  bottom: calc(var(--fixed-footer-h) + 72px);
   z-index: 9150;
   width: 52px;
   height: 52px;
@@ -915,9 +916,15 @@ body.iv-editing .iv-edit-btn { opacity: 1; }
 
 #ivEdit {
   border-top: 1px solid var(--field-border);
-  padding-top: 12px;
+  padding-top: 10px;
   animation: ivFadeIn .18s ease;
+  gap: 6px !important;
+  row-gap: 6px !important;
 }
+#ivEdit .field { margin-bottom: 0; }
+#ivEdit .label { font-size: .72rem; margin-bottom: 2px; }
+#ivEdit .select { width: 100%; }
+#ivEdit .select select { width: 100%; }
 @keyframes ivFadeIn {
   from { opacity: 0; transform: translateY(-4px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -1717,13 +1724,13 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
 
       <div class="field span-3">
         <label class="label">Parking</label>
-        <div class="select is-fullwidth">
-          <select id="Parking">
-            <option value="">--</option>
+        <div class="control">
+          <input class="input" type="text" id="Parking" list="parkingList" autocomplete="off" maxlength="4" placeholder="--">
+          <datalist id="parkingList">
             <option>1</option><option>2</option><option>3</option><option>4</option>
             <option>5</option><option>6</option><option>7</option><option>8</option>
             <option>9</option><option>10</option><option>11</option><option>12</option>
-          </select>
+          </datalist>
         </div>
       </div>
 
@@ -1758,13 +1765,8 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
       </div>
 
       <div class="field span-3">
-        <label class="label">N°</label>
+        <label class="label">N° DE VOL</label>
         <input class="input uppercase" type="text" id="NVol">
-      </div>
-
-      <div class="field span-3">
-        <label class="label">Callsign</label>
-        <input class="input uppercase" type="text" id="Callsign" maxlength="10">
       </div>
 
       <div class="field span-3">
@@ -1776,6 +1778,11 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
       <div class="field span-3">
         <label class="label">To</label>
         <input class="input uppercase" type="text" id="To" maxlength="3">
+      </div>
+
+      <div class="field span-6">
+        <label class="label">Callsign</label>
+        <input class="input uppercase" type="text" id="Callsign" maxlength="10">
       </div>
 
     </div>
@@ -1832,77 +1839,6 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
     </div>
 
     <!-- Mode édition infos vol (masqué par défaut) -->
-    <div id="ivEdit" class="grid-auto" style="display:none; margin-top:12px; margin-bottom:16px;">
-
-      <div class="field span-3">
-        <label class="label">Date</label>
-        <input class="input" type="date" id="Date">
-      </div>
-
-      <div class="field span-3">
-        <label class="label">Parking</label>
-        <div class="select is-fullwidth">
-          <select id="Parking">
-            <option value="">--</option>
-            <option>1</option><option>2</option><option>3</option><option>4</option>
-            <option>5</option><option>6</option><option>7</option><option>8</option>
-            <option>9</option><option>10</option><option>11</option><option>12</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="field span-3">
-        <label class="label">Immat</label>
-        <input class="input uppercase" type="text" id="Immat" maxlength="6">
-      </div>
-
-      <div class="field span-3">
-        <label class="label">Type avion</label>
-        <div class="control">
-          <input class="input uppercase" type="text" id="TypeAvion" list="typeAvionList" autocomplete="off" maxlength="6" placeholder="--">
-          <datalist id="typeAvionList">
-            <option>A319</option><option>A320</option><option>A321</option>
-            <option>A20N</option><option>A21N</option><option>A21NY</option>
-            <option>B734</option><option>B737</option><option>B738</option>
-            <option>B38M</option><option>BCS3</option><option>CL35</option>
-          </datalist>
-        </div>
-      </div>
-
-      <div class="field span-3">
-        <label class="label">Cie</label>
-        <div class="control">
-          <input class="input uppercase" type="text" id="Cie" list="cieList" autocomplete="off" maxlength="4" placeholder="--" oninput="updateFinalWeightIfNeeded()">
-          <datalist id="cieList">
-            <option>FR</option><option>RK</option><option>W4</option><option>W6</option>
-            <option>H4</option><option>H6</option><option>U5</option><option>U7</option>
-            <option>V7</option>
-          </datalist>
-        </div>
-      </div>
-
-      <div class="field span-3">
-        <label class="label">N°</label>
-        <input class="input uppercase" type="text" id="NVol">
-      </div>
-
-      <div class="field span-3">
-        <label class="label">Callsign</label>
-        <input class="input uppercase" type="text" id="Callsign" maxlength="10">
-      </div>
-
-      <div class="field span-3">
-        <label class="label">From</label>
-        <input class="input uppercase" type="text" id="From" maxlength="3"
-               oninput="updateEOBT(); updateCountdownOnce(); ensureCountdownRunning(); updateAllCalculations();">
-      </div>
-
-      <div class="field span-3">
-        <label class="label">To</label>
-        <input class="input uppercase" type="text" id="To" maxlength="3">
-      </div>
-
-    </div>
   </div>
 </div>
 
@@ -1940,19 +1876,18 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
 <!-- RETARDS -->
 <div class="card mb-5">
   <header class="card-header section-collapse" onclick="toggleCardBody(this)">
-    <p class="card-header-title">RETARDS (Départ)</p>
+    <p class="card-header-title">RETARD</p>
+    <button id="delayCodesBtn" class="button is-small is-warning is-light" type="button"
+            onclick="event.stopPropagation(); toggleDelayCodes()"
+            style="display:none; margin: auto 8px auto 0; font-size:.72rem; font-weight:900;">
+      CODES RYR
+    </button>
     <span class="card-header-icon"><span class="icon">⌄</span></span>
   </header>
 
   <div class="card-content">
 
-    <div style="margin-bottom:10px;">
-      <button id="delayCodesBtn" class="button is-warning is-light" type="button" onclick="toggleDelayCodes()">
-        DELAY CODES (RYR)
-      </button>
-    </div>
-
-    <div id="delayCodesBox" style="display:none; margin-top:12px;">
+    <div id="delayCodesBox" style="display:none; margin-bottom:12px;">
       <img id="delayCodesImage"
            src="https://pub-c7a84a2cfc4d46d3b0562e0e646eff71.r2.dev/gops-iata-delay-codes-apr24-rev17.jpg"
            style="max-width:100%; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,.25);">
@@ -3736,17 +3671,12 @@ function switchTab(id){
 
   loadTabData(id);
 
+  // Fermer LOAD après chargement — évite de l'avoir ouvert sur le nouvel onglet
+  closeLDM?.();
+
   renderTabs();
   refreshUIForTabs();
   renderTimeline();
-
-  // ✅ si LOAD est ouvert : remettre les layouts selon la Cie du nouvel onglet
-  const ldmModal = document.getElementById('ldmModal');
-  const isLdmOpen = ldmModal && ldmModal.style.display !== 'none' && ldmModal.style.display !== '';
-  if(isLdmOpen){
-    updateFinalLoadLayout?.();
-    updatePreviLoadLayout?.();
-  }
 }
 
 function deleteTab(id){
