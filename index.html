@@ -5930,7 +5930,7 @@ function applyAKFlight(f, flow, opts = {}){
         }catch(e){ console.warn('AK sync send error:', e); }
         return;
       }
-      if(attempts > 0) setTimeout(() => tryPush(attempts - 1), 500);
+      if(attempts > 0) setTimeout(() => tryPush(attempts - 1), 300);
     };
     tryPush(10); // jusqu'à 5s de retry
   }, 50);
@@ -7060,7 +7060,7 @@ function connectFlightSocket() {
     }
     // Retry automatique : dès que les champs nécessaires seront remplis
     clearTimeout(_connectRetryTimer);
-    _connectRetryTimer = setTimeout(() => { connectFlightSocket(); }, 2000);
+    _connectRetryTimer = setTimeout(() => { connectFlightSocket(); }, 800);
     return;
   }
 
