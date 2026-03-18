@@ -7209,6 +7209,8 @@ function setupRealtimeSync() {
     "BlockFuel", "TaxiFuel", "TripFuel", "FuelUplift",
     "FinalCREW", "FinalTHOB", "CommChiffresPorte"
   ]);
+
+  const pushIfSyncField = (event) => {
     const el = event.target;
     if (!el || !el.id) return;
     if (!syncFields.has(el.id)) return;
