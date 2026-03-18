@@ -3860,6 +3860,10 @@ function deleteTab(id){
 
     if(id === currentTabId && socket && socket.readyState === WebSocket.OPEN){
       socket.send(deleteMsg);
+      // Couper immédiatement le socket APRÈS le delete pour éviter tout re-upsert
+      clearTimeout(_connectRetryTimer);
+      _connectRetryTimer = null;
+      setTimeout(() => { try{ socket.close(); socket = null; currentSocketKey = null; }catch(_){} }, 100);
     } else {
       // Socket fermé ou autre onglet : connexion temporaire
       try{
@@ -5173,7 +5177,7 @@ document.addEventListener('keydown', (e)=>{
 });
 
 // ===== Airport Keeper (AK) =====
-const AK_PROXY = "/ak";
+const AK_PROXY = "https://airportkeeper-proxy.deruellehugo-49c.workers.dev/ak";
 
 // Ouvrir/Fermer
 function openAKPicker(){
@@ -7057,11 +7061,16 @@ function connectFlightSocket() {
 
   socket.onopen = () => {
     console.log("WebSocket connecté :", key);
-    // Envoyer le state complet dès la connexion → dashboard toujours notifié
+    // Envoyer le state complet seulement si le vol est actif (Cie+NVol+Date présents)
     try {
-      const fullPayload = collectFlightState();
-      if(fullPayload && typeof fullPayload === 'object' && Object.keys(fullPayload).length > 0){
-        socket.send(JSON.stringify(fullPayload));
+      const cie  = (document.getElementById('Cie')?.value  || '').trim();
+      const nvol = (document.getElementById('NVol')?.value || '').trim();
+      const date = (document.getElementById('Date')?.value || '').trim();
+      if(cie && nvol && date){
+        const fullPayload = collectFlightState();
+        if(fullPayload && typeof fullPayload === 'object' && Object.keys(fullPayload).length > 0){
+          socket.send(JSON.stringify(fullPayload));
+        }
       }
     } catch(_) {}
     flushPendingPatch();
