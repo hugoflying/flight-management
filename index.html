@@ -3847,6 +3847,9 @@ function deleteTab(id){
   const deleteKey = tabData?.akMeta?.id ? `AK_${tabData.akMeta.id}` : (id === currentTabId ? buildFlightKey() : null);
 
   if(deleteKey){
+    // Annuler tous les timers pour éviter tout envoi post-suppression
+    clearTimeout(saveTimer); saveTimer = null;
+    clearTimeout(_connectRetryTimer); _connectRetryTimer = null;
     // Calculer la clé dashboard avant de supprimer le localStorage
     const deleteDashKey = (() => {
       try {
@@ -3858,11 +3861,17 @@ function deleteTab(id){
     })();
     const deleteMsg = JSON.stringify({ __delete: '1', ...(deleteDashKey ? { __dashboardKey: deleteDashKey } : {}) });
 
+    // Envoyer aussi au DO lié pour éviter re-upsert via FORWARD
+    const linkedDeleteKey = (() => {
+      try {
+        const lid = String(tabData?.akMeta?.linkedId || '').trim();
+        return lid ? `AK_${lid}` : null;
+      } catch(_){ return null; }
+    })();
+
     if(id === currentTabId && socket && socket.readyState === WebSocket.OPEN){
       socket.send(deleteMsg);
       // Couper immédiatement le socket APRÈS le delete pour éviter tout re-upsert
-      clearTimeout(_connectRetryTimer);
-      _connectRetryTimer = null;
       setTimeout(() => { try{ socket.close(); socket = null; currentSocketKey = null; }catch(_){} }, 100);
     } else {
       // Socket fermé ou autre onglet : connexion temporaire
@@ -3873,6 +3882,18 @@ function deleteTab(id){
           setTimeout(() => { try{ ws.close(); }catch(_){} }, 300);
         };
         ws.onerror = () => {};
+      }catch(_){}
+    }
+
+    // Supprimer aussi le DO lié
+    if(linkedDeleteKey && linkedDeleteKey !== deleteKey){
+      try{
+        const wsLinked = new WebSocket(WS_BASE + encodeURIComponent(linkedDeleteKey));
+        wsLinked.onopen = () => {
+          wsLinked.send(deleteMsg);
+          setTimeout(() => { try{ wsLinked.close(); }catch(_){} }, 300);
+        };
+        wsLinked.onerror = () => {};
       }catch(_){}
     }
   }
@@ -7070,6 +7091,9 @@ function connectFlightSocket() {
         const fullPayload = collectFlightState();
         if(fullPayload && typeof fullPayload === 'object' && Object.keys(fullPayload).length > 0){
           socket.send(JSON.stringify(fullPayload));
+          // State complet envoyé — vider pendingPatch pour éviter le double envoi
+          pendingPatch = {};
+          return;
         }
       }
     } catch(_) {}
