@@ -3849,7 +3849,6 @@ function deleteTab(id){
   if(deleteKey){
     // Annuler tous les timers pour éviter tout envoi post-suppression
     clearTimeout(saveTimer); saveTimer = null;
-    clearTimeout(_connectRetryTimer); _connectRetryTimer = null;
     // Calculer la clé dashboard avant de supprimer le localStorage
     const deleteDashKey = (() => {
       try {
@@ -5198,7 +5197,7 @@ document.addEventListener('keydown', (e)=>{
 });
 
 // ===== Airport Keeper (AK) =====
-const AK_PROXY = "/ak";
+const AK_PROXY = "https://airportkeeper-proxy.deruellehugo-49c.workers.dev/ak";
 
 // Ouvrir/Fermer
 function openAKPicker(){
@@ -7045,8 +7044,6 @@ function sendFullFlightState() {
   socket.send(JSON.stringify(payload));
 }
 
-let _connectRetryTimer = null;
-
 function connectFlightSocket() {
   const key = buildFlightKey();
 
@@ -7058,14 +7055,8 @@ function connectFlightSocket() {
       try { socket.close(); } catch (e) {}
       socket = null;
     }
-    // Retry automatique : dès que les champs nécessaires seront remplis
-    clearTimeout(_connectRetryTimer);
-    _connectRetryTimer = setTimeout(() => { connectFlightSocket(); }, 800);
     return;
   }
-
-  clearTimeout(_connectRetryTimer);
-  _connectRetryTimer = null;
 
   if (socket && currentSocketKey === key && socket.readyState <= WebSocket.OPEN) return;
 
