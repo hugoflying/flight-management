@@ -3847,14 +3847,25 @@ function deleteTab(id){
   const deleteKey = tabData?.akMeta?.id ? `AK_${tabData.akMeta.id}` : (id === currentTabId ? buildFlightKey() : null);
 
   if(deleteKey){
+    // Calculer la clé dashboard avant de supprimer le localStorage
+    const deleteDashKey = (() => {
+      try {
+        const fid = String(tabData?.akMeta?.id || '').trim();
+        const lid = String(tabData?.akMeta?.linkedId || '').trim();
+        if(fid && lid) return fid < lid ? fid : lid;
+        return fid || null;
+      } catch(_){ return null; }
+    })();
+    const deleteMsg = JSON.stringify({ __delete: '1', ...(deleteDashKey ? { __dashboardKey: deleteDashKey } : {}) });
+
     if(id === currentTabId && socket && socket.readyState === WebSocket.OPEN){
-      socket.send(JSON.stringify({ __delete: '1' }));
+      socket.send(deleteMsg);
     } else {
       // Socket fermé ou autre onglet : connexion temporaire
       try{
         const ws = new WebSocket(WS_BASE + encodeURIComponent(deleteKey));
         ws.onopen = () => {
-          ws.send(JSON.stringify({ __delete: '1' }));
+          ws.send(deleteMsg);
           setTimeout(() => { try{ ws.close(); }catch(_){} }, 300);
         };
         ws.onerror = () => {};
@@ -6532,16 +6543,22 @@ function clearAutoSave() {
         if(!meta?.id) return;
         const key = `AK_${meta.id}`;
 
+        // Calculer la clé dashboard
+        const fid = String(meta.id || '').trim();
+        const lid = String(meta.linkedId || '').trim();
+        const dashKey = (fid && lid) ? (fid < lid ? fid : lid) : fid;
+        const deleteMsg = JSON.stringify({ __delete: '1', ...(dashKey ? { __dashboardKey: dashKey } : {}) });
+
         if(tid === currentTabId && socket && socket.readyState === WebSocket.OPEN){
           // Onglet courant : socket déjà ouvert
-          socket.send(JSON.stringify({ __delete: '1' }));
+          socket.send(deleteMsg);
         } else {
           // Autres onglets : ouvrir un socket temporaire
           const p = new Promise(resolve => {
             try{
               const ws = new WebSocket(WS_BASE + encodeURIComponent(key));
               ws.onopen = () => {
-                ws.send(JSON.stringify({ __delete: '1' }));
+                ws.send(deleteMsg);
                 setTimeout(() => { try{ ws.close(); }catch(_){} resolve(); }, 200);
               };
               ws.onerror = () => resolve();
@@ -7040,6 +7057,13 @@ function connectFlightSocket() {
 
   socket.onopen = () => {
     console.log("WebSocket connecté :", key);
+    // Envoyer le state complet dès la connexion → dashboard toujours notifié
+    try {
+      const fullPayload = collectFlightState();
+      if(fullPayload && typeof fullPayload === 'object' && Object.keys(fullPayload).length > 0){
+        socket.send(JSON.stringify(fullPayload));
+      }
+    } catch(_) {}
     flushPendingPatch();
   };
 
