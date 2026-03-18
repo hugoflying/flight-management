@@ -7579,15 +7579,27 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // Stratégie : Network-first, fallback cache
+  // Ne pas intercepter les requêtes non-HTTP (chrome-extension, data:, etc.)
+  if (!e.request.url.startsWith('http')) return;
+  // Ne pas intercepter les WebSocket
+  if (e.request.url.startsWith('ws://') || e.request.url.startsWith('wss://')) return;
+
+  // Stratégie : Network-first, fallback cache, fallback réponse vide
   e.respondWith(
     fetch(e.request)
       .then(resp => {
-        const clone = resp.clone();
-        caches.open(CACHE).then(c => c.put(e.request, clone));
+        // Ne mettre en cache que les réponses valides GET
+        if (resp.ok && e.request.method === 'GET') {
+          const clone = resp.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
+        }
         return resp;
       })
-      .catch(() => caches.match(e.request))
+      .catch(() =>
+        caches.match(e.request).then(cached =>
+          cached || new Response('', { status: 503, statusText: 'Offline' })
+        )
+      )
   );
 });
 `;
