@@ -2567,6 +2567,24 @@ function updateFinalWeightIfNeeded(){
     return;
   }
 
+  // ✈️ CAS W4 / W6 / H4 → POIDS libre + GB s'ajoute en kg (GB * 13)
+  if(cie === 'W4' || cie === 'W6' || cie === 'H4'){
+    const gb = parseInt(document.getElementById('FinalGB').value) || 0;
+    if(gb > 0){
+      // Lire le poids de base (BAGS * 13 si BAGS rempli, sinon valeur saisie)
+      const bags = parseInt(document.getElementById('FinalBAGS').value) || 0;
+      const bagsWeight = bags * 13;
+      poidsField.readOnly = true;
+      poidsField.value = bagsWeight + (gb * 13);
+    } else {
+      // Pas de GB : recalcul depuis BAGS uniquement
+      const bags = parseInt(document.getElementById('FinalBAGS').value) || 0;
+      poidsField.readOnly = bags > 0 ? true : false;
+      if(bags > 0) poidsField.value = bags * 13;
+    }
+    return;
+  }
+
   // 🛫 AUTRES COMPAGNIES → champ libre
   poidsField.readOnly = false;            // 🔓 déverrouillé
 }
