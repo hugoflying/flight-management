@@ -4183,9 +4183,20 @@ function generateTimingFields(){
   /* ===== DÉPART ===== */
   const depNoHeader = `
     <div class="buttons mb-4" style="justify-content:center;gap:.5rem;">
+      <button class="button is-rounded is-light" id="btn-crew" type="button" onclick="toggleDepExtra('crew')" style="font-weight:700;width:160px;">Crew</button>
       <button class="button is-rounded is-light" id="btn-recherche-bag" type="button" onclick="toggleDepExtra('recherche-bag')" style="font-weight:700;width:160px;">Recherche bag</button>
       <button class="button is-rounded is-light" id="btn-inad" type="button" onclick="toggleDepExtra('inad')" style="font-weight:700;width:160px;">INAD</button>
       <button class="button is-rounded is-light" id="btn-gpu" type="button" onclick="toggleDepExtra('gpu')" style="font-weight:700;width:160px;">Nayak</button>
+    </div>
+
+    <!-- Panneau Crew -->
+    <div id="panel-crew" class="card mb-3" style="display:none;">
+      <div class="card-content">
+        <div class="grid-auto">
+          <div class="span-6">${fieldHTML('ArrPNT','Arrivée PNT',false,true,'is-dark')}</div>
+          <div class="span-6">${fieldHTML('ArrPNC','Arrivée PNC',false,true,'is-dark')}</div>
+        </div>
+      </div>
     </div>
 
     <!-- Panneau Recherche bag -->
@@ -4230,8 +4241,6 @@ function generateTimingFields(){
     <div class="card">
       <div class="card-content">
         <div class="grid-auto">
-          <div class="span-6">${fieldHTML('ArrPNT','Arrivée PNT',false,true,'is-dark')}</div>
-          <div class="span-6">${fieldHTML('ArrPNC','Arrivée PNC',false,true,'is-dark')}</div>
           <div class="span-6">${fieldHTML('AvionPremierEmbarque','Premier embarqué')}</div>
           <div class="span-6">${fieldHTML('AvionDernierEmbarque','Dernier embarqué')}</div>
           <div class="span-6">${fieldHTML('ArriveeLift','Arrivée lift',false,false,'is-success')}</div>
