@@ -4354,7 +4354,7 @@ function updateAllCalculations() {
 function updateDelayBands(){
   const pairs = [
     { actual: 'AIBT', planned: 'SIBT', wrap: 'tw-disp-AIBT' },
-    { actual: 'AOBT', planned: 'SOBT', wrap: 'tw-disp-AOBT' }
+    { actual: 'AOBT', planned: 'EOBT', wrap: 'tw-disp-AOBT' }
   ];
 
   pairs.forEach(({ actual, planned, wrap }) => {
@@ -4370,8 +4370,15 @@ function updateDelayBands(){
 
     if(!aVal || !pVal) return;
 
-    const toMins = hhmm => {
-      const [h, m] = hhmm.split(':').map(Number);
+    const toMins = val => {
+      if(!val) return null;
+      if(val.includes('T') || (val.endsWith('Z') && val.length > 10)){
+        try{
+          const d = new Date(val);
+          if(!isNaN(d.getTime())) return d.getHours()*60 + d.getMinutes();
+        }catch(e){}
+      }
+      const [h, m] = val.split(':').map(Number);
       return isNaN(h) ? null : h * 60 + m;
     };
 
