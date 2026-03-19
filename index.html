@@ -6216,107 +6216,125 @@ function validateForm() {
   };
   const t  = id => hhmm(v(id));
   const r  = (label, value) => value ? `${label} : ${value}\n` : '';
-  const hr = () => `${'─'.repeat(36)}\n`;
+  const s  = () => `\n- - - - - - - - - - - - - - - - - - - -\n\n`;
+  const br = () => '\n';
 
   // ── INFO VOL ─────────────────────────────────────────────────────────────
-  const infoBlock = ''
-    + r('Date',        dateTitre)
-    + r('Cie',         cie)
-    + r('N° de vol',   vol)
-    + r('From',        from)
-    + r('To',          to)
-    + r('RZA',         rza)
-    + r('Immat',       immat)
-    + r('Type avion',  typeAvion)
-    + r('Callsign',    v('Callsign'))
-    + r('Parking',     v('Parking'))
-    + r('Mode',        isUTC ? 'UTC' : 'LOCAL')
-    + '\n';
+  let body = '';
+
+  body += r('DATE',        dateTitre);
+  body += r('CIE',         cie);
+  body += r('N° DE VOL',   `${cie}${vol}`);
+  body += r('FROM',        from);
+  body += r('TO',          to);
+  body += r('RZA',         rza);
+  body += r('IMMAT',       immat);
+  body += r('TYPE',        typeAvion);
+  body += r('CALLSIGN',    v('Callsign'));
+  body += r('PARKING',     v('Parking'));
+  body += r('MODE',        isUTC ? 'UTC' : 'LOCAL');
 
   // ── HORAIRES ─────────────────────────────────────────────────────────────
-  const horBlock = hr()
-    + r('SIBT', t('SIBT') || '--:--')
-    + r('AIBT', t('AIBT') || '--:--')
-    + r('SOBT', t('SOBT') || '--:--')
-    + r('AOBT', t('AOBT') || '--:--')
-    + (t('EOBT') ? r('EOBT', t('EOBT')) : '')
-    + (t('CTOT') ? r('CTOT', t('CTOT')) : '')
-    + '\n';
+  body += s();
+  body += r('SIBT', t('SIBT') || '--:--');
+  body += r('AIBT', t('AIBT') || '--:--');
+  body += r('SOBT', t('SOBT') || '--:--');
+  body += r('AOBT', t('AOBT') || '--:--');
+  if(t('EOBT')) body += r('EOBT', t('EOBT'));
+  if(t('CTOT')) body += r('CTOT', t('CTOT'));
 
   // ── TIMINGS ───────────────────────────────────────────────────────────────
-  const liftArr = t('ArriveeLiftArr') || t('DepartLiftArr')
-    ? `${t('ArriveeLiftArr')||'--:--'} → ${t('DepartLiftArr')||'--:--'}` : '';
-  const liftDep = t('ArriveeLift') || t('DepartLift')
-    ? `${t('ArriveeLift')||'--:--'} → ${t('DepartLift')||'--:--'}` : '';
-  const avitair = t('ArriveeFuel') || t('DepartFuel')
-    ? `${t('ArriveeFuel')||'--:--'} → ${t('DepartFuel')||'--:--'}` : '';
+  body += s();
 
-  const timBlock = hr()
-    + r('Arrivée PNT',       t('ArrPNT'))
-    + r('Arrivée PNC',       t('ArrPNC'))
-    + r('Premier débarqué (L1)', t('PremierDebarque'))
-    + r('Premier débarqué (L2)', t('PremierDebarqueL2'))
-    + r('Dernier débarqué',  t('DernierDebarque'))
-    + r('Lift ARR',          liftArr)
-    + r('Premier embarqué',  t('AvionPremierEmbarque'))
-    + r('Dernier embarqué',  t('AvionDernierEmbarque'))
-    + r('Lift DEP',          liftDep)
-    + r('Avitair',           avitair)
-    + r('Remise LID/LDS',    t('RemiseLID'))
-    + r('Fermeture porte',   t('FermeturePorteAvion'))
-    + r('Connexion casque',  t('ConnexionAgentCasque'))
-    + '\n';
+  if(t('ArrPNT'))            { body += r('ARRIVEE PNT', t('ArrPNT')); }
+  if(t('ArrPNC'))            { body += r('ARRIVEE PNC', t('ArrPNC')); }
 
-  // ── SECTIONS OPERATIONNELLES ──────────────────────────────────────────────
-  const opsLines = [
-    v('ArriveeINAD') ? `Recherche bag / INAD : ${v('ArriveeINAD')}` : ''
-  ].filter(Boolean);
-  const opsBlock = opsLines.length ? hr() + opsLines.join('\n') + '\n\n' : hr() + '\n';
+  body += br();
+  if(t('PremierDebarque'))   { body += r('PREMIER DEBARQUE (L1)', t('PremierDebarque')); }
+  if(t('PremierDebarqueL2')) { body += r('PREMIER DEBARQUE (L2)', t('PremierDebarqueL2')); }
+  if(t('DernierDebarque'))   { body += r('DERNIER DEBARQUE',      t('DernierDebarque')); }
+
+  body += br();
+  if(t('ArriveeLiftArr') || t('DepartLiftArr'))
+    body += r('LIFT ARR', `${t('ArriveeLiftArr')||'--:--'} → ${t('DepartLiftArr')||'--:--'}`);
+
+  body += br();
+  if(t('AvionPremierEmbarque')) { body += r('PREMIER EMBARQUE',  t('AvionPremierEmbarque')); }
+  if(t('AvionDernierEmbarque')) { body += r('DERNIER EMBARQUE',  t('AvionDernierEmbarque')); }
+
+  body += br();
+  if(t('ArriveeLift') || t('DepartLift'))
+    body += r('LIFT DEP', `${t('ArriveeLift')||'--:--'} → ${t('DepartLift')||'--:--'}`);
+  if(t('ArriveeFuel') || t('DepartFuel'))
+    body += r('AVITAIR',  `${t('ArriveeFuel')||'--:--'} → ${t('DepartFuel')||'--:--'}`);
+
+  body += br();
+  if(t('RemiseLID'))            { body += r('REMISE LID',       t('RemiseLID')); }
+  if(t('FermeturePorteAvion'))  { body += r('FERMETURE PORTE',  t('FermeturePorteAvion')); }
+  if(t('ConnexionAgentCasque')) { body += r('CONNEXION CASQUE', t('ConnexionAgentCasque')); }
+
+  // ── OPS : INAD / NAYAK ───────────────────────────────────────────────────
+  const hasInad = t('ArriveeINAD') || v('ArrSI');
+  if(hasInad){
+    body += s();
+    if(t('ArriveeINAD')) body += r('INAD / NAYAK', t('ArriveeINAD'));
+    if(v('ArrSI'))       body += r('SI',            v('ArrSI'));
+  }
 
   // ── LOAD FINAL ────────────────────────────────────────────────────────────
-  const hasFinal = v('FinalTOB') || v('FinalADULT') || v('FinalMALE');
-  const tobLine = hasFinal
-    ? `TOB ${v('FinalTOB')||'—'}`
-      + (v('FinalADULT')  ? `  ADULT ${v('FinalADULT')}` : '')
-      + (v('FinalMALE')   ? `  M ${v('FinalMALE')}` : '')
-      + (v('FinalFEMALE') ? `  F ${v('FinalFEMALE')}` : '')
-      + (v('FinalCHILD')  ? `  CH ${v('FinalCHILD')}` : '')
-      + (v('FinalINFANT') ? `  INF ${v('FinalINFANT')}` : '')
-    : '';
-  const bagsLine = hasFinal
-    ? `${v('FinalBAGS')||'—'} BAGS  /  ${v('FinalPOIDS')||'—'} kg${v('FinalGB') ? `  (+ ${v('FinalGB')} GB)` : ''}` : '';
+  const hasFinal = v('FinalTOB') || v('FinalADULT') || v('FinalMALE') || v('FinalBAGS');
+  if(hasFinal){
+    body += s();
+    body += '[ LOAD FINAL ]\n\n';
 
-  const zones = ['FinalOA','FinalOB','FinalOC','FinalOD']
-    .filter(id => v(id))
-    .map(id => `${id.replace('Final','').replace('O','O')} ${v(id)}`)
-    .join('  /  ');
-  const soutes = ['FinalH1','FinalH2','FinalH3','FinalH4']
-    .filter(id => v(id))
-    .map((id,i) => `CP${i+1} ${v(id)}`)
-    .join('  /  ');
+    if(v('FinalTOB'))    body += r('TOB', v('FinalTOB'));
 
-  const loadBlock = hr()
-    + (tobLine  ? tobLine  + '\n' : '')
-    + (bagsLine ? bagsLine + '\n' : '')
-    + (zones    ? r('Zones',  zones)  : '')
-    + (soutes   ? r('Soutes', soutes) : '')
-    + (v('FinalSI') ? r('SI', v('FinalSI')) : '')
-    + r('Comm. chiffres porte', t('CommChiffresPorte'))
-    + '\n';
+    const paxDetails = [
+      v('FinalADULT')  && `ADULT ${v('FinalADULT')}`,
+      v('FinalMALE')   && `M ${v('FinalMALE')}`,
+      v('FinalFEMALE') && `F ${v('FinalFEMALE')}`,
+      v('FinalCHILD')  && `CH ${v('FinalCHILD')}`,
+      v('FinalINFANT') && `INF ${v('FinalINFANT')}`,
+    ].filter(Boolean).join('  ');
+    if(paxDetails) body += paxDetails + '\n';
+
+    body += br();
+    if(v('FinalBAGS'))  body += r('BAGS',  v('FinalBAGS'));
+    if(v('FinalGB'))    body += r('GB',    v('FinalGB') + ' pcs');
+    if(v('FinalPOIDS')) body += r('POIDS', v('FinalPOIDS') + ' kg');
+
+    body += br();
+    ['FinalOA','FinalOB','FinalOC','FinalOD'].forEach(id => {
+      if(v(id)) body += r(id.replace('Final',''), v(id));
+    });
+
+    body += br();
+    [['FinalH1','CP1'],['FinalH2','CP2'],['FinalH3','CP3'],['FinalH4','CP4']].forEach(([id,lbl]) => {
+      if(v(id)) body += r(lbl, v(id));
+    });
+
+    body += br();
+    if(v('CommChiffresPorte')) body += r('COMM. CHIFFRES PORTE', v('CommChiffresPorte'));
+    if(v('FinalSI'))           body += r('SI', v('FinalSI'));
+  }
 
   // ── RETARDS ───────────────────────────────────────────────────────────────
-  const dlLines = [];
-  if(v('DLcode1')) dlLines.push(`DL ${v('DLcode1')} : ${v('DLduree1')||'?'} min`);
-  if(v('DLcode2')) dlLines.push(`DL ${v('DLcode2')} : ${v('DLduree2')||'?'} min`);
-  if(v('DLcode3')) dlLines.push(`DL ${v('DLcode3')} : ${v('DLduree3')||'?'} min`);
-  const dlBlock = dlLines.length ? hr() + dlLines.join('\n') + '\n\n' : '';
+  const hasDL = v('DLcode1') || v('DLcode2') || v('DLcode3');
+  if(hasDL){
+    body += s();
+    body += '[ RETARDS ]\n\n';
+    if(v('DLcode1')) body += `DL ${v('DLcode1')}  /  ${v('DLduree1')||'?'} min\n`;
+    if(v('DLcode2')) body += `DL ${v('DLcode2')}  /  ${v('DLduree2')||'?'} min\n`;
+    if(v('DLcode3')) body += `DL ${v('DLcode3')}  /  ${v('DLduree3')||'?'} min\n`;
+  }
 
   // ── BLOC NOTE ─────────────────────────────────────────────────────────────
-  const faitsTxt   = v('FaitsSaillants');
-  const faitsBlock = faitsTxt ? hr() + faitsTxt + '\n' : '';
-
-  const body = [infoBlock, horBlock, timBlock, opsBlock, loadBlock, dlBlock, faitsBlock]
-    .filter(Boolean).join('');
+  const faitsTxt = v('FaitsSaillants');
+  if(faitsTxt){
+    body += s();
+    body += '[ BLOC NOTE ]\n\n';
+    body += faitsTxt + '\n';
+  }
 
   window.location.href =
     `mailto:trafic@aeroportbeauvais.com?subject=${encodeURIComponent(titre)}&body=${encodeURIComponent(body)}`;
