@@ -1797,7 +1797,7 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
       <div class="field span-3">
         <label class="label">Cie</label>
         <div class="control">
-          <input class="input uppercase" type="text" id="Cie" list="cieList" autocomplete="off" maxlength="4" placeholder="--" oninput="updateFinalWeightIfNeeded()">
+          <input class="input uppercase" type="text" id="Cie" list="cieList" autocomplete="off" maxlength="4" placeholder="--" oninput="updateFinalWeightIfNeeded(); updateDLCodeInputMode();">
           <datalist id="cieList">
             <option>FR</option><option>RK</option><option>W4</option><option>W6</option>
             <option>H4</option><option>H6</option><option>U5</option><option>U7</option>
@@ -3022,6 +3022,7 @@ if(!window._cieLayoutHooked){
   document.getElementById('Cie')?.addEventListener('change', ()=>{
     updateFinalLoadLayout();
     updatePreviLoadLayout();
+    updateDLCodeInputMode();
   });
 }
 
@@ -3548,6 +3549,7 @@ function initForm(){
     updateFinalLoadLayout();
     updateFinalPlaceholdersFRRK();
     updateLidGuideVisibility();
+    updateDLCodeInputMode();
   });
 
   document.getElementById('TypeAvion')?.addEventListener('change', ()=>{
@@ -6826,6 +6828,17 @@ function toggleDelayCodes() {
   box.style.display = (box.style.display === 'none') ? 'block' : 'none';
 }
 
+
+function updateDLCodeInputMode(){
+  const cie = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
+  const numeric = (cie === 'FR' || cie === 'RK' || cie === 'H4' || cie === 'V7');
+  ['DLcode1','DLcode2','DLcode3'].forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.inputMode = numeric ? 'numeric' : 'text';
+    el.pattern   = numeric ? '[0-9]*' : '';
+  });
+}
 
 function toggleDepExtra(panel){
   const el = document.getElementById('panel-' + panel)
