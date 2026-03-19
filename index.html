@@ -4366,7 +4366,15 @@ function updateDelayBands(){
     disp.style.boxShadow = '';
 
     const aVal = document.getElementById(actual)?.value || '';
-    const pVal = document.getElementById(planned)?.value || '';
+    // Pour EOBT : lire la valeur calculée (timer-eobt div) si planned='EOBT'
+    let pVal = '';
+    if(planned === 'EOBT'){
+      const eobtDiv = document.getElementById('timer-eobt');
+      pVal = (eobtDiv?.textContent || '').trim();
+      if(pVal === '--:--' || pVal === '') pVal = '';
+    } else {
+      pVal = document.getElementById(planned)?.value || '';
+    }
 
     if(!aVal || !pVal) return;
 
