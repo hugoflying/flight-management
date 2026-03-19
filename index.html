@@ -2638,6 +2638,7 @@ function updateFinalPlaceholdersFRRK(){
   const type = (document.getElementById('TypeAvion')?.value || '').toUpperCase().trim();
 
   const isFRRK = (cie === 'FR' || cie === 'RK');
+  const isW4W6 = (cie === 'W4' || cie === 'W6');
 
   const setPH = (id, txt)=>{
     const el = document.getElementById(id);
@@ -2646,40 +2647,99 @@ function updateFinalPlaceholdersFRRK(){
   };
 
   // reset
-  ['FinalOA','FinalOB','FinalOC','FinalH1','FinalH2','FinalH3','FinalH4'].forEach(id=>setPH(id,''));
-  if(!isFRRK) return;
+  ['FinalOA','FinalOB','FinalOC','FinalOD','FinalH1','FinalH2','FinalH3','FinalH4'].forEach(id=>setPH(id,''));
+  if(!isFRRK && !isW4W6) return;
 
-  if(type === 'B38M'){
-    setPH('FinalOA', '32 (1-6)');
-    setPH('FinalOB', '129 (7-29)');
-    setPH('FinalOC', '36 (30-35)');
-    setPH('FinalH1', '5 pcs');
-    setPH('FinalH2', '100 pcs');
-    setPH('FinalH3', 'Remainder');
-    setPH('FinalH4', 'Over-spill H3');
+  // ===== FR / RK =====
+  if(isFRRK){
+    if(type === 'B38M'){
+      setPH('FinalOA', '32 (1-6)');
+      setPH('FinalOB', '129 (7-29)');
+      setPH('FinalOC', '36 (30-35)');
+      setPH('FinalH1', '5 pcs');
+      setPH('FinalH2', '100 pcs');
+      setPH('FinalH3', 'Remainder');
+      setPH('FinalH4', 'Over-spill H3');
+      return;
+    }
+    if(type === 'B738'){
+      setPH('FinalOA', '27 (1-5)');
+      setPH('FinalOB', '132 (6-28)');
+      setPH('FinalOC', '30 (29-33)');
+      setPH('FinalH1', '30 pcs');
+      setPH('FinalH2', '160 pcs');
+      setPH('FinalH3', 'Remainder');
+      setPH('FinalH4', 'Over-spill H3');
+      return;
+    }
+    if(type === 'A320'){
+      setPH('FinalOA', '60 (1-10)');
+      setPH('FinalOB', '60 (11-20)');
+      setPH('FinalOC', '60 (21-30)');
+      setPH('FinalH1', '160 pcs');
+      setPH('FinalH2', 'Overflow');
+      setPH('FinalH3', 'Overflow');
+      setPH('FinalH4', 'Not planned');
+      return;
+    }
     return;
   }
 
-  if(type === 'B738'){
-    setPH('FinalOA', '27 (1-5)');
-    setPH('FinalOB', '132 (6-28)');
-    setPH('FinalOC', '30 (29-33)');
-    setPH('FinalH1', '30 pcs');
-    setPH('FinalH2', '160 pcs');
-    setPH('FinalH3', 'Remainder');
-    setPH('FinalH4', 'Over-spill H3');
-    return;
-  }
-
-  if(type === 'A320'){
-    setPH('FinalOA', '60 (1-10)');
-    setPH('FinalOB', '60 (11-20)');
-    setPH('FinalOC', '60 (21-30)');
-    // IDs restent FinalH1..H4 même si labels affichent CP1..CP4
-    setPH('FinalH1', '160 pcs');               // CP1
-    setPH('FinalH2', 'Overflow');    // CP2
-    setPH('FinalH3', 'Overflow');    // CP3
-    setPH('FinalH4', 'Not planned');           // CP4
+  // ===== W4 / W6 =====
+  if(isW4W6){
+    if(type === 'A20N'){
+      setPH('FinalOA', '60 (1-10)');
+      setPH('FinalOB', '66 (11-21)');
+      setPH('FinalOC', '60 (22-31)');
+      setPH('FinalH1', '3402 kg');   // CP1
+      // CP2 masqué pour A20N
+      setPH('FinalH3', '2426 kg');   // CP3
+      setPH('FinalH4', '2110 kg');   // CP4
+      return;
+    }
+    if(type === 'A320'){
+      setPH('FinalOA', '66 (1-11)');
+      setPH('FinalOB', '60 (12-21)');
+      setPH('FinalOC', '54 (22-30)');
+      setPH('FinalH1', '3402 kg');   // CP1
+      // CP2 masqué pour A320
+      setPH('FinalH3', '2426 kg');   // CP3
+      setPH('FinalH4', '2110 kg');   // CP4
+      return;
+    }
+    if(type === 'A321'){
+      setPH('FinalOA', '54 (1-9)');
+      setPH('FinalOB', '64 (10-20)');
+      setPH('FinalOC', '58 (21-30)');
+      setPH('FinalOD', '54 (31-39)');
+      setPH('FinalH1', '1140 kg');   // CP1
+      setPH('FinalH2', '2160 kg');   // CP2
+      setPH('FinalH3', '3587 kg');   // CP3
+      setPH('FinalH4', '2083 kg');   // CP4
+      return;
+    }
+    if(type === 'A21NY'){
+      setPH('FinalOA', '60 (1-10)');
+      setPH('FinalOB', '60 (11-20)');
+      setPH('FinalOC', '59 (21-30)');
+      setPH('FinalOD', '60 (31-40)');
+      setPH('FinalH1', '2202 kg');   // CP1
+      setPH('FinalH2', '3468 kg');   // CP2
+      setPH('FinalH3', '1272 kg');   // CP3 — A321 NEO XLR
+      setPH('FinalH4', '2083 kg');   // CP4
+      return;
+    }
+    if(type === 'A21N'){
+      setPH('FinalOA', '60 (1-10)');
+      setPH('FinalOB', '60 (11-20)');
+      setPH('FinalOC', '59 (21-30)');
+      setPH('FinalOD', '60 (31-40)');
+      setPH('FinalH1', '2202 kg');   // CP1
+      setPH('FinalH2', '3468 kg');   // CP2
+      setPH('FinalH3', '3587 kg');   // CP3
+      setPH('FinalH4', '2083 kg');   // CP4
+      return;
+    }
     return;
   }
 }
@@ -2831,28 +2891,36 @@ function updateFinalLoadLayout(){
     return d;
   };
 
+  const isW4W6 = (cie === 'W4' || cie === 'W6');
+  const hasOD_W4W6 = isW4W6 && (type === 'A321' || type === 'A21N' || type === 'A21NY');
+  const hideCP2_W4W6 = isW4W6 && (type === 'A20N' || type === 'A320');
+
   // ===== règles =====
-  showField('FinalMALE',   !isFRRK);
-  showField('FinalFEMALE', !isFRRK);
-  showField('FinalOD',     !isFRRK);
+  showField('FinalMALE',   !isFRRK && !isW4W6);
+  showField('FinalFEMALE', !isFRRK && !isW4W6);
+  showField('FinalOD',     (!isFRRK && !isW4W6) || hasOD_W4W6);
+  showField('FinalADULT',  isFRRK || isW4W6);
+
+  // Masquer CP2 pour W4/W6 A20N et A320
+  showField('FinalH2', !hideCP2_W4W6);
 
   setLabel('FinalOA', isFRRK ? 'FWD' : 'OA');
   setLabel('FinalOB', isFRRK ? 'MID' : 'OB');
   setLabel('FinalOC', isFRRK ? 'AFT' : 'OC');
 
-  showField('FinalADULT', isFRRK);
-
-  // ✅ labels H1..H4 => CP1..CP4 si useCP
-  setLabel('FinalH1', useCP ? 'CP1' : 'H1');
-  setLabel('FinalH2', useCP ? 'CP2' : 'H2');
-  setLabel('FinalH3', useCP ? 'CP3' : 'H3');
-  setLabel('FinalH4', useCP ? 'CP4' : 'H4');
+  // ✅ labels H1..H4 => CP1..CP4 si useCP ou W4/W6
+  const useCPLabel = useCP || isW4W6;
+  setLabel('FinalH1', useCPLabel ? 'CP1' : 'H1');
+  setLabel('FinalH2', useCPLabel ? 'CP2' : 'H2');
+  setLabel('FinalH3', useCPLabel ? 'CP3' : 'H3');
+  setLabel('FinalH4', useCPLabel ? 'CP4' : 'H4');
 
   // ===== layout =====
   restore();
 
-  if(isFRRK){
-    // --- FR/RK ---
+  if(isFRRK || isW4W6){
+    // --- FR/RK et W4/W6 : même structure PAX ---
+    const zonesCount = (isFRRK) ? 3 : (hasOD_W4W6 ? 4 : 3);
     if(adultF && childF && infantF){
       const paxRow = makeRow3('ldm-final-frrk-pax');
       paxRow.appendChild(adultF);
@@ -2862,10 +2930,11 @@ function updateFinalLoadLayout(){
       const tobRow = makeRowFull('ldm-final-frrk-tob');
       if(tobF) tobRow.appendChild(tobF);
 
-      const zonesRow = makeRow3('ldm-final-frrk-zones');
+      const zonesRow = hasOD_W4W6 ? makeRow4('ldm-final-frrk-zones') : makeRow3('ldm-final-frrk-zones');
       if(oaF) zonesRow.appendChild(oaF);
       if(obF) zonesRow.appendChild(obF);
       if(ocF) zonesRow.appendChild(ocF);
+      if(hasOD_W4W6 && odF) zonesRow.appendChild(odF);
 
       const bagsRow = makeRow3('ldm-final-frrk-bags');
       if(bagsF)  bagsRow.appendChild(bagsF);
@@ -2886,7 +2955,7 @@ function updateFinalLoadLayout(){
     }
 
   }else{
-    // --- AUTRES CIE : ordre FORCÉ ---
+    // --- AUTRES CIE (non FR/RK, non W4/W6) ---
     if(maleF && femaleF && childF && infantF){
       const paxLine = makeRow4('ldm-final-other-paxline');
       paxLine.appendChild(maleF);
