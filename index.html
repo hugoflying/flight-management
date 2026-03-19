@@ -4198,8 +4198,37 @@ function updateLIDVisibility(){
   updateHeaderOffset();
 }
 
-/* CALCULS */
-function updateAllCalculations() {
+/* ===== Auto-switch vers onglet DÉPART après Dernier débarqué ===== */
+let _autoSwitchDepTimer = null;
+
+function checkAutoSwitchToDep(){
+  // Ne switche que si on est actuellement sur l'onglet ARR
+  const liArr = document.getElementById('seg-arr-li');
+  if(!liArr || !liArr.classList.contains('is-active')) return;
+
+  const dernierDeb = (document.getElementById('DernierDebarque')?.value || '').trim();
+  const arriveeift = (document.getElementById('ArriveeLift')?.value   || '').trim();
+  const departLift = (document.getElementById('DepartLift')?.value    || '').trim();
+
+  // Condition de switch : DernierDebarque rempli
+  if(!dernierDeb){ clearTimeout(_autoSwitchDepTimer); _autoSwitchDepTimer = null; return; }
+
+  // Ne switch pas si ArriveeLift rempli mais DepartLift vide
+  if(arriveeift && !departLift){ clearTimeout(_autoSwitchDepTimer); _autoSwitchDepTimer = null; return; }
+
+  // Switch après 3s (debounce)
+  clearTimeout(_autoSwitchDepTimer);
+  _autoSwitchDepTimer = setTimeout(() => {
+    _autoSwitchDepTimer = null;
+    // Re-vérifier les conditions au moment du switch
+    const dd  = (document.getElementById('DernierDebarque')?.value || '').trim();
+    const al  = (document.getElementById('ArriveeLift')?.value     || '').trim();
+    const dl  = (document.getElementById('DepartLift')?.value      || '').trim();
+    if(dd && !(al && !dl)) switchTimingPanel('dep');
+  }, 3000);
+}
+
+
   setTimeout(updateIVBadges, 0);
   updateTimers();
   updateSOBTDefault();
@@ -4222,6 +4251,9 @@ function updateAllCalculations() {
 
   updateInfoStrip();
   updateDelayBands();
+
+  // Auto-switch vers onglet DÉPART si conditions remplies
+  checkAutoSwitchToDep();
 
   // Réapplique le rouge sur les champs en dépassement
   setTimeout(revalidateDangerFields, 0);
