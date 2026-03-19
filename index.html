@@ -89,6 +89,8 @@ html, body {
   z-index: 3000;
   background: var(--bg);
   border-bottom: 1px solid rgba(0,0,0,.08);
+  /* iOS Dynamic Island / notch : décale le contenu sous la zone de sécurité */
+  padding-top: env(safe-area-inset-top);
 }
 html.dark .fixed-header { border-bottom-color: rgba(255,255,255,.08); }
 
