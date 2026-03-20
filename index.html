@@ -2912,11 +2912,11 @@ function updateFinalLoadLayout(){
   const hasOD_W4W6 = isW4W6 && (type === 'A321' || type === 'A21N' || type === 'A21NY');
   const hideCP2_W4W6 = isW4W6 && (type === 'A20N' || type === 'A320');
 
-  // ===== règles =====
-  showField('FinalMALE',   !isFRRK);
+  // ===== règles visibilité =====
+  showField('FinalMALE',   !isFRRK);   // autres CIE : MALE remplace ADULT
   showField('FinalFEMALE', !isFRRK);
+  showField('FinalADULT',  isFRRK);    // FR/RK uniquement
   showField('FinalOD',     (!isFRRK && !isW4W6) || hasOD_W4W6);
-  showField('FinalADULT',  isFRRK || isW4W6);
 
   // Masquer CP2 pour W4/W6 A20N et A320
   showField('FinalH2', !hideCP2_W4W6);
@@ -2935,12 +2935,43 @@ function updateFinalLoadLayout(){
   // ===== layout =====
   restore();
 
-  if(isFRRK || isW4W6){
-    // --- FR/RK et W4/W6 : même structure PAX ---
-    const zonesCount = (isFRRK) ? 3 : (hasOD_W4W6 ? 4 : 3);
+  if(isFRRK){
+    // --- FR/RK : ADULT / CHILD / INFANT ---
     if(adultF && childF && infantF){
       const paxRow = makeRow3('ldm-final-frrk-pax');
       paxRow.appendChild(adultF);
+      paxRow.appendChild(childF);
+      paxRow.appendChild(infantF);
+
+      const tobRow = makeRowFull('ldm-final-frrk-tob');
+      if(tobF) tobRow.appendChild(tobF);
+
+      const zonesRow = makeRow3('ldm-final-frrk-zones');
+      if(oaF) zonesRow.appendChild(oaF);
+      if(obF) zonesRow.appendChild(obF);
+      if(ocF) zonesRow.appendChild(ocF);
+
+      const bagsRow = makeRow3('ldm-final-frrk-bags');
+      if(bagsF)  bagsRow.appendChild(bagsF);
+      if(poidsF) bagsRow.appendChild(poidsF);
+      if(gbF)    bagsRow.appendChild(gbF);
+      bagsRow.style.marginBottom = '0';
+
+      finalGrid.insertBefore(bagsRow, finalGrid.firstChild);
+      finalGrid.insertBefore(zonesRow, bagsRow);
+      finalGrid.insertBefore(tobRow, zonesRow);
+      finalGrid.insertBefore(paxRow, tobRow);
+
+      const bpb = document.getElementById('bagsPoidsBgRow');
+      if(bpb) bpb.style.display = 'none';
+    }
+
+  }else if(isW4W6){
+    // --- W4/W6 : MALE / FEMALE / CHILD / INFANT ---
+    if(maleF && femaleF && childF && infantF){
+      const paxRow = makeRow4('ldm-final-frrk-pax');
+      paxRow.appendChild(maleF);
+      paxRow.appendChild(femaleF);
       paxRow.appendChild(childF);
       paxRow.appendChild(infantF);
 
@@ -2957,8 +2988,6 @@ function updateFinalLoadLayout(){
       if(bagsF)  bagsRow.appendChild(bagsF);
       if(poidsF) bagsRow.appendChild(poidsF);
       if(gbF)    bagsRow.appendChild(gbF);
-
-      // ✅ FR/RK : réduire l’espace sous BAGS/POIDS/GB
       bagsRow.style.marginBottom = '0';
 
       finalGrid.insertBefore(bagsRow, finalGrid.firstChild);
@@ -2966,7 +2995,7 @@ function updateFinalLoadLayout(){
       finalGrid.insertBefore(tobRow, zonesRow);
       finalGrid.insertBefore(paxRow, tobRow);
 
-      // Masquer les conteneurs statiques vidés
+      if(paxGridOrig) paxGridOrig.style.display = 'none';
       const bpb = document.getElementById('bagsPoidsBgRow');
       if(bpb) bpb.style.display = 'none';
     }
