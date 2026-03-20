@@ -2066,15 +2066,22 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
 
 <!-- Modal confirmation TOUT FERMER -->
 <div id="closeAllModal" style="display:none; position:fixed; inset:0; z-index:6400; background:rgba(0,0,0,.45); align-items:center; justify-content:center; padding:14px;">
-  <div class="card" style="width:min(360px, 100%);">
+  <div class="card" style="width:min(340px, 100%);">
     <header class="card-header">
       <p class="card-header-title">Tout fermer ?</p>
     </header>
-    <div class="card-content">
-      <p style="margin-bottom:16px; color:var(--muted); font-size:.9rem;">Tous les onglets ouverts seront fermés.</p>
-      <div class="buttons is-right">
-        <button class="button is-light" type="button" onclick="document.getElementById('closeAllModal').style.display='none'">Annuler</button>
-        <button class="button is-danger" type="button" onclick="document.getElementById('closeAllModal').style.display='none'; clearAutoSave();">Fermer tout</button>
+    <div class="card-content" style="padding:1rem;">
+      <p style="margin-bottom:14px; color:var(--muted); font-size:.88rem;">Tous les onglets ouverts seront fermés.</p>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <button class="button is-warning is-fullwidth" type="button" onclick="confirmCloseAll(false)" style="font-weight:800;">
+          📂 Fermer tout
+        </button>
+        <button class="button is-danger is-light is-fullwidth" type="button" onclick="confirmCloseAll(true)" style="font-weight:800;">
+          🗑 Fermer tout + Supprimer les données
+        </button>
+        <button class="button is-light is-fullwidth" type="button" onclick="document.getElementById('closeAllModal').style.display='none'" style="margin-top:4px;">
+          Annuler
+        </button>
       </div>
     </div>
   </div>
@@ -6818,52 +6825,54 @@ function openCloseAllModal(){
   document.getElementById('closeAllModal').style.display = 'flex';
 }
 
-function clearAutoSave() {
-  const tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
+function confirmCloseAll(deleteRemote) {
+  document.getElementById('closeAllModal').style.display = 'none';
+
+  if(deleteRemote){
+    // Supprimer les données sur le DO pour chaque onglet
+    const tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
     const WS_BASE = 'wss://turnaround-sync.deruellehugo-49c.workers.dev/';
     const deletePromises = [];
-
     tabs.forEach(tid => {
       try{
         const data = JSON.parse(localStorage.getItem('tab-'+tid) || '{}');
         const meta = data?.akMeta;
         if(!meta?.id) return;
         const key = `AK_${meta.id}`;
-
-        // Calculer la clé dashboard
         const fid = String(meta.id || '').trim();
         const lid = String(meta.linkedId || '').trim();
         const dashKey = (fid && lid) ? (fid < lid ? fid : lid) : fid;
         const deleteMsg = JSON.stringify({ __delete: '1', ...(dashKey ? { __dashboardKey: dashKey } : {}) });
-
         if(tid === currentTabId && socket && socket.readyState === WebSocket.OPEN){
-          // Onglet courant : socket déjà ouvert
           socket.send(deleteMsg);
         } else {
-          // Autres onglets : ouvrir un socket temporaire
           const p = new Promise(resolve => {
             try{
               const ws = new WebSocket(WS_BASE + encodeURIComponent(key));
-              ws.onopen = () => {
-                ws.send(deleteMsg);
-                setTimeout(() => { try{ ws.close(); }catch(_){} resolve(); }, 200);
-              };
+              ws.onopen = () => { ws.send(deleteMsg); setTimeout(()=>{ try{ws.close();}catch(_){} resolve(); }, 200); };
               ws.onerror = () => resolve();
-              setTimeout(resolve, 2000); // timeout sécurité
+              setTimeout(resolve, 2000);
             }catch(_){ resolve(); }
           });
           deletePromises.push(p);
         }
       }catch(_){}
     });
-
-    // Attendre que tous les deletes soient envoyés avant de recharger
     Promise.all(deletePromises).then(() => {
-      setTimeout(() => {
-        localStorage.clear();
-        location.reload();
-      }, 1000);
+      setTimeout(() => { localStorage.clear(); location.reload(); }, 1000);
     });
+  } else {
+    // Fermeture locale uniquement — déconnecter proprement
+    clearTimeout(window._sendFullDebounce);
+    clearTimeout(saveTimer); saveTimer = null;
+    if(socket){ try{ socket.close(); }catch(_){} socket = null; currentSocketKey = null; }
+    localStorage.clear();
+    location.reload();
+  }
+}
+
+function clearAutoSave() {
+  confirmCloseAll(false);
 }
 
 function shouldOpenFinalLoad(){
