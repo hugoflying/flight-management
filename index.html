@@ -2090,13 +2090,11 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
     <div class="card-content" style="padding:1rem;">
       <p style="margin-bottom:14px; color:var(--muted); font-size:.88rem;">Que voulez-vous faire avec cet onglet ?</p>
       <div style="display:flex; flex-direction:column; gap:8px;">
-        <button class="button is-warning is-fullwidth" type="button" onclick="confirmCloseTab(false)" style="justify-content:flex-start; font-weight:800;">
+        <button class="button is-warning is-fullwidth" type="button" onclick="confirmCloseTab(false)" style="font-weight:800;">
           📂 Fermer l'onglet
-          <span style="font-size:.75rem; font-weight:400; margin-left:auto; color:rgba(0,0,0,.5);">Les données restent</span>
         </button>
-        <button class="button is-danger is-light is-fullwidth" type="button" onclick="confirmCloseTab(true)" style="justify-content:flex-start; font-weight:800;">
+        <button class="button is-danger is-light is-fullwidth" type="button" onclick="confirmCloseTab(true)" style="font-weight:800;">
           🗑 Fermer + Supprimer les données
-          <span style="font-size:.75rem; font-weight:400; margin-left:auto; color:#ef4444;">Irréversible</span>
         </button>
         <button class="button is-light is-fullwidth" type="button" onclick="closeTabCloseModal()" style="margin-top:4px;">
           Annuler
