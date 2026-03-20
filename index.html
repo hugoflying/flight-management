@@ -2081,6 +2081,23 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
 </div>
 
 <!-- Modal confirmation EFFACER champs -->
+<!-- Modal fermeture onglet -->
+<div id="tabCloseModal" style="display:none; position:fixed; inset:0; z-index:6500; background:rgba(0,0,0,.45); align-items:center; justify-content:center; padding:14px;">
+  <div class="card" style="width:min(360px, 100%);">
+    <header class="card-header">
+      <p class="card-header-title" id="tabCloseModalTitle">Fermer ce vol ?</p>
+    </header>
+    <div class="card-content">
+      <p style="margin-bottom:16px; color:var(--muted); font-size:.9rem;">Que voulez-vous faire avec cet onglet ?</p>
+      <div class="buttons is-right">
+        <button class="button is-light" type="button" onclick="closeTabCloseModal()">Annuler</button>
+        <button class="button is-warning" type="button" onclick="confirmCloseTab(false)">Fermer</button>
+        <button class="button is-danger" type="button" onclick="confirmCloseTab(true)">Fermer + Supprimer les données</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="clearFieldsModal" style="display:none; position:fixed; inset:0; z-index:6300; background:rgba(0,0,0,.45); align-items:center; justify-content:center; padding:14px;">
   <div class="card" style="width:min(360px, 100%);">
     <header class="card-header">
@@ -2896,8 +2913,8 @@ function updateFinalLoadLayout(){
   const hideCP2_W4W6 = isW4W6 && (type === 'A20N' || type === 'A320');
 
   // ===== règles =====
-  showField('FinalMALE',   !isFRRK && !isW4W6);
-  showField('FinalFEMALE', !isFRRK && !isW4W6);
+  showField('FinalMALE',   !isFRRK);
+  showField('FinalFEMALE', !isFRRK);
   showField('FinalOD',     (!isFRRK && !isW4W6) || hasOD_W4W6);
   showField('FinalADULT',  isFRRK || isW4W6);
 
@@ -3786,7 +3803,7 @@ function renderTabs(){
       +
     </button>
     <button class="button is-link is-light" type="button"
-            onclick="createNewTab(); openAKPicker();">
+            onclick="openAKPicker();">
       + Liste vols
     </button>
   `;
@@ -3819,7 +3836,7 @@ function renderTabs(){
     btn.className = `button ${id === currentTabId ? 'is-link' : 'is-light'}`;
     btn.textContent = label || 'VOL';
     btn.onclick = ()=> switchTab(id);
-    btn.ondblclick = ()=> deleteTab(id);
+    btn.ondblclick = ()=> openTabCloseModal(id);
 
     // Bouton refresh ↻ — toujours affiché, grisé si pas de AK
     const r = document.createElement('button');
@@ -3927,65 +3944,74 @@ function switchTab(id){
   renderTimeline();
 }
 
-function deleteTab(id){
-  stopCountdown();
-  if(!confirm('Supprimer cette fiche ?')) return;
+let _tabCloseId = null;
 
+function openTabCloseModal(id){
+  _tabCloseId = id;
+  const data = JSON.parse(localStorage.getItem('tab-'+id) || '{}');
+  const cie  = (data.Cie||'').toUpperCase();
+  const nvol = (data.NVol||'').toUpperCase();
+  const depFF = (data?.akMeta?.depFF||'').toUpperCase().trim();
+  const label = depFF || (cie+nvol) || 'ce vol';
+  document.getElementById('tabCloseModalTitle').textContent = label ? `Fermer ${label} ?` : 'Fermer ce vol ?';
+  document.getElementById('tabCloseModal').style.display = 'flex';
+}
+
+function closeTabCloseModal(){
+  document.getElementById('tabCloseModal').style.display = 'none';
+  _tabCloseId = null;
+}
+
+function confirmCloseTab(deleteRemote){
+  const id = _tabCloseId;
+  closeTabCloseModal();
+  if(!id) return;
+  deleteTab(id, deleteRemote);
+}
+
+function deleteTab(id, deleteRemote = false){
+  stopCountdown();
   id = String(id);
 
-  // Supprimer du dashboard via WebSocket __delete — fiable même si socket fermé
-  const WS_BASE = 'wss://turnaround-sync.deruellehugo-49c.workers.dev/';
-  const tabData = JSON.parse(localStorage.getItem('tab-'+id) || '{}');
-  const deleteKey = tabData?.akMeta?.id ? `AK_${tabData.akMeta.id}` : (id === currentTabId ? buildFlightKey() : null);
-
-  if(deleteKey){
-    // Annuler tous les timers pour éviter tout envoi post-suppression
-    clearTimeout(saveTimer); saveTimer = null;
-    // Calculer la clé dashboard avant de supprimer le localStorage
-    const deleteDashKey = (() => {
-      try {
-        const fid = String(tabData?.akMeta?.id || '').trim();
-        const lid = String(tabData?.akMeta?.linkedId || '').trim();
-        if(fid && lid) return fid < lid ? fid : lid;
-        return fid || null;
-      } catch(_){ return null; }
-    })();
-    const deleteMsg = JSON.stringify({ __delete: '1', ...(deleteDashKey ? { __dashboardKey: deleteDashKey } : {}) });
-
-    // Envoyer aussi au DO lié pour éviter re-upsert via FORWARD
-    const linkedDeleteKey = (() => {
-      try {
-        const lid = String(tabData?.akMeta?.linkedId || '').trim();
-        return lid ? `AK_${lid}` : null;
-      } catch(_){ return null; }
-    })();
-
-    if(id === currentTabId && socket && socket.readyState === WebSocket.OPEN){
-      socket.send(deleteMsg);
-      // Couper immédiatement le socket APRÈS le delete pour éviter tout re-upsert
-      setTimeout(() => { try{ socket.close(); socket = null; currentSocketKey = null; }catch(_){} }, 100);
-    } else {
-      // Socket fermé ou autre onglet : connexion temporaire
-      try{
-        const ws = new WebSocket(WS_BASE + encodeURIComponent(deleteKey));
-        ws.onopen = () => {
-          ws.send(deleteMsg);
-          setTimeout(() => { try{ ws.close(); }catch(_){} }, 300);
-        };
-        ws.onerror = () => {};
-      }catch(_){}
+  if(deleteRemote){
+    // Supprimer les données du DO (l'autre tablette sera déconnectée)
+    const WS_BASE = 'wss://turnaround-sync.deruellehugo-49c.workers.dev/';
+    const tabData = JSON.parse(localStorage.getItem('tab-'+id) || '{}');
+    const deleteKey = tabData?.akMeta?.id ? `AK_${tabData.akMeta.id}` : (id === currentTabId ? buildFlightKey() : null);
+    if(deleteKey){
+      const fid = String(tabData?.akMeta?.id || '').trim();
+      const lid = String(tabData?.akMeta?.linkedId || '').trim();
+      const deleteDashKey = (fid && lid) ? (fid < lid ? fid : lid) : fid || null;
+      const deleteMsg = JSON.stringify({ __delete: '1', ...(deleteDashKey ? { __dashboardKey: deleteDashKey } : {}) });
+      if(id === currentTabId && socket && socket.readyState === WebSocket.OPEN){
+        socket.send(deleteMsg);
+        setTimeout(() => { try{ socket.close(); socket = null; currentSocketKey = null; }catch(_){} }, 100);
+      } else {
+        try{
+          const ws = new WebSocket(WS_BASE + encodeURIComponent(deleteKey));
+          ws.onopen = () => { ws.send(deleteMsg); setTimeout(()=>{ try{ ws.close(); }catch(_){} }, 300); };
+          ws.onerror = () => {};
+        }catch(_){}
+      }
+      const linkedKey = tabData?.akMeta?.linkedId ? `AK_${tabData.akMeta.linkedId}` : null;
+      if(linkedKey && linkedKey !== deleteKey){
+        try{
+          const ws2 = new WebSocket(WS_BASE + encodeURIComponent(linkedKey));
+          ws2.onopen = () => { ws2.send(deleteMsg); setTimeout(()=>{ try{ ws2.close(); }catch(_){} }, 300); };
+          ws2.onerror = () => {};
+        }catch(_){}
+      }
     }
+  }
 
-    // Supprimer aussi le DO lié
-    if(linkedDeleteKey && linkedDeleteKey !== deleteKey){
-      try{
-        const wsLinked = new WebSocket(WS_BASE + encodeURIComponent(linkedDeleteKey));
-        wsLinked.onopen = () => {
-          wsLinked.send(deleteMsg);
-          setTimeout(() => { try{ wsLinked.close(); }catch(_){} }, 300);
-        };
-        wsLinked.onerror = () => {};
-      }catch(_){}
+  // Fermeture locale — déconnecter le socket proprement
+  if(id === currentTabId){
+    clearTimeout(window._sendFullDebounce);
+    clearTimeout(saveTimer); saveTimer = null;
+    if(socket && !deleteRemote){
+      try{ socket.close(); }catch(_){}
+      socket = null;
+      currentSocketKey = null;
     }
   }
 
@@ -5879,6 +5905,11 @@ async function refreshAKTab(tabId){
 
 function applyAKFlight(f, flow, opts = {}){
   const isRefresh = !!opts.refresh;
+
+  // Créer un nouvel onglet seulement si c'est une nouvelle sélection
+  if(!isRefresh){
+    createNewTab();
+  }
 
   try{
     /* ===== champs communs ===== */
